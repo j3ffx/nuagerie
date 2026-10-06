@@ -34,12 +34,22 @@ export interface SyncCallbacks {
   estimate?: number | null;
 }
 
+export interface SyncTimings {
+  pages: number;
+  /** Time spent waiting for Graph. */
+  fetchMs: number;
+  /** Time spent writing to IndexedDB (overlaps the next fetch). */
+  storeMs: number;
+  totalMs: number;
+}
+
 export interface SyncOutcome {
   root: RootSyncState;
   /** Items added, changed or deleted. */
   changes: number;
   /** True when the server asked for a full resync (410 Gone): the store was cleared. */
   resynced: boolean;
+  timings: SyncTimings;
 }
 
 /** Resolves a folder path such as "/Pictures" to its id. */
@@ -94,12 +104,20 @@ export async function syncRoot(
   let loaded = 0;
   let changes = 0;
   let resynced = false;
+  const startedAt = performance.now();
+  const timings: SyncTimings = { pages: 0, fetchMs: 0, storeMs: 0, totalMs: 0 };
+  // Each page is written while the next one downloads; writes stay in order.
+  let pendingWrite: Promise<void> = Promise.resolve();
 
   for (;;) {
     let page: DeltaPage;
+    const fetchStart = performance.now();
     try {
       page = await client.getJson<DeltaPage>(url);
+      timings.fetchMs += performance.now() - fetchStart;
+      timings.pages++;
     } catch (error) {
+      await pendingWrite;
       if (error instanceof GraphError && error.status === 410 && !resynced) {
         // The service cannot continue from this token: enumerate again from scratch.
         resynced = true;
@@ -120,20 +138,30 @@ export async function syncRoot(
       else if (isWorthKeeping(item)) upserts.push(item);
       else deleted.push(item.id); // e.g. a photo renamed to .txt
     }
-    await store.applyChanges(upserts, deleted);
+    await pendingWrite;
     loaded += page.value.length;
     changes += page.value.length;
-    callbacks.onProgress?.({ loaded, total: callbacks.estimate ?? null });
-
     const next = page['@odata.nextLink'];
+    const state: RootSyncState = next
+      ? { ...root, resumeLink: next }
+      : { ...root, resumeLink: null, deltaLink: page['@odata.deltaLink'] ?? root.deltaLink };
+    const progress = { loaded, total: callbacks.estimate ?? null };
+    pendingWrite = (async () => {
+      const storeStart = performance.now();
+      await store.applyChanges(upserts, deleted);
+      timings.storeMs += performance.now() - storeStart;
+      // Saved only once the page is stored, so a resume never skips items.
+      await callbacks.onRootState(state);
+      callbacks.onProgress?.(progress);
+    })();
+    root = state;
+
     if (next) {
-      root = { ...root, resumeLink: next };
-      await callbacks.onRootState(root);
       url = next;
       continue;
     }
-    root = { ...root, resumeLink: null, deltaLink: page['@odata.deltaLink'] ?? root.deltaLink };
-    await callbacks.onRootState(root);
-    return { root, changes, resynced };
+    await pendingWrite;
+    timings.totalMs = performance.now() - startedAt;
+    return { root, changes, resynced, timings };
   }
 }
