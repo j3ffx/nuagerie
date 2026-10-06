@@ -34,12 +34,12 @@ describe('summarize', () => {
     const index = buildIndex(raw, ['root'], (item) =>
       item.photo?.takenDateTime ? { takenAt: 1, source: 'exif' } : null,
     );
-    const report = summarize(raw, index, {
-      mode: 'test',
-      channels: [],
-      apiChecks: [],
-      lastSyncAt: null,
-    });
+    const report = summarize(
+      raw,
+      index,
+      { nowWallClock: Date.UTC(2026, 9, 6), timeZone: 'UTC' },
+      { mode: 'test', channels: [], apiChecks: [], lastSyncAt: null, lastFullSync: null },
+    );
 
     expect(report.counts).toMatchObject({
       indexedMedia: 2,
@@ -52,5 +52,32 @@ describe('summarize', () => {
     });
     expect(report.undatedNameShapes).toEqual([{ shape: 'a.mp4', count: 1 }]);
     expect(JSON.stringify(report)).not.toContain('Secret');
+  });
+
+  it('compares EXIF dates with dates read from the name, per name shape', () => {
+    const shot = (id: string, name: string, exif: string): GraphDriveItem => ({
+      id,
+      name,
+      file: { mimeType: 'image/jpeg' },
+      parentReference: { id: 'root' },
+      photo: { takenDateTime: exif },
+    });
+    const raw: GraphDriveItem[] = [
+      { id: 'root', name: 'Pictures', folder: {}, parentReference: { id: 'drive' } },
+      shot('a', '20250701_100000.jpg', '2025-07-01T10:00:00Z'),
+      shot('b', '20250701_080000123_iOS.jpg', '2025-07-01T10:00:00Z'),
+      shot('c', '20250702_080000456_iOS.jpg', '2025-07-02T10:00:00Z'),
+    ];
+    const index = buildIndex(raw, ['root'], () => null);
+    const report = summarize(
+      raw,
+      index,
+      { nowWallClock: Date.UTC(2026, 9, 6), timeZone: 'UTC' },
+      { mode: 'test', channels: [], apiChecks: [], lastSyncAt: null, lastFullSync: null },
+    );
+    expect(report.exifVersusName).toEqual([
+      { shape: '99999999_999999999_a.jpg', count: 2, offsets: { '+120': 2 } },
+      { shape: '99999999_999999.jpg', count: 1, offsets: { '0': 1 } },
+    ]);
   });
 });

@@ -32,6 +32,16 @@ export interface IndexMeta {
   lastSyncAt: number | null;
   /** Item count of the last complete index, used as the progress estimate. */
   lastCount: number | null;
+  /** Measures of the last full enumeration (diagnostic). */
+  lastFullSync?: FullSyncStats | null;
+}
+
+export interface FullSyncStats {
+  items: number;
+  pages: number;
+  fetchMs: number;
+  storeMs: number;
+  totalMs: number;
 }
 
 interface NuagerieDB extends DBSchema {

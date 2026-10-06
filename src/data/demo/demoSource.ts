@@ -33,8 +33,9 @@ export function createDemoSource(): DataSource {
 
     async diagnose() {
       const { dataset, index } = load();
-      return summarize(dataset.items, index, {
+      return summarize(dataset.items, index, currentDateContext(), {
         mode: 'demo',
+        lastFullSync: null,
         channels: [],
         apiChecks: [],
         lastSyncAt: null,

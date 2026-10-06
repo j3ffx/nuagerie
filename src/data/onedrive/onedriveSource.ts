@@ -128,6 +128,9 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
     let meta = start;
     let changes = 0;
     let loadedBefore = 0;
+    const full = meta.channels.some((c) => c.deltaLink === null);
+    const stats = { items: 0, pages: 0, fetchMs: 0, storeMs: 0, totalMs: 0 };
+    const startedAt = performance.now();
     for (let i = 0; i < meta.channels.length; i++) {
       const channel = meta.channels[i];
       if (!channel) continue;
@@ -142,6 +145,9 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
       });
       changes += outcome.changes;
       loadedBefore += outcome.changes;
+      stats.pages += outcome.timings.pages;
+      stats.fetchMs += outcome.timings.fetchMs;
+      stats.storeMs += outcome.timings.storeMs;
       if (outcome.resynced) {
         // The store was cleared: every other channel must enumerate again too.
         meta = {
@@ -154,7 +160,23 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
         loadedBefore = 0;
       }
     }
-    meta = { ...meta, lastSyncAt: Date.now(), lastCount: await store.count() };
+    const count = await store.count();
+    meta = {
+      ...meta,
+      lastSyncAt: Date.now(),
+      lastCount: count,
+      ...(full
+        ? {
+            lastFullSync: {
+              ...stats,
+              items: count,
+              totalMs: Math.round(performance.now() - startedAt),
+              fetchMs: Math.round(stats.fetchMs),
+              storeMs: Math.round(stats.storeMs),
+            },
+          }
+        : {}),
+    };
     await store.setMeta(meta);
     return { meta, changes };
   }
@@ -191,8 +213,9 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
       if (!meta) throw new Error('Index not loaded yet');
       const raw = await store.loadItems();
       const index = await buildFromStore(store, meta);
-      return summarize(raw, index, {
+      return summarize(raw, index, currentDateContext(), {
         mode: 'onedrive',
+        lastFullSync: meta.lastFullSync ?? null,
         channels: meta.channels.map(({ path, scope }) => ({ path, scope })),
         apiChecks: await checkApi(client, meta),
         lastSyncAt: meta.lastSyncAt ? new Date(meta.lastSyncAt).toISOString() : null,

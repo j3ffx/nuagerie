@@ -136,6 +136,48 @@ export function DiagnosticScreen() {
               </div>
             </section>
 
+            {report.lastFullSync && (
+              <section className={common.section}>
+                <h2 className={common.sectionTitle}>Dernière indexation complète</h2>
+                <div className={common.card}>
+                  <dl className={common.definitionList}>
+                    <dt>Durée totale</dt>
+                    <dd>{formatSeconds(report.lastFullSync.totalMs)}</dd>
+                    <dt>Attente de OneDrive</dt>
+                    <dd>{formatSeconds(report.lastFullSync.fetchMs)}</dd>
+                    <dt>Écriture locale</dt>
+                    <dd>{formatSeconds(report.lastFullSync.storeMs)}</dd>
+                    <dt>Pages</dt>
+                    <dd>{formatCount(report.lastFullSync.pages)}</dd>
+                  </dl>
+                </div>
+              </section>
+            )}
+
+            <section className={common.section}>
+              <h2 className={common.sectionTitle}>Date EXIF moins date du nom (minutes)</h2>
+              <div className={common.card}>
+                {report.exifVersusName.length === 0 ? (
+                  <p className={common.muted}>Aucun fichier avec les deux dates.</p>
+                ) : (
+                  <dl className={common.definitionList}>
+                    {report.exifVersusName.map(({ shape, count, offsets }) => (
+                      <div key={shape} className={styles.row}>
+                        <dt className={styles.shape}>
+                          {shape} ({formatCount(count)})
+                        </dt>
+                        <dd>
+                          {Object.entries(offsets)
+                            .map(([minutes, n]) => `${minutes} : ${formatCount(n)}`)
+                            .join(' · ')}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+              </div>
+            </section>
+
             <section className={common.section}>
               <h2 className={common.sectionTitle}>Noms sans date (formes)</h2>
               <div className={common.card}>
@@ -147,6 +189,10 @@ export function DiagnosticScreen() {
       </div>
     </>
   );
+}
+
+function formatSeconds(ms: number): string {
+  return `${(ms / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} s`;
 }
 
 function ShapeList({ shapes }: { shapes: DiagnosticReport['undatedNameShapes'] }) {

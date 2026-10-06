@@ -1,5 +1,7 @@
+import { parseExifDate, parseFileNameDate, type DateContext } from './dates.ts';
 import type { GraphDriveItem } from './graph/types.ts';
 import type { MediaIndex } from './model.ts';
+import type { FullSyncStats } from './store.ts';
 
 /**
  * Anonymous summary of an index, to check assumptions about the Graph data
@@ -29,7 +31,14 @@ export interface DiagnosticReport {
   undatedNameShapes: { shape: string; count: number }[];
   /** Shapes of names dated from the file name, to spot unexpected formats. */
   filenameDatedShapes: { shape: string; count: number }[];
+  /**
+   * For files with both an EXIF date and a date in the name: EXIF minus name,
+   * in minutes (rounded to 15), per name shape. A steady ±60/120 reveals names
+   * written in UTC rather than local time.
+   */
+  exifVersusName: { shape: string; count: number; offsets: Record<string, number> }[];
   lastSyncAt: string | null;
+  lastFullSync: FullSyncStats | null;
 }
 
 /** "IMG_1234.JPG" → "a_9999.jpg": letters become "a", digits "9", extension kept. */
@@ -52,10 +61,47 @@ function topShapes(names: Iterable<string>, limit: number): { shape: string; cou
     .map(([shape, count]) => ({ shape, count }));
 }
 
+function compareExifAndName(
+  raw: readonly GraphDriveItem[],
+  media: ReadonlySet<string>,
+  context: DateContext,
+): DiagnosticReport['exifVersusName'] {
+  const byShape = new Map<string, { count: number; offsets: Map<number, number> }>();
+  for (const item of raw) {
+    if (!media.has(item.id) || !item.photo?.takenDateTime || !item.name) continue;
+    const exif = parseExifDate(item.photo.takenDateTime, context);
+    const fromName = parseFileNameDate(item.name, context);
+    if (exif === null || fromName === null) continue;
+    const offset = Math.round((exif - fromName) / 60_000 / 15) * 15;
+    const shape = nameShape(item.name);
+    let entry = byShape.get(shape);
+    if (!entry) {
+      entry = { count: 0, offsets: new Map() };
+      byShape.set(shape, entry);
+    }
+    entry.count++;
+    entry.offsets.set(offset, (entry.offsets.get(offset) ?? 0) + 1);
+  }
+  return [...byShape]
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 25)
+    .map(([shape, { count, offsets }]) => ({
+      shape,
+      count,
+      offsets: Object.fromEntries(
+        [...offsets]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([minutes, n]) => [minutes > 0 ? `+${minutes}` : String(minutes), n]),
+      ),
+    }));
+}
+
 export function summarize(
   raw: readonly GraphDriveItem[],
   index: MediaIndex,
-  extra: Pick<DiagnosticReport, 'mode' | 'channels' | 'apiChecks' | 'lastSyncAt'>,
+  context: DateContext,
+  extra: Pick<DiagnosticReport, 'mode' | 'channels' | 'apiChecks' | 'lastSyncAt' | 'lastFullSync'>,
 ): DiagnosticReport {
   const media = new Set(index.items.map((item) => item.id));
   const counts: DiagnosticReport['counts'] = {
@@ -105,5 +151,6 @@ export function summarize(
       index.items.filter((item) => item.dateSource === 'filename').map((item) => item.name),
       40,
     ),
+    exifVersusName: compareExifAndName(raw, media, context),
   };
 }
