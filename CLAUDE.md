@@ -76,7 +76,9 @@ commit metadata.
   non-technical parent (`src/data/technical.ts`). An album shows only its own files, not its sub-albums'.
 - **Grids show Graph thumbnails only**, never the original file. They are kept on the device
   (`src/data/thumbnails/`: Cache Storage, keyed by id + size + eTag, size-capped), and grids are
-  virtualized (`src/ui/grid/`): only the rows near the screen exist in the DOM.
+  virtualized (`src/ui/grid/`): only the rows near the screen exist in the DOM. The viewer shows the
+  large Graph thumbnail (JPEG, HEIC included); an original file is downloaded only on demand (video
+  playback, "Ouvrir l'original").
 - **Accessibility:** contrast ≥ 4.5:1 (tokens in `src/styles/tokens.css`), visible focus, touch targets
   ≥ 44 px, `alt` text, `prefers-reduced-motion` respected.
 
