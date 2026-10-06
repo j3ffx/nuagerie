@@ -30,7 +30,10 @@ export interface Album {
   subAlbumCount: number;
   /** The album's own files, most recent first, undated last. */
   items: MediaItem[];
-  /** Most recent dated photo, of the album itself or else of its sub-albums. */
+  /**
+   * Most recent dated photo (videos only when there is no photo, any file when
+   * nothing is dated), of the album itself or else of its sub-albums.
+   */
   cover: MediaItem | null;
   /** Date range of the album's own files, or of its sub-albums when it has none. */
   first: number | null;
@@ -109,7 +112,12 @@ export function buildAlbums(index: MediaIndex, selection: AlbumSelection): Album
       }
     }
 
-    let cover = firstDated;
+    // Cover: the most recent dated photo; else the most recent dated video; else any file.
+    let cover =
+      items.find((item) => item.takenAt !== null && item.kind === 'image') ??
+      firstDated ??
+      items[0] ??
+      null;
     let last = firstDated?.takenAt ?? null;
     let first = lastDated?.takenAt ?? null;
     if (items.length === 0) {

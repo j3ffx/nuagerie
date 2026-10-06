@@ -1,0 +1,88 @@
+import { expect, test, type Page } from '@playwright/test';
+
+const homeAlbums = (page: Page) => page.getByRole('list', { name: 'Albums' });
+const albumNames = async (page: Page) =>
+  (await homeAlbums(page).locator('li').allInnerTexts()).map((text) => text.split('\n')[0]);
+
+test.beforeEach(async ({ page }) => {
+  await page.goto('/?demo=1');
+  await expect(homeAlbums(page)).toBeVisible();
+});
+
+test('opens an album, its sub-albums, and goes back to the parent', async ({ page }) => {
+  await homeAlbums(page)
+    .getByRole('link', { name: /^Albums/ })
+    .click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Albums' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '7 sous-albums' })).toBeVisible();
+
+  await page.getByRole('link', { name: /^Animaux/ }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Animaux' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '2 sous-albums' })).toBeVisible();
+  await expect(page.getByText(/^\d[\d\s]* éléments · \d{4}/)).toBeVisible();
+  const grid = page.getByLabel('Photos et vidéos de Animaux');
+  await expect(grid.getByRole('img').first()).toBeVisible();
+
+  await page.getByRole('link', { name: 'Retour à Albums' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Albums' })).toBeVisible();
+  await page.getByRole('link', { name: 'Retour aux albums' }).click();
+  await expect(page).toHaveURL('/');
+});
+
+test('sorts the home albums and remembers the choice', async ({ page }) => {
+  await page.getByLabel('Trier les albums par').selectOption('name');
+  await expect
+    .poll(() => albumNames(page))
+    .toEqual([...(await albumNames(page))].sort((a, b) => (a ?? '').localeCompare(b ?? '', 'fr')));
+  const ascending = await albumNames(page);
+
+  await page.getByRole('button', { name: /^Ordre : A → Z/ }).click();
+  await expect.poll(() => albumNames(page)).toEqual([...ascending].reverse());
+
+  await page.reload();
+  await expect(page.getByLabel('Trier les albums par')).toHaveValue('name');
+  await expect.poll(() => albumNames(page)).toEqual([...ascending].reverse());
+});
+
+test('reverses the photo order of an album, undated items staying last', async ({ page }) => {
+  await homeAlbums(page)
+    .getByRole('link', { name: /^Camera Roll/ })
+    .click();
+  const months = page.getByRole('main').getByRole('heading', { level: 2 });
+  const newest = await months.first().innerText();
+  await page.getByRole('button', { name: /^Ordre : récent d’abord/ }).click();
+  await expect(months.first()).not.toHaveText(newest);
+  await expect(months.first()).toHaveText(/2016$/);
+});
+
+test('chooses albums, hides a sub-album, and resets the choice', async ({ page }) => {
+  await page.getByRole('link', { name: 'Choisir les albums' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Choisir les albums' })).toBeVisible();
+
+  // Unchecking a folder removes it from the home screen.
+  await page.getByRole('checkbox', { name: /^Screenshots/ }).uncheck();
+
+  // A sub-album can be hidden from its parent's page.
+  await page.getByRole('button', { name: 'Déplier Albums' }).click();
+  await page.getByRole('checkbox', { name: /^Memes/ }).uncheck();
+  await expect(page.getByText('sous-album de Albums · masqué')).toBeVisible();
+
+  // Search ignores accents.
+  await page.getByPlaceholder('Rechercher un dossier').fill('evenem');
+  await expect(page.getByRole('checkbox', { name: /^Événements/ })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /^Camera Roll/ })).toBeHidden();
+
+  await page.getByRole('link', { name: 'Retour aux albums' }).click();
+  expect(await albumNames(page)).not.toContain('Screenshots');
+  await homeAlbums(page)
+    .getByRole('link', { name: /^Albums/ })
+    .click();
+  await expect(page.getByRole('heading', { name: '6 sous-albums' })).toBeVisible();
+
+  // The choice survives a reload, and can be reset.
+  await page.goto('/albums/choisir');
+  await expect(page.getByRole('checkbox', { name: /^Screenshots/ })).not.toBeChecked();
+  page.once('dialog', (dialog) => void dialog.accept());
+  await page.getByRole('button', { name: 'Revenir à la sélection par défaut' }).click();
+  await expect(page.getByRole('checkbox', { name: /^Screenshots/ })).toBeChecked();
+});

@@ -11,7 +11,9 @@ import { DataProvider } from '../data/DataProvider.tsx';
 import { createDemoSource } from '../data/demo/demoSource.ts';
 import { createOneDriveSource } from '../data/onedrive/onedriveSource.ts';
 import type { DataMode, DataSource } from '../data/source.ts';
+import { AlbumScreen } from '../features/albums/AlbumScreen.tsx';
 import { AlbumsScreen } from '../features/albums/AlbumsScreen.tsx';
+import { ChooseAlbumsScreen } from '../features/albums/ChooseAlbumsScreen.tsx';
 import { AllScreen } from '../features/all/AllScreen.tsx';
 import { DiagnosticScreen } from '../features/diagnostic/DiagnosticScreen.tsx';
 import { MapScreen } from '../features/map/MapScreen.tsx';
@@ -20,6 +22,7 @@ import { SignInScreen } from '../features/welcome/SignInScreen.tsx';
 import { useApplyTheme } from '../lib/theme.ts';
 import styles from './App.module.css';
 import { NavBar } from './NavBar.tsx';
+import { useScrollToTop } from './useScrollToTop.ts';
 
 export function App({
   mode,
@@ -60,6 +63,7 @@ function Data({ mode, create }: { mode: DataMode; create: () => DataSource }) {
 }
 
 function Shell() {
+  useScrollToTop();
   return (
     <div className={styles.shell}>
       <a className={styles.skipLink} href="#main">
@@ -69,6 +73,8 @@ function Shell() {
       <main id="main" className={styles.main}>
         <Switch>
           <Route path="/" component={AlbumsScreen} />
+          <Route path="/albums/choisir" component={ChooseAlbumsScreen} />
+          <Route path="/album/:id" component={AlbumScreen} />
           <Route path="/tout" component={AllScreen} />
           <Route path="/carte" component={MapScreen} />
           <Route path="/reglages" component={SettingsScreen} />

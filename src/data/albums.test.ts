@@ -123,6 +123,25 @@ describe('buildAlbums', () => {
     expect(cam?.first).toBe(Date.parse('2026-10-01T12:00:00Z'));
   });
 
+  it('prefers a photo over a more recent video, and any file when nothing is dated', () => {
+    const local = buildIndex(
+      [
+        folder('pics', 'Pictures', 'drive'),
+        folder('clips', 'Clips', 'pics'),
+        folder('memes', 'Memes', 'pics'),
+        { ...photo('v', 'clips', '2026-01-02'), file: { mimeType: 'video/mp4' } },
+        photo('p', 'clips', '2026-01-01'),
+        photo('x', 'memes', null),
+      ],
+      ['pics'],
+      date,
+    );
+    const { byId } = buildAlbums(local, { checked: null, hidden: [] });
+    expect(byId.get('clips')?.cover?.id).toBe('p');
+    expect(byId.get('clips')?.last).toBe(Date.parse('2026-01-02T12:00:00Z'));
+    expect(byId.get('memes')?.cover?.id).toBe('x');
+  });
+
   it('gives container albums the cover and range of their sub-albums', () => {
     const { byId } = buildAlbums(index, { checked: null, hidden: [] });
     const events = byId.get('evt');

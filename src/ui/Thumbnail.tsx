@@ -9,10 +9,13 @@ export function Thumbnail({
   item,
   size = 'medium',
   className,
+  decorative = false,
 }: {
   item: MediaItem;
   size?: ThumbnailSize;
   className?: string | undefined;
+  /** The surrounding element already names the content (e.g. an album tile). */
+  decorative?: boolean;
 }) {
   const { source } = useData();
   const [loaded, setLoaded] = useState<{ id: string; url: string } | null>(null);
@@ -41,7 +44,7 @@ export function Thumbnail({
         <img
           className={styles.image}
           src={url}
-          alt={describeItem(item)}
+          alt={decorative ? '' : describeItem(item)}
           loading="lazy"
           decoding="async"
           draggable={false}
