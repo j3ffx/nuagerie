@@ -178,14 +178,18 @@ export function createThumbnailFetcher(
     const url = await getUrl(item, size, signal);
     if (bytesReadable === false) return { url };
     return download(async () => {
+      // Settled while this download was waiting for its turn.
+      if (bytesReadable === false) return { url };
       let response: Response;
       try {
         response = await doFetch(url, { signal: signal ?? null, credentials: 'omit' });
       } catch (error) {
         if (signal?.aborted) throw error;
-        // Graph answered a moment ago, so a failure here is the thumbnail host
-        // refusing cross-origin reads (or a CSP block): show the URL instead.
-        if (error instanceof TypeError && bytesReadable === null) {
+        // Graph answered a moment ago, so a failure here (before any download
+        // succeeded) is the thumbnail host refusing cross-origin reads, or a
+        // CSP block: show the URL instead. Downloads started at the same time
+        // fail the same way and take the same path.
+        if (error instanceof TypeError && bytesReadable !== true) {
           bytesReadable = false;
           return { url };
         }

@@ -98,4 +98,21 @@ describe('createThumbnailFetcher', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(fetchThumbnail.bytesReadable()).toBe(false);
   });
+
+  it('falls back for every download refused at the same time (a screen of album covers)', async () => {
+    const { client } = fakeClient();
+    const fetch = vi.fn(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      throw new TypeError('Failed to fetch');
+    });
+    const fetchThumbnail = createThumbnailFetcher(client, { fetch });
+    const results = await Promise.all(
+      Array.from({ length: 12 }, (_, i) => fetchThumbnail(item(`c${i}`), 'medium')),
+    );
+    expect(results).toEqual(
+      Array.from({ length: 12 }, (_, i) => ({ url: `https://thumbs.test/c${i}/c360x360_crop` })),
+    );
+    // The downloads still waiting for a slot did not even try.
+    expect(fetch.mock.calls.length).toBeLessThanOrEqual(8);
+  });
 });
