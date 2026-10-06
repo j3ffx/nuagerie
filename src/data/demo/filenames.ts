@@ -1,3 +1,4 @@
+import { toInstant, toWallClock } from '../dates.ts';
 import type { MediaKind } from '../model.ts';
 import { pick, pickWeighted, randomInt, type Random } from './random.ts';
 
@@ -71,6 +72,7 @@ export function generateName(
   wallClock: number,
   random: Random,
   counter: number,
+  timeZone: string,
 ): GeneratedName {
   const { Y, M, D, h, m, s, ms } = parts(wallClock);
   const video = kind === 'video';
@@ -135,17 +137,18 @@ export function generateName(
       };
     }
     case 'epoch': {
-      // TODO: a millisecond timestamp is a UTC instant; decide how it maps to wall-clock time.
-      const name = video
-        ? `${wallClock}_0.mp4`
-        : `${wallClock}.${pick(random, ['jpg', 'jpg', 'png'])}`;
-      return { name, nameDate: wallClock };
+      // A millisecond timestamp is a UTC instant: the parser shows it in the device's time zone.
+      const instant = toInstant(wallClock, timeZone);
+      const name = video ? `${instant}_0.mp4` : `${instant}.${pick(random, ['jpg', 'jpg', 'png'])}`;
+      return { name, nameDate: toWallClock(instant, timeZone) };
     }
-    case 'facebook':
+    case 'facebook': {
+      const instant = toInstant(wallClock, timeZone);
       return {
-        name: video ? `${wallClock}_0.mp4` : `FB_IMG_${wallClock}.jpg`,
-        nameDate: wallClock,
+        name: video ? `${instant}_0.mp4` : `FB_IMG_${instant}.jpg`,
+        nameDate: toWallClock(instant, timeZone),
       };
+    }
     case 'img': {
       const prefix = video ? 'VID' : 'IMG';
       const extension = video ? 'mp4' : 'jpg';

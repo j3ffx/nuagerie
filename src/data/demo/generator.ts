@@ -26,6 +26,8 @@ export interface DemoOptions {
   mediaCount?: number;
   /** "Now" as wall-clock time encoded in UTC (see CaptureDate.takenAt). */
   nowWallClock?: number;
+  /** Time zone of the device, used for names holding UTC timestamps. */
+  timeZone?: string;
 }
 
 export const DEMO_ROOT_ID = 'demo!pictures';
@@ -324,6 +326,7 @@ export function generateDemoDataset(options: DemoOptions = {}): DemoDataset {
   const mediaCount = options.mediaCount ?? 20_000;
   const now = options.nowWallClock ?? Date.now() - new Date().getTimezoneOffset() * 60_000;
   const nowYear = new Date(now).getUTCFullYear();
+  const timeZone = options.timeZone ?? 'UTC';
 
   const folders: DemoDriveItem[] = [];
   const files: DemoDriveItem[] = [];
@@ -453,7 +456,7 @@ export function generateDemoDataset(options: DemoOptions = {}): DemoDataset {
         const takenAt = Math.max(b.from, Math.min(time, end - randomInt(random, 0, 60_000)));
         const kind: MediaKind = random() < b.video ? 'video' : 'image';
         const style = pickWeighted(random, b.styles);
-        const { name, nameDate } = generateName(style, kind, takenAt, random, counter++);
+        const { name, nameDate } = generateName(style, kind, takenAt, random, counter++, timeZone);
         const hasExif = random() < (kind === 'video' ? b.exif * 0.85 : b.exif);
         const second = Math.floor(takenAt / 1000) * 1000;
 
@@ -512,7 +515,7 @@ export function generateDemoDataset(options: DemoOptions = {}): DemoDataset {
     }
   });
   for (let i = 0; i < memesCount; i++) {
-    const { name } = generateName('meme', 'image', 0, random, i + 1);
+    const { name } = generateName('meme', 'image', 0, random, i + 1, timeZone);
     addFile(['Albums', 'Memes'], name, 'image', {
       demoExpectedDate: null,
       image: dimensions('meme', 'image'),
