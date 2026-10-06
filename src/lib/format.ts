@@ -19,6 +19,12 @@ const shortDateFormat = new Intl.DateTimeFormat('fr-FR', {
   timeZone: 'UTC',
 });
 const yearFormat = new Intl.DateTimeFormat('fr-FR', { year: 'numeric', timeZone: 'UTC' });
+const longDateFormat = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
 
 export function formatCount(value: number): string {
   return numberFormat.format(value);
@@ -28,6 +34,11 @@ export function formatCount(value: number): string {
 export function formatMonthYear(takenAt: number): string {
   const text = monthYearFormat.format(takenAt);
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** "6 octobre 2026" */
+export function formatLongDate(takenAt: number): string {
+  return longDateFormat.format(takenAt);
 }
 
 /** "06/10/26" */
@@ -42,7 +53,13 @@ export function formatYearRange(first: number, last: number): string {
   return a === b ? a : `${a} – ${b}`;
 }
 
-/** "1 photo", "12 éléments"… */
+/** Accessible description of a thumbnail: "Photo du 6 octobre 2026", "Vidéo sans date". */
+export function describeItem(item: { kind: 'image' | 'video'; takenAt: number | null }): string {
+  const kind = item.kind === 'video' ? 'Vidéo' : 'Photo';
+  return item.takenAt === null ? `${kind} sans date` : `${kind} du ${formatLongDate(item.takenAt)}`;
+}
+
+/** "1 élément", "12 éléments" */
 export function formatItemCount(count: number): string {
   return `${formatCount(count)} ${count > 1 ? 'éléments' : 'élément'}`;
 }
