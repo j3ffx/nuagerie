@@ -19,6 +19,7 @@ export type NameStyle =
   | 'img'
   | 'pixel'
   | 'iphone'
+  | 'ios'
   | 'meme';
 
 export interface GeneratedName {
@@ -160,6 +161,21 @@ export function generateName(
     case 'pixel': {
       const extension = video ? 'mp4' : 'jpg';
       return { name: `PXL_${Y}${M}${D}_${h}${m}${s}${ms}.${extension}`, nameDate: wallClock };
+    }
+    case 'ios': {
+      // OneDrive's iPhone upload names the file after the UTC time.
+      const instant = toInstant(wallClock, timeZone);
+      const u = parts(instant);
+      const extension = video
+        ? 'mov'
+        : pickWeighted(random, [
+            ['jpg', 8],
+            ['heic', 2],
+          ]);
+      return {
+        name: `${u.Y}${u.M}${u.D}_${u.h}${u.m}${u.s}${u.ms}_iOS.${extension}`,
+        nameDate: toWallClock(instant, timeZone),
+      };
     }
     case 'iphone': {
       const extension = video

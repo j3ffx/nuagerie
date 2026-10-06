@@ -1,3 +1,4 @@
+import { toInstant } from '../dates.ts';
 import type { GraphDriveItem } from '../graph/types.ts';
 import type { CaptureDate, MediaKind } from '../model.ts';
 import { generateName, generateUndatedName, mimeTypeOf, type NameStyle } from './filenames.ts';
@@ -130,6 +131,14 @@ function buildBuckets(now: number): Bucket[] {
     camera: PHONE,
     video: 0.07,
   } as const;
+  // Camera Roll also receives uploads from an iPhone through the OneDrive app (…_iOS names).
+  const cameraRoll = {
+    ...camera,
+    styles: [
+      ['camera', 9],
+      ['ios', 1],
+    ],
+  } as const;
   const oldPhone = {
     styles: [['iphone', 1]],
     exif: 0.95,
@@ -142,7 +151,7 @@ function buildBuckets(now: number): Bucket[] {
 
   const buckets: Bucket[] = [
     bucket(['Camera Roll'], 0.5, ym(2016, 1), now, {
-      ...camera,
+      ...cameraRoll,
       yearMonth: true,
       session: [1, 14],
     }),
@@ -466,16 +475,21 @@ export function generateDemoDataset(options: DemoOptions = {}): DemoDataset {
           : b.path;
 
         const { width, height } = dimensions(style, kind);
+        // Like on a real drive: MP4 videos carry their container time in UTC, while
+        // photos and iPhone videos carry the local time.
+        const utcContainer = kind === 'video' && style !== 'iphone' && style !== 'ios';
+        const exifDigits = utcContainer ? toInstant(second, timeZone) : second;
+        const fromExif = hasExif ? ({ takenAt: exifDigits, source: 'exif' } as const) : null;
+        const fromName =
+          nameDate !== null ? ({ takenAt: nameDate, source: 'filename' } as const) : null;
         const extra: Partial<DemoDriveItem> = {
-          demoExpectedDate: hasExif
-            ? { takenAt: second, source: 'exif' }
-            : nameDate !== null
-              ? { takenAt: nameDate, source: 'filename' }
-              : null,
+          // Same precedence as resolveCaptureDate: the name first for videos, EXIF first for photos.
+          demoExpectedDate:
+            (kind === 'video' ? (fromName ?? fromExif) : (fromExif ?? fromName)) ?? null,
         };
         if (hasExif) {
           extra.photo = {
-            takenDateTime: new Date(second).toISOString().replace('.000Z', 'Z'),
+            takenDateTime: new Date(exifDigits).toISOString().replace('.000Z', 'Z'),
             ...(b.camera ? { cameraMake: b.camera[0], cameraModel: b.camera[1] } : {}),
           };
         }

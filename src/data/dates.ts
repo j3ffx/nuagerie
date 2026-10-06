@@ -3,7 +3,8 @@ import type { CaptureDate } from './model.ts';
 
 /**
  * Capture date of a file (CLAUDE.md → Invariants → Capture dates):
- *  1. `photo.takenDateTime` (EXIF), kept as wall-clock time, never shifted;
+ *  1. `photo.takenDateTime` (EXIF), kept as wall-clock time, never shifted
+ *     (for videos, a date in the name comes first: see resolveCaptureDate);
  *  2. otherwise a date found in the file name;
  *  3. otherwise none ("Sans date").
  * `createdDateTime` and `lastModifiedDateTime` are never used: they are upload
@@ -158,6 +159,17 @@ const n = Number;
  * longer numbers (IDs, 15-digit "received_…" names) never match by accident.
  */
 const NAME_RULES: readonly NameRule[] = [
+  // OneDrive's iPhone camera upload: 20190415_123456789_iOS.jpg is written in UTC (measured on a
+  // real drive: EXIF minus name was a steady +60/+120 min), so it is read as a UTC instant.
+  (name, context) => {
+    const match = /(?<!\d)(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})(\d{3})_iOS/i.exec(name);
+    if (!match) return null;
+    const [, y, mo, d, h, mi, s, ms] = match;
+    const instant = wallClock(n(y), n(mo), n(d), n(h), n(mi), n(s), n(ms));
+    if (instant === null) return null;
+    const date = toWallClock(instant, context.timeZone);
+    return inRange(date, context) ? date : null;
+  },
   // 20261006_084759.jpg, 20260812_103801(0).jpg, 20190415_123456_Bokeh.jpg, IMG_20190415_123456.jpg,
   // VID_…, Screenshot_20261005_220836_Chrome.jpg, Screenshot_20180315-171124.png, PXL_20240101_123456789.jpg
   rule(
@@ -192,11 +204,18 @@ export function parseFileNameDate(name: string, context: DateContext): number | 
   return null;
 }
 
-/** The capture date of a drive item, or null for "Sans date". */
+/**
+ * The capture date of a drive item, or null for "Sans date".
+ * Photos: EXIF first, then the name. Videos: the name first, because the
+ * "EXIF" date of MP4 files is the container's creation time, stored in UTC
+ * (measured on a real drive: EXIF minus name was a steady -60/-120 min).
+ */
 export function resolveCaptureDate(item: GraphDriveItem, context: DateContext): CaptureDate | null {
   const exif = item.photo?.takenDateTime ? parseExifDate(item.photo.takenDateTime, context) : null;
-  if (exif !== null) return { takenAt: exif, source: 'exif' };
   const fromName = item.name ? parseFileNameDate(item.name, context) : null;
+  const video = Boolean(item.video) || (item.file?.mimeType ?? '').startsWith('video/');
+  if (video && fromName !== null) return { takenAt: fromName, source: 'filename' };
+  if (exif !== null) return { takenAt: exif, source: 'exif' };
   if (fromName !== null) return { takenAt: fromName, source: 'filename' };
   return null;
 }

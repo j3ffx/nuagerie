@@ -44,6 +44,13 @@ describe('parseFileNameDate: the formats found on real phones and apps', () => {
     expect(fromName(name)).toBe(expected);
   });
 
+  it('reads OneDrive iPhone upload names (…_iOS) as UTC, shown in local time', () => {
+    // 12:34:56.789 UTC = 14:34:56.789 in Paris (UTC+2 in April)
+    expect(fromName('20190415_123456789_iOS.jpg')).toBe('2019-04-15 14:34:56.789');
+    expect(fromName('20190415_123456789_iOS 2.jpg')).toBe('2019-04-15 14:34:56.789');
+    expect(fromName('20190115_233000000_iOS.heic')).toBe('2019-01-16 00:30:00');
+  });
+
   it('reads 13-digit millisecond timestamps as UTC instants, shown in local time', () => {
     // 1773214568483 = 2026-03-11T07:36:08.483Z = 08:36:08 in Paris (UTC+1 in March)
     expect(fromName('1773214568483_0.mp4')).toBe('2026-03-11 08:36:08.483');
@@ -114,6 +121,23 @@ describe('resolveCaptureDate', () => {
       source: 'filename',
     });
     expect(resolveCaptureDate({ ...base, name: 'IMG_0001.JPG' }, context)).toBeNull();
+  });
+
+  it('prefers the name for videos, whose "EXIF" date is a UTC container time', () => {
+    const video = {
+      id: 'v',
+      name: '20250701_100000.mp4',
+      file: { mimeType: 'video/mp4' },
+      photo: { takenDateTime: '2025-07-01T08:00:00Z' },
+    };
+    expect(resolveCaptureDate(video, context)).toEqual({
+      takenAt: Date.UTC(2025, 6, 1, 10),
+      source: 'filename',
+    });
+    expect(resolveCaptureDate({ ...video, name: 'IMG_0001.MOV' }, context)).toEqual({
+      takenAt: Date.UTC(2025, 6, 1, 8),
+      source: 'exif',
+    });
   });
 
   it('falls back to the file name when the camera clock is wrong', () => {
