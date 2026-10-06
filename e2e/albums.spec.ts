@@ -86,3 +86,33 @@ test('chooses albums, hides a sub-album, and resets the choice', async ({ page }
   await page.getByRole('button', { name: 'Revenir à la sélection par défaut' }).click();
   await expect(page.getByRole('checkbox', { name: /^Screenshots/ })).toBeChecked();
 });
+
+test('sorts the sub-albums from a button, remembered apart from the home sort', async ({
+  page,
+}) => {
+  await homeAlbums(page)
+    .getByRole('link', { name: /^Événements/ })
+    .click();
+  const subNames = async () =>
+    (await page
+      .locator('section ul li a')
+      .evaluateAll((links) =>
+        links.map((link) => link.getAttribute('aria-label')?.split(',')[0] ?? ''),
+      )) as string[];
+
+  // Hidden until asked for.
+  await expect(page.getByLabel('Trier les sous-albums par')).toBeHidden();
+  const toggle = page.getByRole('button', { name: /^Trier les sous-albums/ });
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+  await page.getByLabel('Trier les sous-albums par').selectOption('name');
+  const byName = await subNames();
+  expect(byName).toEqual([...byName].sort((a, b) => a.localeCompare(b, 'fr', { numeric: true })));
+  await page.getByRole('button', { name: /^Ordre : A → Z/ }).click();
+  await expect.poll(subNames).toEqual([...byName].reverse());
+
+  // The home screen keeps its own sort.
+  await page.getByRole('link', { name: 'Retour aux albums' }).click();
+  await expect(page.getByLabel('Trier les albums par')).toHaveValue('last');
+});

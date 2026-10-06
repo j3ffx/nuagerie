@@ -1,16 +1,18 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'wouter';
-import { orderItems, type Album } from '../../data/albums.ts';
+import { orderItems, sortAlbums, type Album } from '../../data/albums.ts';
 import { formatItemCount, formatYearRange } from '../../lib/format.ts';
 import common from '../../ui/common.module.css';
 import { BackIcon, SortDownIcon, SortUpIcon } from '../../ui/icons.tsx';
 import { IndexStatus } from '../../ui/IndexStatus.tsx';
 import { MonthGrid } from '../../ui/MonthGrid.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
+import { AlbumSortControls } from './AlbumSortControls.tsx';
+import { sortSummary } from './albumSortLabels.ts';
 import { AlbumTile } from './AlbumTile.tsx';
 import tiles from './AlbumTile.module.css';
 import styles from './AlbumScreen.module.css';
-import { useAlbumModel, usePhotoOrder } from './useAlbums.ts';
+import { useAlbumModel, usePhotoOrder, useSubAlbumSort } from './useAlbums.ts';
 
 export function AlbumScreen({ params }: { params: { id: string } }) {
   const model = useAlbumModel();
@@ -73,9 +75,18 @@ function AlbumContent({
   items: Album['items'];
   model: NonNullable<ReturnType<typeof useAlbumModel>>;
 }) {
-  const subAlbums = album.subAlbumIds
-    .map((id) => model.byId.get(id))
-    .filter((sub): sub is Album => sub !== undefined);
+  const [subSort, setSubSort] = useSubAlbumSort();
+  const [sorting, setSorting] = useState(false);
+  const subAlbums = useMemo(
+    () =>
+      sortAlbums(
+        album.subAlbumIds
+          .map((id) => model.byId.get(id))
+          .filter((sub): sub is Album => sub !== undefined),
+        subSort,
+      ),
+    [album, model, subSort],
+  );
 
   return (
     <>
@@ -92,9 +103,33 @@ function AlbumContent({
 
       {subAlbums.length > 0 && (
         <section className={styles.subAlbums} aria-labelledby="sub-albums">
-          <h2 id="sub-albums" className={common.sectionTitle}>
-            {subAlbums.length > 1 ? `${subAlbums.length} sous-albums` : '1 sous-album'}
-          </h2>
+          <div className={styles.subHeader}>
+            <h2 id="sub-albums" className={common.sectionTitle}>
+              {subAlbums.length > 1 ? `${subAlbums.length} sous-albums` : '1 sous-album'}
+            </h2>
+            {subAlbums.length > 1 && (
+              <button
+                type="button"
+                className={styles.sortToggle}
+                aria-expanded={sorting}
+                aria-controls="sub-album-sort"
+                aria-label={`Trier les sous-albums (${sortSummary(subSort)})`}
+                onClick={() => setSorting(!sorting)}
+              >
+                {subSort.direction === 'desc' ? <SortDownIcon /> : <SortUpIcon />}
+                Trier
+              </button>
+            )}
+          </div>
+          {sorting && (
+            <div id="sub-album-sort">
+              <AlbumSortControls
+                sort={subSort}
+                onChange={setSubSort}
+                label="Trier les sous-albums par"
+              />
+            </div>
+          )}
           <ul className={`${tiles.grid} ${styles.subGrid}`}>
             {subAlbums.map((sub) => (
               <li key={sub.id}>

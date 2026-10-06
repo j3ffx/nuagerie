@@ -62,6 +62,11 @@ export function useAlbumSort() {
   return usePersistentState<AlbumSort>('albums.sort', DEFAULT_ALBUM_SORT);
 }
 
+/** Sort of the sub-album tiles on album pages (remembered apart from the home screen's). */
+export function useSubAlbumSort() {
+  return usePersistentState<AlbumSort>('albums.subSort', DEFAULT_ALBUM_SORT);
+}
+
 const DEFAULT_ORDER: PhotoOrder = 'desc';
 
 export function usePhotoOrder() {
