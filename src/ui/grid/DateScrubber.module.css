@@ -1,0 +1,124 @@
+/* Track between the screen header and the bottom bar; only the thumb takes touches. */
+.scrubber {
+  position: fixed;
+  z-index: 15;
+  top: var(--header-height);
+  right: 0;
+  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
+  width: 56px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--duration) var(--ease);
+}
+
+.scrubber[data-visible],
+.scrubber:focus-within {
+  opacity: 1;
+}
+
+.thumb {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 52px;
+  touch-action: none;
+  cursor: grab;
+  will-change: transform;
+}
+
+.scrubber[data-visible] .thumb,
+.scrubber:focus-within .thumb {
+  pointer-events: auto;
+}
+
+/* Visible handle: a pill stuck to the right edge, inside the 48 x 52 touch area. */
+.thumb::before {
+  content: '';
+  position: absolute;
+  inset: 4px 0 4px 8px;
+  border-radius: var(--radius-pill) 0 0 var(--radius-pill);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--color-border);
+  border-right: none;
+}
+
+.scrubber[data-dragging] .thumb {
+  cursor: grabbing;
+}
+
+.scrubber[data-dragging] .thumb::before {
+  background: var(--color-primary-soft);
+}
+
+.grip {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  margin-left: 8px;
+  fill: none;
+  stroke: var(--color-text);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.thumb:focus-visible {
+  outline: none;
+}
+
+.thumb:focus-visible::before {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+/* "Mars 2023", left of the thumb, only while dragging. */
+.bubble {
+  position: absolute;
+  top: 50%;
+  right: 56px;
+  display: none;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 16px;
+  font-weight: 800;
+  white-space: nowrap;
+  transform: translateY(-50%);
+  box-shadow: var(--shadow-soft);
+}
+
+.scrubber[data-dragging] .bubble {
+  display: block;
+}
+
+.marks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Years along the track, while dragging. */
+.mark {
+  position: absolute;
+  right: 52px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  transform: translateY(-50%);
+  box-shadow: var(--shadow-soft);
+}
+
+@media (min-width: 900px) {
+  .scrubber {
+    bottom: 0;
+  }
+}
