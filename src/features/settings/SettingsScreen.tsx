@@ -1,3 +1,6 @@
+import { useData } from '../../data/dataContext.ts';
+import { enterDemoMode, isDemoForced, leaveDemoMode } from '../../data/mode.ts';
+import { formatCount } from '../../lib/format.ts';
 import { useThemePreference, type ThemePreference } from '../../lib/theme.ts';
 import common from '../../ui/common.module.css';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
@@ -10,6 +13,8 @@ const THEMES: { value: ThemePreference; label: string }[] = [
 
 export function SettingsScreen() {
   const [theme, setTheme] = useThemePreference();
+  const { mode, state } = useData();
+  const index = state.status === 'ready' ? state.index : null;
 
   return (
     <>
@@ -35,6 +40,42 @@ export function SettingsScreen() {
                 </label>
               ))}
             </fieldset>
+          </div>
+        </section>
+
+        <section className={common.section} aria-labelledby="settings-data">
+          <h2 id="settings-data" className={common.sectionTitle}>
+            Données
+          </h2>
+          <div className={`${common.card} ${common.stack}`}>
+            <dl className={common.definitionList}>
+              <dt>Source</dt>
+              <dd>{mode === 'demo' ? 'Démo (photos factices)' : 'OneDrive'}</dd>
+              {index && (
+                <>
+                  <dt>Éléments</dt>
+                  <dd>{formatCount(index.items.length)}</dd>
+                  <dt>Dossiers</dt>
+                  <dd>{formatCount(index.folders.size)}</dd>
+                </>
+              )}
+              {state.status === 'ready' && (
+                <>
+                  <dt>Chargé en</dt>
+                  <dd>{formatCount(Math.round(state.loadedInMs))} ms</dd>
+                </>
+              )}
+            </dl>
+            {mode === 'demo' && !isDemoForced() && (
+              <button type="button" className={common.buttonSoft} onClick={leaveDemoMode}>
+                Quitter la démo
+              </button>
+            )}
+            {mode === 'onedrive' && (
+              <button type="button" className={common.buttonSoft} onClick={enterDemoMode}>
+                Essayer la démo
+              </button>
+            )}
           </div>
         </section>
 

@@ -1,0 +1,15 @@
+.welcome {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-4);
+  min-height: 100dvh;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5);
+  text-align: center;
+}
+
+.title {
+  font-size: 28px;
+}
