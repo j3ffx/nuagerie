@@ -5,6 +5,7 @@ import { App } from './app/App.tsx';
 import { initUpdates } from './app/updates.ts';
 import { initAuth, REDIRECT_PATH } from './auth/msal.ts';
 import { resolveDataMode } from './data/mode.ts';
+import { ConnectingScreen } from './features/welcome/SignInScreen.tsx';
 
 async function start() {
   // MSAL v5 redirect bridge: hands the sign-in response back to the app, renders nothing.
@@ -21,10 +22,15 @@ async function start() {
   // Production only (no service worker in dev, so hot reload is never stale).
   initUpdates();
 
+  const element = document.getElementById('root');
+  if (!element) throw new Error('Missing #root element');
+  const root = createRoot(element);
+
   const mode = resolveDataMode();
   let account: AccountInfo | null = null;
   let authError: string | null = null;
   if (mode === 'onedrive') {
+    root.render(<ConnectingScreen />);
     try {
       account = await initAuth();
     } catch (error) {
@@ -32,9 +38,7 @@ async function start() {
     }
   }
 
-  const root = document.getElementById('root');
-  if (!root) throw new Error('Missing #root element');
-  createRoot(root).render(
+  root.render(
     <StrictMode>
       <App mode={mode} account={account} authError={authError} />
     </StrictMode>,

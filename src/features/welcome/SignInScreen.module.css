@@ -27,3 +27,13 @@
   background: var(--color-warning-bg);
   color: var(--color-warning-text);
 }
+
+.connecting {
+  animation: appear var(--duration) var(--ease) 400ms both;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}

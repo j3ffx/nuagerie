@@ -39,3 +39,19 @@ export function SignInScreen({ error }: { error: string | null }) {
     </main>
   );
 }
+
+/**
+ * Shown while the session is restored, which may mean a hidden sign-in to
+ * Microsoft (a few seconds). Appears only if it lasts, so a quick start
+ * shows no flash.
+ */
+export function ConnectingScreen() {
+  return (
+    <main className={`${styles.welcome} ${styles.connecting}`}>
+      <Logo size={96} />
+      <p className={common.muted} role="status">
+        Connexion à OneDrive…
+      </p>
+    </main>
+  );
+}
