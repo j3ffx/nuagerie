@@ -1,0 +1,35 @@
+.title {
+  position: sticky;
+  top: var(--header-height);
+  z-index: 5;
+  padding: var(--space-3) var(--space-4) var(--space-2);
+  background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sentinel {
+  height: 1px;
+}
+
+@media (min-width: 900px) {
+  .title {
+    padding-inline: var(--space-4);
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 4px;
+    padding: 0 var(--space-4);
+  }
+}

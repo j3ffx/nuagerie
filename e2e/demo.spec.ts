@@ -48,10 +48,16 @@ test('navigates between the four main screens', async ({ page }) => {
   }
 });
 
-test('shows thumbnails of the most recent items', async ({ page }) => {
+test('shows every item grouped by month', async ({ page }) => {
   await page.goto('/tout');
   await expect(page.getByText(/20\s000 éléments/)).toBeVisible();
-  const first = page.getByRole('list', { name: 'Photos et vidéos' }).getByRole('img').first();
+  await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText(
+    /^\p{Lu}\p{Ll}+ \d{4}$/u,
+  );
+  const first = page
+    .getByRole('main')
+    .getByRole('img', { name: /^(Photo|Vidéo)/ })
+    .first();
   await expect(first).toHaveAttribute('alt', /^(Photo|Vidéo) du \d{1,2} \S+ \d{4}$/);
   await expect(first).toHaveJSProperty('complete', true);
 });
