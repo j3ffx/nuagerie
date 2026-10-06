@@ -1,7 +1,7 @@
 /**
  * Minimal Microsoft Graph client: bearer token, retries on throttling and
  * transient errors (honouring Retry-After), typed errors. Read-only usage:
- * only GET requests are ever sent.
+ * GET requests, plus POST /$batch, whose sub-requests are GETs too.
  */
 
 export const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
@@ -31,7 +31,24 @@ export interface GraphClientOptions {
 
 export interface GraphClient {
   getJson<T>(pathOrUrl: string): Promise<T>;
+  /** JSON batching: up to 20 read requests in one round trip. */
+  batch(requests: BatchRequest[]): Promise<BatchResponse[]>;
 }
+
+export interface BatchRequest {
+  id: string;
+  /** Relative to the API version, e.g. "/me/drive/items/{id}/thumbnails". */
+  url: string;
+}
+
+export interface BatchResponse {
+  id: string;
+  status: number;
+  headers?: Record<string, string>;
+  body?: unknown;
+}
+
+export const MAX_BATCH = 20;
 
 const RETRYABLE = new Set([429, 500, 502, 503, 504]);
 const MAX_BACKOFF_MS = 60_000;
@@ -70,16 +87,29 @@ export function createGraphClient(options: GraphClientOptions): GraphClient {
   const sleep = options.sleep ?? ((ms: number) => new Promise((r) => setTimeout(r, ms)));
   const maxRetries = options.maxRetries ?? 6;
 
-  async function get(pathOrUrl: string): Promise<Response> {
+  async function send(pathOrUrl: string, body?: unknown): Promise<Response> {
     const url = /^https:\/\//.test(pathOrUrl) ? pathOrUrl : `${GRAPH_BASE}${pathOrUrl}`;
     for (let attempt = 0; ; attempt++) {
       const token = await options.getToken();
       let response: Response;
       try {
-        response = await doFetch(url, {
-          method: 'GET',
-          headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-        });
+        response = await doFetch(
+          url,
+          body === undefined
+            ? {
+                method: 'GET',
+                headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+              }
+            : {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body),
+              },
+        );
       } catch (error) {
         // Network failure (offline, DNS…): retry, then give up with the original error.
         if (attempt >= maxRetries) throw error;
@@ -97,7 +127,16 @@ export function createGraphClient(options: GraphClientOptions): GraphClient {
 
   return {
     async getJson<T>(pathOrUrl: string): Promise<T> {
-      return (await (await get(pathOrUrl)).json()) as T;
+      return (await (await send(pathOrUrl)).json()) as T;
+    },
+
+    async batch(requests: BatchRequest[]): Promise<BatchResponse[]> {
+      if (requests.length > MAX_BATCH) throw new Error(`At most ${MAX_BATCH} requests per batch`);
+      const body = { requests: requests.map(({ id, url }) => ({ id, method: 'GET', url })) };
+      const result = (await (await send('/$batch', body)).json()) as {
+        responses?: BatchResponse[];
+      };
+      return result.responses ?? [];
     },
   };
 }

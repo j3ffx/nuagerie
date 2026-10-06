@@ -39,6 +39,21 @@ describe('createGraphClient', () => {
     );
   });
 
+  it('batches read requests: one POST to /$batch whose sub-requests are all GETs', async () => {
+    const { client, calls } = setup([json({ responses: [{ id: '0', status: 200, body: {} }] })]);
+    await expect(client.batch([{ id: '0', url: '/me/drive/items/a/thumbnails' }])).resolves.toEqual(
+      [{ id: '0', status: 200, body: {} }],
+    );
+    expect(calls[0]?.url).toBe('https://graph.microsoft.com/v1.0/$batch');
+    expect(calls[0]?.init?.method).toBe('POST');
+    expect(JSON.parse(String(calls[0]?.init?.body))).toEqual({
+      requests: [{ id: '0', method: 'GET', url: '/me/drive/items/a/thumbnails' }],
+    });
+    await expect(
+      client.batch(Array.from({ length: 21 }, (_, i) => ({ id: String(i), url: '/x' }))),
+    ).rejects.toThrow();
+  });
+
   it('follows absolute URLs as given (nextLink, deltaLink)', async () => {
     const { client, calls } = setup([json({ value: [] })]);
     await client.getJson('https://graph.microsoft.com/v1.0/me/drive/root/delta?token=abc');

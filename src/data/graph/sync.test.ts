@@ -11,6 +11,7 @@ let counter = 0;
 function fakeGraph(routes: Record<string, unknown | GraphError>) {
   const calls: string[] = [];
   const client: GraphClient = {
+    batch: () => Promise.reject(new Error('unexpected batch')),
     async getJson<T>(url: string): Promise<T> {
       calls.push(url);
       const key = Object.keys(routes).find((prefix) => url.startsWith(prefix));

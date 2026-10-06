@@ -26,6 +26,7 @@ function fakeOneDrive() {
   const calls: string[] = [];
   let changes: GraphDriveItem[] = [];
   const client: GraphClient = {
+    batch: () => Promise.reject(new Error('unexpected batch')),
     async getJson<T>(url: string): Promise<T> {
       calls.push(url);
       if (url.startsWith('/me/drive/root:/Pictures')) return { id: 'pics', name: 'Pictures' } as T;
