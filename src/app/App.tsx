@@ -14,6 +14,7 @@ import type { DataMode, DataSource } from '../data/source.ts';
 import { AlbumScreen } from '../features/albums/AlbumScreen.tsx';
 import { AlbumsScreen } from '../features/albums/AlbumsScreen.tsx';
 import { ChooseAlbumsScreen } from '../features/albums/ChooseAlbumsScreen.tsx';
+import { AllFilterScreen } from '../features/all/AllFilterScreen.tsx';
 import { AllScreen } from '../features/all/AllScreen.tsx';
 import { DiagnosticScreen } from '../features/diagnostic/DiagnosticScreen.tsx';
 import { MapScreen } from '../features/map/MapScreen.tsx';
@@ -78,6 +79,7 @@ function Shell() {
           <Route path="/albums/choisir" component={ChooseAlbumsScreen} />
           <Route path="/album/:id" component={AlbumScreen} />
           <Route path="/tout" component={AllScreen} />
+          <Route path="/tout/filtre" component={AllFilterScreen} />
           <Route path="/carte" component={MapScreen} />
           <Route path="/reglages" component={SettingsScreen} />
           <Route path="/diagnostic" component={DiagnosticScreen} />

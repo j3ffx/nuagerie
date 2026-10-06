@@ -5,6 +5,7 @@ import {
   folderTree,
   orderItems,
   sortAlbums,
+  withoutFolders,
   type Album,
 } from './albums.ts';
 import type { GraphDriveItem } from './graph/types.ts';
@@ -183,5 +184,16 @@ describe('orderItems', () => {
     const items = byId.get('cam')?.items ?? [];
     expect(orderItems(items, 'desc').map((i) => i.id)).toEqual(['c1', 'c2', 'c3']);
     expect(orderItems(items, 'asc').map((i) => i.id)).toEqual(['c2', 'c1', 'c3']);
+  });
+});
+
+describe('withoutFolders', () => {
+  it('hides the excluded folders and everything below them, keeping the order', () => {
+    expect(withoutFolders(index, new Set())).toBe(index.items);
+    expect(itemIds(withoutFolders(index, new Set(['alb', 'wedding'])))).toEqual(
+      itemIds(index.items).filter((id) => !['a0', 'p1', 'p2', 'g1', 'm1', 'm2'].includes(id)),
+    );
+    // Files of technical folders belong to their album: hiding Camera Roll hides them.
+    expect(itemIds(withoutFolders(index, new Set(['cam'])))).not.toContain('c3');
   });
 });

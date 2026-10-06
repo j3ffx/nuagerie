@@ -2,3 +2,7 @@
   padding: 0 var(--space-4) var(--space-1);
   font-size: 14px;
 }
+
+.filter {
+  gap: var(--space-1);
+}

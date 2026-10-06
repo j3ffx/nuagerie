@@ -197,3 +197,24 @@ export function orderItems(items: readonly MediaItem[], order: PhotoOrder): Medi
   const undated = firstUndated === -1 ? [] : items.slice(firstUndated);
   return [...dated].reverse().concat(undated);
 }
+
+/**
+ * Items outside the excluded folders, and outside everything below them
+ * (hiding "Applis" hides "Applis/WhatsApp" too). Order is kept.
+ */
+export function withoutFolders(
+  index: MediaIndex,
+  excluded: ReadonlySet<string>,
+): readonly MediaItem[] {
+  if (excluded.size === 0) return index.items;
+  const hidden = new Map<string, boolean>();
+  const isHidden = (folderId: string | null): boolean => {
+    if (folderId === null) return false;
+    const known = hidden.get(folderId);
+    if (known !== undefined) return known;
+    const value = excluded.has(folderId) || isHidden(index.folders.get(folderId)?.parentId ?? null);
+    hidden.set(folderId, value);
+    return value;
+  };
+  return index.items.filter((item) => !isHidden(item.albumId));
+}
