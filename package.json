@@ -24,7 +24,9 @@
     "e2e": "playwright test",
     "check:private": "node scripts/check-tracked.mjs",
     "check:commits": "node scripts/check-commits.mjs",
-    "fix:dates": "node scripts/commit-date.mjs --fix"
+    "fix:dates": "node scripts/commit-date.mjs --fix",
+    "check:dist": "node scripts/check-dist.mjs",
+    "deploy": "npm run build && npm run check:dist && wrangler pages deploy dist --project-name nuagerie"
   },
   "dependencies": {
     "@fontsource-variable/nunito": "^5.3.0",
@@ -57,6 +59,7 @@
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.0.3",
     "workbox-build": "^7.4.1",
-    "workbox-window": "^7.4.1"
+    "workbox-window": "^7.4.1",
+    "wrangler": "^4.147.0"
   }
 }
