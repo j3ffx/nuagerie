@@ -34,6 +34,11 @@ jobs:
       - name: Privacy check (no private file or identity tracked)
         run: npm run check:private
 
+      - name: Commit messages (Conventional Commits)
+        run: >-
+          node scripts/check-commits.mjs
+          ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}..${{ github.sha }}
+
       - run: npm run format:check
       - run: npm run typecheck
       - run: npm run lint
