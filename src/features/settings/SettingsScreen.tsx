@@ -8,6 +8,7 @@ import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import { checkForUpdate } from '../../app/updates.ts';
 import { AboutSection } from './AboutSection.tsx';
 import { AccountSection } from './AccountSection.tsx';
+import { ThumbnailCacheSection } from './ThumbnailCacheSection.tsx';
 
 const THEMES: { value: ThemePreference; label: string }[] = [
   { value: 'auto', label: 'Automatique' },
@@ -123,6 +124,8 @@ export function SettingsScreen() {
             )}
           </div>
         </section>
+
+        <ThumbnailCacheSection />
 
         <AboutSection />
       </div>

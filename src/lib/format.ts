@@ -71,6 +71,14 @@ export function describeItem(item: { kind: 'image' | 'video'; takenAt: number | 
   return item.takenAt === null ? `${kind} sans date` : `${kind} du ${formatLongDate(item.takenAt)}`;
 }
 
+const decimalFormat = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
+
+/** Storage size from megabytes: "0 Mo", "12,4 Mo", "500 Mo", "1 Go", "1,5 Go". */
+export function formatMegabytes(megabytes: number): string {
+  if (megabytes >= 1000) return `${decimalFormat.format(megabytes / 1000)} Go`;
+  return `${decimalFormat.format(megabytes >= 10 ? Math.round(megabytes) : megabytes)} Mo`;
+}
+
 /** "1 élément", "12 éléments" */
 export function formatItemCount(count: number): string {
   return `${formatCount(count)} ${count > 1 ? 'éléments' : 'élément'}`;
