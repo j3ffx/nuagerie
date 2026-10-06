@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import common from '../ui/common.module.css';
+import { Logo } from '../ui/Logo.tsx';
 import styles from './UpdateBanner.module.css';
 import { applyUpdate, useUpdateState } from './updates.ts';
 
@@ -11,9 +12,13 @@ export function UpdateBanner() {
 
   return (
     <div className={styles.banner} role="status">
-      <span className={styles.text}>Nouvelle version disponible</span>
-      <button type="button" className={common.button} onClick={applyUpdate}>
-        Mettre à jour
+      <Logo size={32} />
+      <span className={styles.text}>
+        <span className={styles.title}>Nouvelle version</span>
+        <span className={styles.subtitle}>disponible</span>
+      </span>
+      <button type="button" className={`${common.button} ${styles.action}`} onClick={applyUpdate}>
+        Installer
       </button>
       <button
         type="button"

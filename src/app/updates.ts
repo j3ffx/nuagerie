@@ -40,6 +40,12 @@ function setState(patch: Partial<UpdateState>) {
   listeners.forEach((notify) => notify());
 }
 
+// Development only (removed from production builds): show the banner without a deploy.
+if (import.meta.env.DEV) {
+  (window as unknown as { simulateUpdate: () => void }).simulateUpdate = () =>
+    setState({ status: 'ready' });
+}
+
 export function initUpdates(): void {
   updateSW = registerSW({
     immediate: true,

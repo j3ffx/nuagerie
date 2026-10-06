@@ -8,7 +8,7 @@
 .sort select,
 .direction {
   min-height: var(--tap-min);
-  padding: 0 var(--space-4);
+  padding: 0 var(--space-3);
   border: none;
   border-radius: var(--radius-pill);
   background: var(--color-surface-2);
@@ -18,13 +18,13 @@
 
 .sort select {
   appearance: none;
-  padding-right: var(--space-6);
+  padding-right: 28px;
   background-image:
     linear-gradient(45deg, transparent 50%, currentColor 50%),
     linear-gradient(135deg, currentColor 50%, transparent 50%);
   background-position:
-    calc(100% - 18px) 50%,
-    calc(100% - 13px) 50%;
+    calc(100% - 16px) 50%,
+    calc(100% - 11px) 50%;
   background-size: 5px 5px;
   background-repeat: no-repeat;
   cursor: pointer;
@@ -33,10 +33,18 @@
 .direction {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 6px;
 }
 
 .direction svg {
   width: 18px;
   height: 18px;
+}
+
+/* Narrow phones (360 px): keep both controls on one line. */
+@media (max-width: 370px) {
+  .sort select,
+  .direction {
+    font-size: 15px;
+  }
 }
