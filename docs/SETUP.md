@@ -122,10 +122,11 @@ annuaire par défaut (**Default Directory**). L’inscription d’application es
 3. Nom : `Nuagerie`.
 4. Types de comptes pris en charge : **Comptes personnels uniquement**
    (_Personal accounts only_).
-5. URI de redirection : plateforme **Application monopage (SPA)**, valeur `http://localhost:5173`.
+5. URI de redirection : plateforme **Application monopage (SPA)**, valeur
+   `http://localhost:5173/redirect` (page « pont » exigée par MSAL v5).
 6. **Inscrire**, puis noter l’**ID d’application (client)**.
-7. **Authentification** → plateforme SPA → ajouter l’URL de l’instance déployée,
-   par exemple `https://nuagerie.pages.dev`.
+7. **Authentification** → plateforme SPA → ajouter l’URL de l’instance déployée suivie de
+   `/redirect`, par exemple `https://nuagerie.pages.dev/redirect`.
 8. **Autorisations d’API** → **Microsoft Graph** → **Autorisations déléguées** :
    `Files.Read`, `User.Read`, `offline_access`, **et rien d’autre**.
 9. Copier l’ID d’application dans `.env` : `VITE_MSAL_CLIENT_ID=…`.
