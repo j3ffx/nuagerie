@@ -2,6 +2,7 @@
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import { minimal2023Preset } from '@vite-pwa/assets-generator/config';
 import { VitePWA } from 'vite-plugin-pwa';
 import { lanQrCode } from './build/lan-qr.ts';
 import { currentCommit, versionFile } from './build/version.ts';
@@ -42,7 +43,13 @@ export default defineConfig(({ mode }) => {
         // Icons (PNG, maskable, apple-touch) are generated at build time from the SVG logo.
         pwaAssets: {
           image: 'public/logo.svg',
-          preset: 'minimal-2023',
+          // Full-bleed sky background behind the padded icons (Android masks, iOS),
+          // instead of the default white.
+          preset: {
+            ...minimal2023Preset,
+            maskable: { ...minimal2023Preset.maskable, resizeOptions: { background: '#5aa7ee' } },
+            apple: { ...minimal2023Preset.apple, resizeOptions: { background: '#5aa7ee' } },
+          },
           overrideManifestIcons: true,
           includeHtmlHeadLinks: true,
           injectThemeColor: false,
