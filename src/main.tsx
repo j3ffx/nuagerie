@@ -1,6 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { registerSW } from 'virtual:pwa-register';
 import { App } from './app/App.tsx';
+
+// Production only (no service worker in dev, so hot reload is never stale).
+registerSW({ immediate: true });
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element');
