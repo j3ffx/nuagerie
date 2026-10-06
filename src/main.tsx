@@ -3,7 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './app/App.tsx';
-import { REDIRECT_PATH } from './auth/msal.ts';
+import { initAuth, REDIRECT_PATH } from './auth/msal.ts';
 import { resolveDataMode } from './data/mode.ts';
 
 async function start() {
@@ -25,7 +25,6 @@ async function start() {
   let account: AccountInfo | null = null;
   let authError: string | null = null;
   if (mode === 'onedrive') {
-    const { initAuth } = await import('./auth/msal.ts');
     try {
       account = await initAuth();
     } catch (error) {
