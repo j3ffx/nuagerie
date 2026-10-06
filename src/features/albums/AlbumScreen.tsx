@@ -5,7 +5,7 @@ import { formatItemCount, formatYearRange } from '../../lib/format.ts';
 import common from '../../ui/common.module.css';
 import { BackIcon, SortDownIcon, SortUpIcon } from '../../ui/icons.tsx';
 import { IndexStatus } from '../../ui/IndexStatus.tsx';
-import { MonthGrid } from '../../ui/MonthGrid.tsx';
+import { PhotoGrid } from '../../ui/grid/PhotoGrid.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import { AlbumSortControls } from './AlbumSortControls.tsx';
 import { sortSummary } from './albumSortLabels.ts';
@@ -141,7 +141,7 @@ function AlbumContent({
       )}
 
       {items.length > 0 ? (
-        <MonthGrid items={items} label={`Photos et vidéos de ${album.name}`} />
+        <PhotoGrid items={items} label={`Photos et vidéos de ${album.name}`} />
       ) : (
         subAlbums.length === 0 && (
           <p className={`${common.muted} ${styles.summary}`}>Cet album est vide.</p>

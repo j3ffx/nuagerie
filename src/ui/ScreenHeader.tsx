@@ -15,7 +15,7 @@ export function ScreenHeader({
 }) {
   const { mode, sync } = useData();
   return (
-    <header className={styles.header}>
+    <header className={styles.header} data-screen-header>
       {leading}
       <h1 className={styles.title}>{title}</h1>
       <div className={styles.actions}>

@@ -1,0 +1,71 @@
+.grid {
+  position: relative;
+}
+
+.rows {
+  position: relative;
+  width: 100%;
+}
+
+.row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0 var(--space-4);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.cells {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+}
+
+/* Zero-height sticky layer: the current month floats over the rows. */
+.stickyHost {
+  position: sticky;
+  z-index: 5;
+  top: var(--header-height);
+  height: 0;
+}
+
+.stickyTitle {
+  height: 44px;
+  background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.stickyTitle[hidden] {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .grid {
+    padding: 0 var(--space-4);
+  }
+
+  .cells {
+    gap: 4px;
+  }
+
+  .title {
+    padding: 0;
+  }
+
+  .stickyHost {
+    margin: 0 calc(-1 * var(--space-4));
+  }
+
+  .stickyTitle {
+    padding: 0 var(--space-4);
+  }
+}
