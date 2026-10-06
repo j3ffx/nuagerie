@@ -57,7 +57,8 @@ commit metadata.
 ## Invariants (discuss before changing)
 
 - **Read-only.** Microsoft Graph delegated scopes are `Files.Read`, `User.Read`, `offline_access` and
-  nothing else. The app never creates, changes, moves or deletes anything in OneDrive.
+  nothing else. The app never creates, changes, moves or deletes anything in OneDrive. Requests are
+  GETs, plus `POST /$batch` whose sub-requests are GETs.
 - **No backend, no tracking.** The only network calls go to Microsoft (sign-in, Graph) and to the map tile
   provider. No analytics.
 - **Demo mode works with no account and no network** (`?demo=1`, `npm run dev:demo`, or no Client ID).
@@ -73,7 +74,9 @@ commit metadata.
 - **Albums:** a folder is a potential album. Technical folders are never albums: years (`^\d{4}$`),
   months under a year (`^(0[1-9]|1[0-2])$`) and `Sans date`; their files belong to the nearest
   non-technical parent (`src/data/technical.ts`). An album shows only its own files, not its sub-albums'.
-- **Grids show Graph thumbnails only**, never the original file.
+- **Grids show Graph thumbnails only**, never the original file. They are kept on the device
+  (`src/data/thumbnails/`: Cache Storage, keyed by id + size + eTag, size-capped), and grids are
+  virtualized (`src/ui/grid/`): only the rows near the screen exist in the DOM.
 - **Accessibility:** contrast ≥ 4.5:1 (tokens in `src/styles/tokens.css`), visible focus, touch targets
   ≥ 44 px, `alt` text, `prefers-reduced-motion` respected.
 
