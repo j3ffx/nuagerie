@@ -36,6 +36,18 @@ export function formatMonthYear(takenAt: number): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
+const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+/** A real instant in the viewer's time zone: "6 oct., 14:32" (sync times, not capture dates). */
+export function formatDateTime(instant: number): string {
+  return dateTimeFormat.format(instant);
+}
+
 /** "6 octobre 2026" */
 export function formatLongDate(takenAt: number): string {
   return longDateFormat.format(takenAt);

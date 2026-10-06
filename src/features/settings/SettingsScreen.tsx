@@ -1,9 +1,11 @@
+import { Link } from 'wouter';
 import { useData } from '../../data/dataContext.ts';
-import { enterDemoMode, isDemoForced, leaveDemoMode } from '../../data/mode.ts';
-import { formatCount } from '../../lib/format.ts';
+import { isDemoForced, leaveDemoMode } from '../../data/mode.ts';
+import { formatCount, formatDateTime } from '../../lib/format.ts';
 import { useThemePreference, type ThemePreference } from '../../lib/theme.ts';
 import common from '../../ui/common.module.css';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
+import { AccountSection } from './AccountSection.tsx';
 
 const THEMES: { value: ThemePreference; label: string }[] = [
   { value: 'auto', label: 'Automatique' },
@@ -13,8 +15,14 @@ const THEMES: { value: ThemePreference; label: string }[] = [
 
 export function SettingsScreen() {
   const [theme, setTheme] = useThemePreference();
-  const { mode, state } = useData();
+  const { mode, state, sync, refresh, resetIndex } = useData();
   const index = state.status === 'ready' ? state.index : null;
+
+  const confirmReset = () => {
+    if (window.confirm('Tout réindexer ? Le premier chargement reprendra depuis le début.')) {
+      void resetIndex();
+    }
+  };
 
   return (
     <>
@@ -43,6 +51,8 @@ export function SettingsScreen() {
           </div>
         </section>
 
+        {mode === 'onedrive' && <AccountSection />}
+
         <section className={common.section} aria-labelledby="settings-data">
           <h2 id="settings-data" className={common.sectionTitle}>
             Données
@@ -61,19 +71,49 @@ export function SettingsScreen() {
               )}
               {state.status === 'ready' && (
                 <>
-                  <dt>Chargé en</dt>
+                  <dt>Affiché en</dt>
                   <dd>{formatCount(Math.round(state.loadedInMs))} ms</dd>
                 </>
               )}
+              {mode === 'onedrive' && (
+                <>
+                  <dt>Mise à jour</dt>
+                  <dd role="status">
+                    {sync.status === 'running'
+                      ? `en cours${sync.progress ? ` (${formatCount(sync.progress.loaded)})` : '…'}`
+                      : sync.status === 'error'
+                        ? 'échec'
+                        : sync.lastSyncAt
+                          ? formatDateTime(sync.lastSyncAt)
+                          : '—'}
+                  </dd>
+                </>
+              )}
             </dl>
+            {sync.status === 'error' && sync.message && (
+              <p className={common.muted}>{sync.message}</p>
+            )}
+            {mode === 'onedrive' && (
+              <>
+                <button
+                  type="button"
+                  className={common.buttonSoft}
+                  onClick={refresh}
+                  disabled={sync.status === 'running' || state.status !== 'ready'}
+                >
+                  Mettre à jour maintenant
+                </button>
+                <button type="button" className={common.buttonSoft} onClick={confirmReset}>
+                  Relancer l’indexation complète
+                </button>
+                <Link href="/diagnostic" className={common.buttonSoft}>
+                  Diagnostic de l’index
+                </Link>
+              </>
+            )}
             {mode === 'demo' && !isDemoForced() && (
               <button type="button" className={common.buttonSoft} onClick={leaveDemoMode}>
                 Quitter la démo
-              </button>
-            )}
-            {mode === 'onedrive' && (
-              <button type="button" className={common.buttonSoft} onClick={enterDemoMode}>
-                Essayer la démo
               </button>
             )}
           </div>

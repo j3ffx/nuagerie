@@ -5,14 +5,25 @@ import type { DataMode, DataSource } from './source.ts';
 export type DataState =
   | { status: 'loading'; progress: IndexProgress | null }
   | { status: 'ready'; index: MediaIndex; loadedInMs: number }
-  | { status: 'error'; message: string }
-  /** OneDrive mode while sign-in is not implemented yet. */
-  | { status: 'unavailable' };
+  | { status: 'error'; message: string };
+
+/** Background update of an index that is already displayed. */
+export interface SyncState {
+  status: 'idle' | 'running' | 'error';
+  progress: IndexProgress | null;
+  message: string | null;
+  lastSyncAt: number | null;
+}
 
 export interface DataContextValue {
   mode: DataMode;
-  source: DataSource | null;
+  source: DataSource;
   state: DataState;
+  sync: SyncState;
+  /** Fetches the latest changes now. */
+  refresh: () => void;
+  /** Forgets the local copy and enumerates everything again. */
+  resetIndex: () => Promise<void>;
 }
 
 export const DataContext = createContext<DataContextValue | null>(null);

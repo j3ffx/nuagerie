@@ -25,8 +25,20 @@ const MIN_DATE = Date.UTC(2000, 0, 1);
 
 /** Context for the current device: its clock and its time zone. */
 export function currentDateContext(): DateContext {
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const timeZone = deviceTimeZone();
   return { nowWallClock: toWallClock(Date.now(), timeZone), timeZone };
+}
+
+/** The device's IANA time zone, or UTC when it is unknown or unusable (e.g. "Etc/Unknown"). */
+function deviceTimeZone(): string {
+  const candidate = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (!candidate) return 'UTC';
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: candidate });
+    return candidate;
+  } catch {
+    return 'UTC';
+  }
 }
 
 /** Wall-clock UTC encoding of the given parts, or null if they don't form a real moment. */

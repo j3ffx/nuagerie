@@ -15,12 +15,21 @@ export function IndexStatus() {
           <Logo size={56} />
         </span>
         <p className={styles.title}>
-          {mode === 'demo' ? 'Préparation de la démo…' : 'Chargement des photos…'}
+          {mode === 'demo'
+            ? 'Préparation de la démo…'
+            : progress
+              ? 'Indexation de OneDrive…'
+              : 'Chargement des photos…'}
         </p>
         {progress && (
           <p className={styles.detail}>
             {formatCount(progress.loaded)}
             {progress.total !== null && ` / ~${formatCount(progress.total)}`} éléments
+          </p>
+        )}
+        {progress && mode === 'onedrive' && (
+          <p className={styles.detail}>
+            Une seule fois : les prochains démarrages seront immédiats.
           </p>
         )}
       </div>

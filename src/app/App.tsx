@@ -2,31 +2,64 @@ import '@fontsource-variable/nunito/wght.css';
 import '../styles/tokens.css';
 import '../styles/global.css';
 
+import type { AccountInfo } from '@azure/msal-browser';
+import { MsalProvider } from '@azure/msal-react';
+import { useState } from 'react';
 import { Redirect, Route, Switch } from 'wouter';
-import { useData } from '../data/dataContext.ts';
+import { getAccessToken, getMsal } from '../auth/msal.ts';
 import { DataProvider } from '../data/DataProvider.tsx';
+import { createDemoSource } from '../data/demo/demoSource.ts';
+import { createOneDriveSource } from '../data/onedrive/onedriveSource.ts';
+import type { DataMode, DataSource } from '../data/source.ts';
 import { AlbumsScreen } from '../features/albums/AlbumsScreen.tsx';
 import { AllScreen } from '../features/all/AllScreen.tsx';
+import { DiagnosticScreen } from '../features/diagnostic/DiagnosticScreen.tsx';
 import { MapScreen } from '../features/map/MapScreen.tsx';
 import { SettingsScreen } from '../features/settings/SettingsScreen.tsx';
-import { WelcomeScreen } from '../features/welcome/WelcomeScreen.tsx';
+import { SignInScreen } from '../features/welcome/SignInScreen.tsx';
 import { useApplyTheme } from '../lib/theme.ts';
 import styles from './App.module.css';
 import { NavBar } from './NavBar.tsx';
 
-export function App() {
+export function App({
+  mode,
+  account,
+  authError,
+}: {
+  mode: DataMode;
+  account: AccountInfo | null;
+  authError: string | null;
+}) {
   useApplyTheme();
+
+  if (mode === 'demo') return <Data mode="demo" create={createDemoSource} />;
+
   return (
-    <DataProvider>
+    <MsalProvider instance={getMsal()}>
+      {account ? (
+        <Data
+          mode="onedrive"
+          create={() =>
+            createOneDriveSource({ accountId: account.homeAccountId, getToken: getAccessToken })
+          }
+        />
+      ) : (
+        <SignInScreen error={authError} />
+      )}
+    </MsalProvider>
+  );
+}
+
+function Data({ mode, create }: { mode: DataMode; create: () => DataSource }) {
+  const [source] = useState(create);
+  return (
+    <DataProvider mode={mode} source={source}>
       <Shell />
     </DataProvider>
   );
 }
 
 function Shell() {
-  const { state } = useData();
-  if (state.status === 'unavailable') return <WelcomeScreen />;
-
   return (
     <div className={styles.shell}>
       <a className={styles.skipLink} href="#main">
@@ -39,6 +72,7 @@ function Shell() {
           <Route path="/tout" component={AllScreen} />
           <Route path="/carte" component={MapScreen} />
           <Route path="/reglages" component={SettingsScreen} />
+          <Route path="/diagnostic" component={DiagnosticScreen} />
           <Route>
             <Redirect to="/" replace />
           </Route>

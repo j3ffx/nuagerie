@@ -49,6 +49,11 @@
   text-decoration: none;
 }
 
+.button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .buttonSoft {
   composes: button;
   background: var(--color-primary-soft);

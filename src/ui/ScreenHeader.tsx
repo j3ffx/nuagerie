@@ -13,13 +13,18 @@ export function ScreenHeader({
   leading?: ReactNode;
   actions?: ReactNode;
 }) {
-  const { mode } = useData();
+  const { mode, sync } = useData();
   return (
     <header className={styles.header}>
       {leading}
       <h1 className={styles.title}>{title}</h1>
       <div className={styles.actions}>
         {actions}
+        {sync.status === 'running' && (
+          <span className={styles.sync} role="status">
+            Mise à jour…
+          </span>
+        )}
         {mode === 'demo' && (
           <Link href="/reglages" className={common.chip} aria-label="Mode démo : voir les réglages">
             Démo
