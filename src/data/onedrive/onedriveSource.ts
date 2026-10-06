@@ -3,7 +3,12 @@ import { currentDateContext, resolveCaptureDate } from '../dates.ts';
 import { summarize } from '../diagnostics.ts';
 import { createGraphClient, GraphError, type GraphClient } from '../graph/client.ts';
 import { detectScope, resolveFolder, syncRoot } from '../graph/sync.ts';
-import { createThumbnailFetcher } from '../graph/thumbnails.ts';
+import {
+  createThumbnailFetcher,
+  THUMBNAIL_SELECTORS,
+  thumbnailPath,
+  thumbnailUrlIn,
+} from '../graph/thumbnails.ts';
 import type { GraphDriveItem } from '../graph/types.ts';
 import type { IndexProgress, MediaIndex } from '../model.ts';
 import { buildIndex } from '../normalize.ts';
@@ -21,6 +26,8 @@ export const ROOT_PATHS_KEY = 'rootPaths';
 async function checkApi(
   client: GraphClient,
   meta: IndexMeta,
+  sampleIds: string[],
+  thumbnails: ReturnType<typeof createThumbnailFetcher>,
 ): Promise<{ check: string; result: string }[]> {
   const root = meta.rootFolders[0];
   if (!root) return [];
@@ -57,7 +64,73 @@ async function checkApi(
       const withThumbs = files.filter((item) => (item.thumbnails ?? []).length > 0);
       return `${withThumbs.length}/${files.length} fichiers avec miniatures`;
     }),
+    ...(await checkThumbnails(client, sampleIds, thumbnails)),
   ];
+}
+
+/** Batched thumbnail URLs, where they are served from, and whether their bytes can be read (CORS). */
+async function checkThumbnails(
+  client: GraphClient,
+  ids: string[],
+  thumbnails: ReturnType<typeof createThumbnailFetcher>,
+): Promise<{ check: string; result: string }[]> {
+  const selector = THUMBNAIL_SELECTORS.medium;
+  const urls: string[] = [];
+  const checks: { check: string; result: string }[] = [];
+  const startedAt = performance.now();
+  try {
+    const responses = await client.batch(
+      ids.map((id, i) => ({ id: String(i), url: thumbnailPath({ id }, selector) })),
+    );
+    for (const response of responses) {
+      const url = response.status === 200 ? thumbnailUrlIn(response.body, selector) : null;
+      if (url) urls.push(url);
+    }
+    const statuses = [...new Set(responses.map((r) => r.status))].join(', ');
+    checks.push({
+      check: `miniatures par $batch (${ids.length} éléments)`,
+      result: `${urls.length}/${ids.length} URL en ${Math.round(performance.now() - startedAt)} ms (statuts ${statuses})`,
+    });
+  } catch (error) {
+    checks.push({
+      check: 'miniatures par $batch',
+      result: `erreur ${error instanceof GraphError ? `${error.status} ${error.code}` : String(error)}`,
+    });
+  }
+  const url = urls[0];
+  if (!url) return checks;
+  // Host only, first label hidden (random server names).
+  const hosts = [...new Set(urls.map((u) => new URL(u).hostname.replace(/^[^.]+/, '*')))];
+  checks.push({ check: 'hôte des miniatures', result: hosts.join(', ') });
+  // Tells a Content-Security-Policy block (host to allow in public/_headers) from a CORS refusal.
+  let cspBlocked = false;
+  const onViolation = () => {
+    cspBlocked = true;
+  };
+  document.addEventListener('securitypolicyviolation', onViolation);
+  try {
+    const response = await fetch(url, { credentials: 'omit' });
+    const blob = await response.blob();
+    checks.push({
+      check: 'lecture des octets (CORS)',
+      result: `oui (${response.status}, ${blob.type || 'type inconnu'}, ${Math.round(blob.size / 1024)} Ko)`,
+    });
+  } catch (error) {
+    await new Promise((resolve) => setTimeout(resolve, 0)); // the violation event comes after
+    checks.push({
+      check: 'lecture des octets (CORS)',
+      result: cspBlocked ? 'non (hôte bloqué par la CSP)' : `non (${String(error)})`,
+    });
+  } finally {
+    document.removeEventListener('securitypolicyviolation', onViolation);
+  }
+  const readable = thumbnails.bytesReadable();
+  checks.push({
+    check: 'cache des miniatures',
+    result:
+      readable === null ? 'pas encore utilisé' : readable ? 'actif' : 'inactif (URL directes)',
+  });
+  return checks;
 }
 
 export interface OneDriveSourceOptions {
@@ -217,7 +290,15 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
         mode: 'onedrive',
         lastFullSync: meta.lastFullSync ?? null,
         channels: meta.channels.map(({ path, scope }) => ({ path, scope })),
-        apiChecks: await checkApi(client, meta),
+        apiChecks: await checkApi(
+          client,
+          meta,
+          raw
+            .filter((item) => item.file?.mimeType?.startsWith('image/'))
+            .slice(0, 20)
+            .map((item) => item.id),
+          thumbnails,
+        ),
         lastSyncAt: meta.lastSyncAt ? new Date(meta.lastSyncAt).toISOString() : null,
       });
     },
