@@ -104,6 +104,28 @@ alias de branche stables, jamais les URL uniques par déploiement.
 Pour relier une instance à OneDrive, le Client ID doit être présent **au moment du build**
 (`.env` sur la machine qui lance `npm run deploy`).
 
+### Déploiement automatique (GitHub Actions)
+
+Une fois configuré, chaque push est déployé par la CI, **seulement si tous les contrôles passent** :
+`main` en production, les autres branches sur leur URL de branche. Sans configuration,
+l’étape de déploiement est simplement sautée.
+
+1. Cloudflare → icône du profil → **Profil** → **Jetons d’API** → **Créer un jeton** →
+   **Créer un jeton personnalisé** :
+   - autorisation : **Compte** → **Cloudflare Pages** → **Modifier** ;
+   - ressources du compte : son propre compte ;
+   - **Continuer**, **Créer le jeton**, puis copier le jeton (il ne s’affiche qu’une fois).
+2. Sur le PC, dans le dossier du projet, enregistrer le jeton comme secret GitHub
+   (la commande demande de le coller) :
+
+   ```bash
+   gh secret set CLOUDFLARE_API_TOKEN
+   ```
+
+3. Enregistrer aussi l’identifiant de compte Cloudflare (affiché par `npx wrangler whoami`)
+   comme secret `CLOUDFLARE_ACCOUNT_ID`, et le Client ID comme variable :
+   `gh variable set VITE_MSAL_CLIENT_ID`.
+
 Les en-têtes HTTP (sécurité, cache) sont dans `public/_headers`. Sans `404.html`,
 Cloudflare Pages sert `index.html` pour toutes les routes (application monopage).
 

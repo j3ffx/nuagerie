@@ -87,8 +87,10 @@ commit metadata.
 
 ## Deployment
 
-`npm run deploy` builds, runs `check:dist` (no source maps, no private pattern), then uploads `dist/` to
-the Cloudflare Pages project with wrangler. The production branch is `main`; other branches get
+On every push, the `deploy` job of `.github/workflows/ci.yml` deploys after all checks pass (secrets
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, variable `VITE_MSAL_CLIENT_ID`; skipped when
+unset). By hand, `npm run deploy` builds, runs `check:dist` (no source maps, no private pattern), then
+uploads `dist/` to the Cloudflare Pages project with wrangler. The production branch is `main`; other branches get
 `<branch>.<project>.pages.dev`. When creating a project, pass `--force` to
 `wrangler pages project create`: without it, recent wrangler versions create a Workers project instead
 and edit `vite.config.ts`.
