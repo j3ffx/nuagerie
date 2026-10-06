@@ -1,0 +1,31 @@
+.shell {
+  min-height: 100dvh;
+}
+
+.main {
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + var(--space-4));
+}
+
+@media (min-width: 900px) {
+  .main {
+    margin-left: var(--rail-width);
+    padding-bottom: var(--space-6);
+  }
+}
+
+.skipLink {
+  position: absolute;
+  z-index: 100;
+  top: var(--space-2);
+  left: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 800;
+  transform: translateY(-200%);
+}
+
+.skipLink:focus {
+  transform: none;
+}
