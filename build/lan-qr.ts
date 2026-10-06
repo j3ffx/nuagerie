@@ -1,3 +1,4 @@
+import { networkInterfaces } from 'node:os';
 import qrcode from 'qrcode-terminal';
 import type { Plugin } from 'vite';
 
@@ -14,33 +15,45 @@ export function lanQrCode(): Plugin {
       const printUrls = server.printUrls.bind(server);
       server.printUrls = () => {
         printUrls();
-        const urls = server.resolvedUrls?.network ?? [];
-        const url = pickLanUrl(urls);
-        if (!url) {
+        const urls = rankLanUrls(server.resolvedUrls?.network ?? []);
+        const [best, ...others] = urls;
+        if (!best) {
           console.log(
             '\n  Aucune adresse réseau local trouvée : le PC est-il connecté au Wi-Fi ?\n',
           );
           return;
         }
-        const demoUrl = `${url}?demo=1`;
+        const demoUrl = `${best}?demo=1`;
         console.log(`\n  Sur le téléphone (même Wi-Fi), scanne ce QR code : ${demoUrl}`);
         console.log(
           '  Certificat local : accepte l’avertissement une fois (Paramètres avancés → Continuer).\n',
         );
         qrcode.generate(demoUrl, { small: true });
+        if (others.length > 0) {
+          console.log(
+            `  Si la page ne s’ouvre pas, essaie : ${others.map((url) => `${url}?demo=1`).join('  ou  ')}\n`,
+          );
+        }
       };
     },
   };
 }
 
-/** Prefers typical home-network ranges over virtual adapters (WSL, VPN, VirtualBox...). */
-function pickLanUrl(urls: string[]): string | undefined {
+const PREFERRED = /^(wi-?fi|wlan|wireless|ethernet|eth|en)\b/i;
+const VIRTUAL =
+  /local area connection\*|vethernet|virtual|vmware|vbox|virtualbox|wsl|hyper-v|docker|tailscale|zerotier|bluetooth|loopback|vpn/i;
+
+/** Real Wi-Fi/Ethernet adapters first, virtual ones (hotspot, WSL, VPN…) last. */
+function rankLanUrls(urls: string[]): string[] {
+  const interfaceOf = new Map<string, string>();
+  for (const [name, addresses] of Object.entries(networkInterfaces())) {
+    for (const address of addresses ?? []) interfaceOf.set(address.address, name);
+  }
   const score = (url: string) => {
-    const host = new URL(url).hostname;
-    if (host.startsWith('192.168.')) return 3;
-    if (host.startsWith('10.')) return 2;
-    if (/^172\.(1[6-9]|2\d|3[01])\./.test(host)) return 1;
-    return 0;
+    const name = interfaceOf.get(new URL(url).hostname) ?? '';
+    if (VIRTUAL.test(name)) return 0;
+    if (PREFERRED.test(name)) return 2;
+    return 1;
   };
-  return [...urls].sort((a, b) => score(b) - score(a))[0];
+  return [...urls].sort((a, b) => score(b) - score(a));
 }
