@@ -44,10 +44,15 @@ export default defineConfig(({ mode }) => {
         pwaAssets: {
           image: 'public/logo.svg',
           // Full-bleed sky background behind the padded icons (Android masks, iOS),
-          // instead of the default white.
+          // instead of the default white. On Android the cloud gets less margin
+          // than the default 30 %, still inside the masks' safe zone.
           preset: {
             ...minimal2023Preset,
-            maskable: { ...minimal2023Preset.maskable, resizeOptions: { background: '#5aa7ee' } },
+            maskable: {
+              ...minimal2023Preset.maskable,
+              padding: 0.15,
+              resizeOptions: { background: '#5aa7ee' },
+            },
             apple: { ...minimal2023Preset.apple, resizeOptions: { background: '#5aa7ee' } },
           },
           overrideManifestIcons: true,
