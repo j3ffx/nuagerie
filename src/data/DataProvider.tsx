@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { DataContext, type DataState, type SyncState } from './dataContext.ts';
 import type { DataMode, DataSource } from './source.ts';
+import { createThumbnails } from './thumbnails/setup.ts';
 
 const IDLE: SyncState = { status: 'idle', progress: null, message: null, lastSyncAt: null };
 
@@ -26,6 +27,7 @@ export function DataProvider({
   const [sync, setSync] = useState<SyncState>(IDLE);
   const syncing = useRef(false);
   const [generation, setGeneration] = useState(0);
+  const [thumbnails] = useState(() => createThumbnails(mode, source));
 
   const refresh = useCallback(() => {
     if (!source.refresh || syncing.current) return;
@@ -82,7 +84,7 @@ export function DataProvider({
   }, [source]);
 
   return (
-    <DataContext.Provider value={{ mode, source, state, sync, refresh, resetIndex }}>
+    <DataContext.Provider value={{ mode, source, thumbnails, state, sync, refresh, resetIndex }}>
       {children}
     </DataContext.Provider>
   );

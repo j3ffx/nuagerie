@@ -3,7 +3,7 @@ import { currentDateContext, resolveCaptureDate } from '../dates.ts';
 import { summarize } from '../diagnostics.ts';
 import { createGraphClient, GraphError, type GraphClient } from '../graph/client.ts';
 import { detectScope, resolveFolder, syncRoot } from '../graph/sync.ts';
-import { createThumbnailLoader } from '../graph/thumbnails.ts';
+import { createThumbnailFetcher } from '../graph/thumbnails.ts';
 import type { GraphDriveItem } from '../graph/types.ts';
 import type { IndexProgress, MediaIndex } from '../model.ts';
 import { buildIndex } from '../normalize.ts';
@@ -70,7 +70,7 @@ export interface OneDriveSourceOptions {
 
 export function createOneDriveSource(options: OneDriveSourceOptions): DataSource {
   const client = options.client ?? createGraphClient({ getToken: options.getToken });
-  const thumbnails = createThumbnailLoader(client);
+  const thumbnails = createThumbnailFetcher(client);
   let storePromise: Promise<IndexStore> | null = options.store
     ? Promise.resolve(options.store)
     : null;
@@ -222,6 +222,6 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
       });
     },
 
-    getThumbnailUrl: thumbnails,
+    fetchThumbnail: thumbnails,
   };
 }

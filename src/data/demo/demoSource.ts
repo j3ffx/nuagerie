@@ -3,10 +3,11 @@ import { summarize } from '../diagnostics.ts';
 import { buildIndex } from '../normalize.ts';
 import type { DataSource } from '../source.ts';
 import { generateDemoDataset } from './generator.ts';
-import { demoThumbnailUrl } from './thumbnails.ts';
+import { createDemoThumbnailDrawer } from './thumbnailWorkers.ts';
 
 /** Demo data: synthetic OneDrive generated locally, no account, no network. */
 export function createDemoSource(): DataSource {
+  const drawThumbnail = createDemoThumbnailDrawer();
   const load = () => {
     const context = currentDateContext();
     const dataset = generateDemoDataset({
@@ -42,8 +43,9 @@ export function createDemoSource(): DataSource {
       });
     },
 
-    getThumbnailUrl(item, size) {
-      return Promise.resolve(demoThumbnailUrl(item, size));
+    async fetchThumbnail(item, size, signal) {
+      signal?.throwIfAborted();
+      return { blob: await drawThumbnail(item, size) };
     },
   };
 }

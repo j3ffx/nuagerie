@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { IndexProgress, MediaIndex } from './model.ts';
 import type { DataMode, DataSource } from './source.ts';
+import type { Thumbnails } from './thumbnails/setup.ts';
 
 export type DataState =
   | { status: 'loading'; progress: IndexProgress | null }
@@ -18,6 +19,7 @@ export interface SyncState {
 export interface DataContextValue {
   mode: DataMode;
   source: DataSource;
+  thumbnails: Thumbnails;
   state: DataState;
   sync: SyncState;
   /** Fetches the latest changes now. */

@@ -20,6 +20,16 @@ export interface DataSource {
   reset?(): Promise<void>;
   /** Anonymous summary of the index and checks of the Graph assumptions. */
   diagnose?(): Promise<DiagnosticReport>;
-  /** URL usable in <img src>. May be short-lived for OneDrive. */
-  getThumbnailUrl(item: MediaItem, size: ThumbnailSize): Promise<string>;
+  /**
+   * A thumbnail image, downloaded on a cache miss (see src/data/thumbnails/).
+   * Rejects when the item has none, or with the signal's reason once aborted.
+   */
+  fetchThumbnail(
+    item: MediaItem,
+    size: ThumbnailSize,
+    signal?: AbortSignal,
+  ): Promise<ThumbnailData>;
 }
+
+/** Image bytes to keep in the cache, or (when they cannot be read) a URL to show as is. */
+export type ThumbnailData = { blob: Blob } | { url: string };
