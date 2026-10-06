@@ -9,6 +9,7 @@ import {
   thumbnailPath,
   thumbnailUrlIn,
 } from '../graph/thumbnails.ts';
+import { createOriginalUrlLoader } from '../graph/originals.ts';
 import type { GraphDriveItem } from '../graph/types.ts';
 import type { IndexProgress, MediaIndex } from '../model.ts';
 import { buildIndex } from '../normalize.ts';
@@ -144,6 +145,7 @@ export interface OneDriveSourceOptions {
 export function createOneDriveSource(options: OneDriveSourceOptions): DataSource {
   const client = options.client ?? createGraphClient({ getToken: options.getToken });
   const thumbnails = createThumbnailFetcher(client);
+  const originalUrls = createOriginalUrlLoader(client);
   let storePromise: Promise<IndexStore> | null = options.store
     ? Promise.resolve(options.store)
     : null;
@@ -304,5 +306,7 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
     },
 
     fetchThumbnail: thumbnails,
+
+    getOriginalUrl: originalUrls,
   };
 }

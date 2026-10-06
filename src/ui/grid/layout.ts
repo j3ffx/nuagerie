@@ -77,3 +77,13 @@ export function rowIndexAt(layout: GridLayout, offset: number): number {
 export function sectionIndexAt(layout: GridLayout, offset: number): number {
   return layout.rows.length === 0 ? -1 : (layout.rows[rowIndexAt(layout, offset)]?.section ?? -1);
 }
+
+/** Index of the row holding the item, or -1. */
+export function rowIndexOfItem(layout: GridLayout, id: string): number {
+  return layout.rows.findIndex((row) => {
+    if (row.kind !== 'cells') return false;
+    const items = layout.sections[row.section]?.items ?? [];
+    for (let i = row.from; i < row.to; i++) if (items[i]?.id === id) return true;
+    return false;
+  });
+}

@@ -54,12 +54,13 @@ test('shows every item grouped by month', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText(
     /^\p{Lu}\p{Ll}+ \d{4}$/u,
   );
+  // Each cell is a link named after the photo; its thumbnail is decorative.
   const first = page
     .getByRole('main')
-    .getByRole('img', { name: /^(Photo|Vidéo)/ })
+    .getByRole('link', { name: /^(Photo|Vidéo)/ })
     .first();
-  await expect(first).toHaveAttribute('alt', /^(Photo|Vidéo) du \d{1,2} \S+ \d{4}$/);
-  await expect(first).toHaveJSProperty('complete', true);
+  await expect(first).toHaveAccessibleName(/^(Photo|Vidéo) du \d{1,2} \S+ \d{4}$/);
+  await expect(first.locator('img')).toHaveJSProperty('complete', true);
 });
 
 test('counts geotagged photos on the map placeholder', async ({ page }) => {

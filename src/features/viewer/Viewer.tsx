@@ -1,0 +1,525 @@
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type WheelEvent as ReactWheelEvent,
+} from 'react';
+import { createPortal } from 'react-dom';
+import { useData, useMediaIndex } from '../../data/dataContext.ts';
+import type { MediaItem } from '../../data/model.ts';
+import { formatCoordinates, formatTakenDateTime } from '../../lib/format.ts';
+import { BackIcon, ChevronIcon, MapIcon, OpenIcon } from '../../ui/icons.tsx';
+import {
+  clampZoom,
+  closesOnDrag,
+  fitSize,
+  itemAspect,
+  NO_ZOOM,
+  swipeOutcome,
+  toggleZoom,
+  zoomAt,
+  type Size,
+  type Zoom,
+} from './gestures.ts';
+import { ViewerSlide } from './ViewerSlide.tsx';
+import styles from './Viewer.module.css';
+
+const TAP_MOVE = 10;
+const DOUBLE_TAP_MS = 300;
+
+type Mode = 'idle' | 'pending' | 'swipe' | 'pan' | 'pinch' | 'dismiss' | 'ignore';
+
+interface Gesture {
+  mode: Mode;
+  pointers: Map<number, { x: number; y: number }>;
+  startX: number;
+  startY: number;
+  lastX: number;
+  lastY: number;
+  lastTime: number;
+  velocityX: number;
+  velocityY: number;
+  startZoom: Zoom;
+  startDistance: number;
+  startMid: { x: number; y: number };
+}
+
+const newGesture = (): Gesture => ({
+  mode: 'idle',
+  pointers: new Map(),
+  startX: 0,
+  startY: 0,
+  lastX: 0,
+  lastY: 0,
+  lastTime: 0,
+  velocityX: 0,
+  velocityY: 0,
+  startZoom: NO_ZOOM,
+  startDistance: 1,
+  startMid: { x: 0, y: 0 },
+});
+
+/** Runs `done` after a CSS transition, at once when motion is reduced (no transition). */
+function transition(element: HTMLElement, apply: () => void, done: () => void) {
+  const duration = parseFloat(getComputedStyle(element).getPropertyValue('--duration')) || 0;
+  element.style.transition = `transform ${duration}ms var(--ease), opacity ${duration}ms var(--ease)`;
+  apply();
+  if (duration === 0) {
+    done();
+    return;
+  }
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    element.removeEventListener('transitionend', finish);
+    done();
+  };
+  element.addEventListener('transitionend', finish);
+  window.setTimeout(finish, duration + 80);
+}
+
+function useViewSize(): Size {
+  const read = () => ({ width: window.innerWidth, height: window.innerHeight });
+  const [view, setView] = useState(read);
+  useEffect(() => {
+    const onResize = () => setView(read());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return view;
+}
+
+/**
+ * Full-screen viewer: swipe between pictures, pinch or double-tap to zoom,
+ * drag down to close; arrows and Escape on a keyboard. The gestures move the
+ * DOM directly (no React render per frame); React renders when the picture
+ * changes. The app behind is inert while it is open.
+ */
+export function Viewer({
+  items,
+  index,
+  onShow,
+  onClose,
+}: {
+  items: readonly MediaItem[];
+  index: number;
+  onShow: (id: string) => void;
+  onClose: () => void;
+}) {
+  const view = useViewSize();
+  const item = items[index];
+  const previous = items[index - 1];
+  const next = items[index + 1];
+
+  const stageRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const gesture = useRef<Gesture>(newGesture());
+  const zoom = useRef<Zoom>(NO_ZOOM);
+  const aspects = useRef(new Map<string, number>());
+  const lastTap = useRef<{ time: number; x: number; y: number } | null>(null);
+  const tapTimer = useRef(0);
+  const [chrome, setChrome] = useState(true);
+
+  // The app behind: no scrolling, no focus, hidden from screen readers.
+  useEffect(() => {
+    const root = document.getElementById('root');
+    const html = document.documentElement;
+    const overflow = html.style.overflow;
+    html.style.overflow = 'hidden';
+    if (root) root.inert = true;
+    return () => {
+      html.style.overflow = overflow;
+      if (root) root.inert = false;
+    };
+  }, []);
+
+  const fitted = useCallback(
+    (target: MediaItem | undefined): Size =>
+      fitSize(view, target ? (aspects.current.get(target.id) ?? itemAspect(target)) : 1),
+    [view],
+  );
+
+  const zoomElement = () =>
+    stageRef.current?.querySelector<HTMLElement>('[data-active] [data-zoom]') ?? null;
+
+  const applyZoom = (value: Zoom) => {
+    zoom.current = value;
+    const element = zoomElement();
+    if (element) {
+      element.style.transition = 'none';
+      element.style.transform =
+        value.scale === 1 && value.x === 0 && value.y === 0
+          ? ''
+          : `translate(${value.x}px, ${value.y}px) scale(${value.scale})`;
+    }
+  };
+
+  const setTrack = (x: number, y = 0, fade = 1) => {
+    const track = trackRef.current;
+    const stage = stageRef.current;
+    if (!track || !stage) return;
+    track.style.transition = 'none';
+    track.style.transform = x || y ? `translate(${x}px, ${y}px)` : '';
+    stage.style.setProperty('--backdrop', String(fade));
+  };
+
+  // A new picture starts unzoomed, centred.
+  useLayoutEffect(() => {
+    zoom.current = NO_ZOOM;
+    setTrack(0);
+    stageRef.current
+      ?.querySelectorAll<HTMLElement>('[data-zoom]')
+      .forEach((element) => (element.style.transform = ''));
+  }, [index]);
+
+  const go = useCallback(
+    (step: 1 | -1) => {
+      const target = items[index + step];
+      const track = trackRef.current;
+      if (!target || !track) return;
+      transition(
+        track,
+        () => (track.style.transform = `translateX(${-step * view.width}px)`),
+        () => onShow(target.id),
+      );
+    },
+    [items, index, onShow, view.width],
+  );
+
+  // Keyboard (PC): arrows move, Escape closes.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight') go(1);
+      else if (event.key === 'ArrowLeft') go(-1);
+      else if (event.key === 'Escape') onClose();
+      else return;
+      event.preventDefault();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [go, onClose]);
+
+  useEffect(() => () => window.clearTimeout(tapTimer.current), []);
+
+  /** Pointer position relative to the centre of the screen. */
+  const fromCentre = (x: number, y: number) => ({ x: x - view.width / 2, y: y - view.height / 2 });
+
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    // Video controls and buttons keep their own touches.
+    if ((event.target as HTMLElement).closest('video, button, a')) return;
+    const g = gesture.current;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    g.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (g.pointers.size === 2) {
+      const [a, b] = [...g.pointers.values()] as [
+        { x: number; y: number },
+        { x: number; y: number },
+      ];
+      setTrack(0);
+      g.mode = 'pinch';
+      g.startZoom = zoom.current;
+      g.startDistance = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      g.startMid = fromCentre((a.x + b.x) / 2, (a.y + b.y) / 2);
+      return;
+    }
+    if (g.pointers.size > 2) return;
+    g.mode = 'pending';
+    g.startX = g.lastX = event.clientX;
+    g.startY = g.lastY = event.clientY;
+    g.lastTime = event.timeStamp;
+    g.velocityX = g.velocityY = 0;
+    g.startZoom = zoom.current;
+  };
+
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const g = gesture.current;
+    if (!g.pointers.has(event.pointerId)) return;
+    g.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const dt = Math.max(1, event.timeStamp - g.lastTime);
+    g.velocityX = (event.clientX - g.lastX) / dt;
+    g.velocityY = (event.clientY - g.lastY) / dt;
+    g.lastX = event.clientX;
+    g.lastY = event.clientY;
+    g.lastTime = event.timeStamp;
+
+    const current = fitted(item);
+    if (g.mode === 'pinch') {
+      const [a, b] = [...g.pointers.values()] as [
+        { x: number; y: number },
+        { x: number; y: number },
+      ];
+      if (!a || !b) return;
+      const distance = Math.hypot(a.x - b.x, a.y - b.y);
+      const mid = fromCentre((a.x + b.x) / 2, (a.y + b.y) / 2);
+      const scaled = zoomAt(
+        g.startZoom,
+        (g.startZoom.scale * distance) / g.startDistance,
+        g.startMid.x,
+        g.startMid.y,
+        current,
+        view,
+      );
+      applyZoom(
+        clampZoom(
+          { ...scaled, x: scaled.x + mid.x - g.startMid.x, y: scaled.y + mid.y - g.startMid.y },
+          current,
+          view,
+        ),
+      );
+      return;
+    }
+
+    const dx = event.clientX - g.startX;
+    const dy = event.clientY - g.startY;
+    if (g.mode === 'pending') {
+      if (Math.hypot(dx, dy) < TAP_MOVE) return;
+      if (zoom.current.scale > 1.01) g.mode = 'pan';
+      else if (Math.abs(dx) > Math.abs(dy)) g.mode = 'swipe';
+      else g.mode = dy > 0 ? 'dismiss' : 'ignore';
+    }
+    if (g.mode === 'pan') {
+      applyZoom(
+        clampZoom({ ...g.startZoom, x: g.startZoom.x + dx, y: g.startZoom.y + dy }, current, view),
+      );
+    } else if (g.mode === 'swipe') {
+      // Resistance past the first and last pictures.
+      const blocked = (dx > 0 && !previous) || (dx < 0 && !next);
+      setTrack(blocked ? dx * 0.25 : dx);
+    } else if (g.mode === 'dismiss') {
+      setTrack(0, Math.max(0, dy), Math.max(0.2, 1 - dy / view.height));
+    }
+  };
+
+  const endGesture = (event: ReactPointerEvent<HTMLDivElement>, cancelled = false) => {
+    const g = gesture.current;
+    if (!g.pointers.delete(event.pointerId)) return;
+    const track = trackRef.current;
+    const stage = stageRef.current;
+
+    if (g.mode === 'pinch') {
+      // One finger left: it pans from here, without a jump.
+      const rest = [...g.pointers.values()][0];
+      if (rest) {
+        g.mode = 'pan';
+        g.startX = rest.x;
+        g.startY = rest.y;
+        g.startZoom = zoom.current;
+      } else {
+        g.mode = 'idle';
+      }
+      return;
+    }
+    if (g.pointers.size > 0) return;
+
+    const dx = event.clientX - g.startX;
+    const dy = event.clientY - g.startY;
+    const mode = g.mode;
+    g.mode = 'idle';
+    if (cancelled || !track || !stage) {
+      setTrack(0);
+      return;
+    }
+
+    if (mode === 'swipe') {
+      const step = swipeOutcome(dx, g.velocityX, view.width);
+      if (step !== 0 && items[index + step]) go(step);
+      else
+        transition(
+          track,
+          () => (track.style.transform = ''),
+          () => setTrack(0),
+        );
+    } else if (mode === 'dismiss') {
+      if (closesOnDrag(dy, g.velocityY, view.height)) onClose();
+      else
+        transition(
+          track,
+          () => {
+            track.style.transform = '';
+            stage.style.setProperty('--backdrop', '1');
+          },
+          () => setTrack(0),
+        );
+    } else if (mode === 'pending') {
+      onTap(event.clientX, event.clientY, event.timeStamp);
+    }
+  };
+
+  /** Double tap zooms; a single tap shows or hides the bars. */
+  const onTap = (x: number, y: number, time: number) => {
+    const last = lastTap.current;
+    if (last && time - last.time < DOUBLE_TAP_MS && Math.hypot(x - last.x, y - last.y) < 30) {
+      window.clearTimeout(tapTimer.current);
+      lastTap.current = null;
+      const point = fromCentre(x, y);
+      const target = toggleZoom(zoom.current, point.x, point.y, fitted(item), view);
+      const element = zoomElement();
+      if (element) {
+        transition(
+          element,
+          () => {
+            zoom.current = target;
+            element.style.transform =
+              target.scale === 1
+                ? ''
+                : `translate(${target.x}px, ${target.y}px) scale(${target.scale})`;
+          },
+          () => undefined,
+        );
+      }
+      return;
+    }
+    lastTap.current = { time, x, y };
+    window.clearTimeout(tapTimer.current);
+    tapTimer.current = window.setTimeout(() => setChrome((shown) => !shown), DOUBLE_TAP_MS);
+  };
+
+  const onWheel = (event: ReactWheelEvent<HTMLDivElement>) => {
+    const point = fromCentre(event.clientX, event.clientY);
+    applyZoom(
+      zoomAt(
+        zoom.current,
+        zoom.current.scale * Math.exp(-event.deltaY * 0.002),
+        point.x,
+        point.y,
+        fitted(item),
+        view,
+      ),
+    );
+  };
+
+  const onAspect = useCallback((id: string, aspect: number) => {
+    aspects.current.set(id, aspect);
+  }, []);
+
+  if (!item) return null;
+
+  return createPortal(
+    <div
+      className={styles.viewer}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Visionneuse"
+      data-chrome={chrome || undefined}
+    >
+      <div
+        ref={stageRef}
+        className={styles.stage}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={(event) => endGesture(event)}
+        onPointerCancel={(event) => endGesture(event, true)}
+        onWheel={onWheel}
+      >
+        <div ref={trackRef} className={styles.track}>
+          {[previous, item, next].map((slide, i) =>
+            slide ? (
+              <ViewerSlide
+                key={slide.id}
+                item={slide}
+                offset={i - 1}
+                active={i === 1}
+                view={view}
+                onAspect={onAspect}
+              />
+            ) : null,
+          )}
+        </div>
+      </div>
+
+      <ViewerBar item={item} onClose={onClose} />
+
+      {previous && (
+        <button
+          type="button"
+          className={`${styles.step} ${styles.stepPrevious}`}
+          onClick={() => go(-1)}
+          aria-label="Photo précédente"
+        >
+          <ChevronIcon />
+        </button>
+      )}
+      {next && (
+        <button
+          type="button"
+          className={`${styles.step} ${styles.stepNext}`}
+          onClick={() => go(1)}
+          aria-label="Photo suivante"
+        >
+          <ChevronIcon />
+        </button>
+      )}
+    </div>,
+    document.body,
+  );
+}
+
+/** Date, album and place of the picture, close and "open the original" buttons. */
+function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) {
+  const { source } = useData();
+  const index = useMediaIndex();
+  const album = index?.folders.get(item.albumId)?.name ?? null;
+  const [opening, setOpening] = useState(false);
+
+  const openOriginal = async () => {
+    // Opened before the (async) URL is known, or the browser would block the window.
+    const target = window.open('', '_blank');
+    setOpening(true);
+    try {
+      const url = await source.getOriginalUrl(item);
+      if (url && target) target.location.href = url;
+      else target?.close();
+    } catch {
+      target?.close();
+    } finally {
+      setOpening(false);
+    }
+  };
+
+  return (
+    <>
+      <header className={styles.top}>
+        <button
+          type="button"
+          className={styles.icon}
+          onClick={onClose}
+          aria-label="Fermer"
+          autoFocus
+        >
+          <BackIcon />
+        </button>
+        <div className={styles.caption}>
+          <p className={styles.date}>
+            {item.takenAt === null
+              ? 'Sans date'
+              : formatTakenDateTime({ takenAt: item.takenAt, dateSource: item.dateSource })}
+          </p>
+          {album && <p className={styles.album}>{album}</p>}
+        </div>
+        {!(item.kind === 'video' && source.mode === 'demo') && (
+          <button
+            type="button"
+            className={styles.icon}
+            onClick={() => void openOriginal()}
+            disabled={opening}
+            aria-label="Ouvrir l’original"
+            title="Ouvrir l’original"
+          >
+            <OpenIcon />
+          </button>
+        )}
+      </header>
+      {item.latitude !== null && item.longitude !== null && (
+        <footer className={styles.bottom}>
+          <MapIcon width={18} height={18} />
+          <span>{formatCoordinates(item.latitude, item.longitude)}</span>
+        </footer>
+      )}
+    </>
+  );
+}

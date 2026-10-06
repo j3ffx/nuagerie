@@ -30,6 +30,15 @@
   gap: 2px;
 }
 
+.cell {
+  display: block;
+  border-radius: 0;
+}
+
+.cell:focus-visible {
+  outline-offset: -3px;
+}
+
 /* Zero-height sticky layer: the current month floats over the rows. */
 .stickyHost {
   position: sticky;

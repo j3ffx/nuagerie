@@ -100,3 +100,19 @@ export function PlayIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function OpenIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+    </Icon>
+  );
+}
+
+export function FilterIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 6h16M7 12h10M10 18h4" />
+    </Icon>
+  );
+}

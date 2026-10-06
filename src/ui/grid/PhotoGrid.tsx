@@ -1,10 +1,21 @@
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from 'react';
 import { groupByMonth } from '../../data/grouping.ts';
 import type { MediaItem } from '../../data/model.ts';
+import { describeItem } from '../../lib/format.ts';
 import { Thumbnail } from '../Thumbnail.tsx';
 import { DateScrubber } from './DateScrubber.tsx';
-import { buildGridLayout, type GridLayout, type GridRow } from './layout.ts';
+import { buildGridLayout, rowIndexOfItem, type GridLayout, type GridRow } from './layout.ts';
+import { stickyHeaderHeight } from './page.ts';
 import { StickyMonth } from './StickyMonth.tsx';
 import styles from './PhotoGrid.module.css';
 
@@ -17,9 +28,22 @@ const WIDE_QUERY = '(min-width: 900px)';
  * Photos grouped by month ("Octobre 2026"), "Sans date" last, in a window-
  * scrolled virtual list: only the rows near the screen exist in the DOM, so
  * 20 000 items scroll as smoothly as 20. A date scrubber appears on the right
- * while scrolling.
+ * while scrolling. Cells are links to the photo (`href`), opened by `onOpen`.
  */
-export function PhotoGrid({ items, label }: { items: readonly MediaItem[]; label: string }) {
+export function PhotoGrid({
+  items,
+  label,
+  href,
+  onOpen,
+  reveal,
+}: {
+  items: readonly MediaItem[];
+  label: string;
+  href: (item: MediaItem) => string;
+  onOpen: (item: MediaItem) => void;
+  /** Brings this item into view and focuses it (new object = new request). */
+  reveal?: { id: string } | null;
+}) {
   const sections = useMemo(() => groupByMonth(items), [items]);
   const rowsRef = useRef<HTMLDivElement>(null);
   const { width, gridTop } = useGridPlacement(rowsRef);
@@ -39,6 +63,26 @@ export function PhotoGrid({ items, label }: { items: readonly MediaItem[]; label
     scrollMargin: gridTop,
   });
 
+  // Back from the viewer: the last photo seen is on screen, and focused.
+  useEffect(() => {
+    if (!reveal) return;
+    const rowIndex = rowIndexOfItem(layout, reveal.id);
+    const row = layout.rows[rowIndex];
+    if (!row) return;
+    const top = gridTop + row.start;
+    const visibleTop = window.scrollY + stickyHeaderHeight() + HEADER_SIZE;
+    const visibleBottom = window.scrollY + window.innerHeight - 80;
+    if (top < visibleTop || top + row.size > visibleBottom) {
+      window.scrollTo({ top: top - stickyHeaderHeight() - HEADER_SIZE, behavior: 'instant' });
+    }
+    // Focus once the row is rendered.
+    requestAnimationFrame(() =>
+      document
+        .querySelector<HTMLElement>(`[data-item-id="${CSS.escape(reveal.id)}"]`)
+        ?.focus({ preventScroll: true }),
+    );
+  }, [reveal]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <section aria-label={label} className={styles.grid}>
       <StickyMonth layout={layout} gridTop={gridTop} />
@@ -51,6 +95,8 @@ export function PhotoGrid({ items, label }: { items: readonly MediaItem[]; label
               row={row}
               layout={layout}
               top={virtualRow.start - virtualizer.options.scrollMargin}
+              href={href}
+              onOpen={onOpen}
             />
           ) : null;
         })}
@@ -64,10 +110,14 @@ const Row = memo(function Row({
   row,
   layout,
   top,
+  href,
+  onOpen,
 }: {
   row: GridRow;
   layout: GridLayout;
   top: number;
+  href: (item: MediaItem) => string;
+  onOpen: (item: MediaItem) => void;
 }) {
   const section = layout.sections[row.section];
   if (!section) return null;
@@ -85,7 +135,21 @@ const Row = memo(function Row({
       style={{ ...style, gridTemplateColumns: `repeat(${layout.columns}, 1fr)` }}
     >
       {section.items.slice(row.from, row.to).map((item) => (
-        <Thumbnail key={item.id} item={item} />
+        <a
+          key={item.id}
+          href={href(item)}
+          className={styles.cell}
+          data-item-id={item.id}
+          aria-label={describeItem(item)}
+          onClick={(event: MouseEvent) => {
+            // New tab, new window: let the browser do it.
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+            event.preventDefault();
+            onOpen(item);
+          }}
+        >
+          <Thumbnail item={item} decorative />
+        </a>
       ))}
     </div>
   );

@@ -53,6 +53,38 @@ export function formatLongDate(takenAt: number): string {
   return longDateFormat.format(takenAt);
 }
 
+const takenDateTimeFormat = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'UTC',
+});
+
+/**
+ * Capture date and time: "6 octobre 2026 à 14:32". A date read from a file
+ * name without a time (WhatsApp) shows no time rather than a false midnight.
+ */
+export function formatTakenDateTime(item: { takenAt: number; dateSource: string | null }): string {
+  const midnight = item.takenAt % 86_400_000 === 0;
+  return item.dateSource === 'filename' && midnight
+    ? formatLongDate(item.takenAt)
+    : takenDateTimeFormat.format(item.takenAt);
+}
+
+const coordinateFormat = new Intl.NumberFormat('fr-FR', {
+  minimumFractionDigits: 4,
+  maximumFractionDigits: 4,
+});
+
+/** "48,8566° N, 2,3522° E" */
+export function formatCoordinates(latitude: number, longitude: number): string {
+  const lat = `${coordinateFormat.format(Math.abs(latitude))}° ${latitude < 0 ? 'S' : 'N'}`;
+  const lon = `${coordinateFormat.format(Math.abs(longitude))}° ${longitude < 0 ? 'O' : 'E'}`;
+  return `${lat}, ${lon}`;
+}
+
 /** "06/10/26" */
 export function formatShortDate(takenAt: number): string {
   return shortDateFormat.format(takenAt);

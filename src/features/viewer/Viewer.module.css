@@ -1,0 +1,219 @@
+/* Always dark, whatever the theme: photos read best on black. */
+.viewer {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  color: #f2f6fc;
+  color-scheme: dark;
+}
+
+.stage {
+  --backdrop: 1;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: rgb(0 0 0 / var(--backdrop));
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.track,
+.slide,
+.zoom {
+  position: absolute;
+  inset: 0;
+}
+
+.slide {
+  will-change: transform;
+}
+
+.zoom {
+  display: grid;
+  place-items: center;
+  transform-origin: 50% 50%;
+}
+
+.frame {
+  position: relative;
+}
+
+.preview,
+.picture,
+.video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The square grid thumbnail, stretched to the picture's shape until the large one is ready. */
+.preview {
+  object-fit: cover;
+  filter: blur(6px);
+  transform: scale(1.02);
+}
+
+.picture {
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity var(--duration) var(--ease);
+}
+
+.picture[data-shown] {
+  opacity: 1;
+}
+
+.video {
+  background: #000;
+  object-fit: contain;
+}
+
+.videoCover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.play {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+}
+
+.play svg {
+  width: 34px;
+  height: 34px;
+  margin-left: 4px;
+  fill: currentColor;
+}
+
+.play:disabled {
+  opacity: 0.6;
+}
+
+.notice {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: rgb(0 0 0 / 0.65);
+  font-weight: 700;
+}
+
+/* Bars over the picture; a tap hides them. */
+.top,
+.bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition: opacity var(--duration) var(--ease);
+}
+
+.viewer:not([data-chrome]) .top,
+.viewer:not([data-chrome]) .bottom,
+.viewer:not([data-chrome]) .step {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.top {
+  top: 0;
+  padding: calc(env(safe-area-inset-top) + var(--space-2)) var(--space-2) var(--space-6);
+  background: linear-gradient(rgb(0 0 0 / 0.75), rgb(0 0 0 / 0.45) 60%, transparent);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.6);
+}
+
+.bottom {
+  bottom: 0;
+  padding: var(--space-6) var(--space-4) calc(env(safe-area-inset-bottom) + var(--space-4));
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.45) 40%, rgb(0 0 0 / 0.75));
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.6);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.caption {
+  flex: 1;
+  min-width: 0;
+}
+
+.date,
+.album {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.date {
+  font-weight: 800;
+}
+
+.album {
+  color: #dbe5f3;
+  font-size: 14px;
+}
+
+.icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+}
+
+.icon:disabled {
+  opacity: 0.5;
+}
+
+.icon:focus-visible,
+.step:focus-visible,
+.play:focus-visible {
+  outline-color: #9fcbff;
+}
+
+/* Previous / next buttons, on screens with a mouse. */
+.step {
+  position: absolute;
+  top: 50%;
+  display: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-top: -24px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: rgb(0 0 0 / 0.45);
+  color: #fff;
+  transition: opacity var(--duration) var(--ease);
+}
+
+.stepPrevious {
+  left: var(--space-3);
+}
+
+.stepPrevious svg {
+  transform: rotate(180deg);
+}
+
+.stepNext {
+  right: var(--space-3);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .step {
+    display: grid;
+  }
+}

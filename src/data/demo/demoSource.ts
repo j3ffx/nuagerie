@@ -43,6 +43,12 @@ export function createDemoSource(): DataSource {
       });
     },
 
+    async getOriginalUrl(item) {
+      // No real file: a large drawing stands for a photo; demo videos cannot play.
+      if (item.kind === 'video') return null;
+      return URL.createObjectURL(await drawThumbnail(item, 'large'));
+    },
+
     async fetchThumbnail(item, size, signal) {
       signal?.throwIfAborted();
       return { blob: await drawThumbnail(item, size) };

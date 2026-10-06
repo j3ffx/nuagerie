@@ -29,6 +29,11 @@ export interface DataSource {
     size: ThumbnailSize,
     signal?: AbortSignal,
   ): Promise<ThumbnailData>;
+  /**
+   * Short-lived URL of the original file, to play a video or open the file;
+   * null when there is none to give (demo videos).
+   */
+  getOriginalUrl(item: MediaItem): Promise<string | null>;
 }
 
 /** Image bytes to keep in the cache, or (when they cannot be read) a URL to show as is. */

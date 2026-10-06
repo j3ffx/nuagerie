@@ -9,8 +9,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('renders only the rows near the screen, out of 20 000 items', async ({ page }) => {
-  await expect(page.getByRole('main').getByRole('img').first()).toBeVisible();
-  expect(await page.getByRole('main').getByRole('img').count()).toBeLessThan(150);
+  await expect(page.getByRole('main').locator('img').first()).toBeVisible();
+  expect(await page.getByRole('main').locator('img').count()).toBeLessThan(150);
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeGreaterThan(100_000);
   // Nothing wider than the screen.
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
@@ -40,7 +40,7 @@ test('shows the date scrubber while scrolling, and jumps to "Sans date" at the e
   await expect(
     page
       .getByRole('main')
-      .getByRole('img', { name: /sans date$/ })
+      .getByRole('link', { name: /sans date$/ })
       .last(),
   ).toBeInViewport();
 
@@ -61,7 +61,7 @@ test('moves through the months and years with the keyboard', async ({ page }) =>
 });
 
 test('keeps thumbnails on the device and can empty the cache', async ({ page }) => {
-  await expect(page.getByRole('main').getByRole('img').first()).toHaveJSProperty('complete', true);
+  await expect(page.getByRole('main').locator('img').first()).toHaveJSProperty('complete', true);
   await page
     .getByRole('navigation', { name: 'Navigation principale' })
     .getByRole('link', { name: 'Réglages' })

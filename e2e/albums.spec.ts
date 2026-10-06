@@ -21,7 +21,7 @@ test('opens an album, its sub-albums, and goes back to the parent', async ({ pag
   await expect(page.getByRole('heading', { name: '2 sous-albums' })).toBeVisible();
   await expect(page.getByText(/^\d[\d\s]* éléments · \d{4}/)).toBeVisible();
   const grid = page.getByLabel('Photos et vidéos de Animaux');
-  await expect(grid.getByRole('img').first()).toBeVisible();
+  await expect(grid.locator('img').first()).toBeVisible();
 
   await page.getByRole('link', { name: 'Retour à Albums' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Albums' })).toBeVisible();
