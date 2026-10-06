@@ -66,6 +66,10 @@ commit metadata.
   and never shifted; otherwise a date read from the file name; otherwise none ("Sans date"). Never
   `createdDateTime` or `lastModifiedDateTime` (upload or export dates). A date is accepted only if it is
   real and between 2000 and today + 1 day. Undated items always come last, whatever the sort.
+  Measured on a real drive (diagnostic "EXIF minus name"): videos take the name first, because their
+  `takenDateTime` is the MP4 container time in UTC; OneDrive iPhone uploads (`…_iOS`) and 13-digit
+  timestamps are UTC instants, shown in the device's time zone. Any new rule gets a unit test and a
+  case in the demo generator, whose expected dates are checked for all 20,000 files.
 - **Albums:** a folder is a potential album. Technical folders are never albums: years (`^\d{4}$`),
   months under a year (`^(0[1-9]|1[0-2])$`) and `Sans date`; their files belong to the nearest
   non-technical parent (`src/data/technical.ts`). An album shows only its own files, not its sub-albums'.
