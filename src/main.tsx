@@ -1,8 +1,8 @@
 import type { AccountInfo } from '@azure/msal-browser';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { registerSW } from 'virtual:pwa-register';
 import { App } from './app/App.tsx';
+import { initUpdates } from './app/updates.ts';
 import { initAuth, REDIRECT_PATH } from './auth/msal.ts';
 import { resolveDataMode } from './data/mode.ts';
 
@@ -19,7 +19,7 @@ async function start() {
   }
 
   // Production only (no service worker in dev, so hot reload is never stale).
-  registerSW({ immediate: true });
+  initUpdates();
 
   const mode = resolveDataMode();
   let account: AccountInfo | null = null;

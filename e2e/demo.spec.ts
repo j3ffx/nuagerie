@@ -102,3 +102,12 @@ test('is an installable PWA with an active service worker', async ({ page }) => 
     .poll(() => page.evaluate(async () => (await navigator.serviceWorker.ready).active?.state))
     .toBe('activated');
 });
+
+test('checks for updates on demand and reports when up to date', async ({ page }) => {
+  await page.goto('/reglages');
+  await expect
+    .poll(() => page.evaluate(async () => (await navigator.serviceWorker.ready).active?.state))
+    .toBe('activated');
+  await page.getByRole('button', { name: 'Rechercher une mise à jour' }).click();
+  await expect(page.getByText('à jour', { exact: true })).toBeVisible();
+});

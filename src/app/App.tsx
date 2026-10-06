@@ -22,6 +22,7 @@ import { SignInScreen } from '../features/welcome/SignInScreen.tsx';
 import { useApplyTheme } from '../lib/theme.ts';
 import styles from './App.module.css';
 import { NavBar } from './NavBar.tsx';
+import { UpdateBanner } from './UpdateBanner.tsx';
 import { useScrollToTop } from './useScrollToTop.ts';
 
 export function App({
@@ -70,6 +71,7 @@ function Shell() {
         Aller au contenu
       </a>
       <NavBar />
+      <UpdateBanner />
       <main id="main" className={styles.main}>
         <Switch>
           <Route path="/" component={AlbumsScreen} />

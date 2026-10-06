@@ -5,6 +5,8 @@ import { formatCount, formatDateTime } from '../../lib/format.ts';
 import { useThemePreference, type ThemePreference } from '../../lib/theme.ts';
 import common from '../../ui/common.module.css';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
+import { checkForUpdate } from '../../app/updates.ts';
+import { AboutSection } from './AboutSection.tsx';
 import { AccountSection } from './AccountSection.tsx';
 
 const THEMES: { value: ThemePreference; label: string }[] = [
@@ -98,7 +100,10 @@ export function SettingsScreen() {
                 <button
                   type="button"
                   className={common.buttonSoft}
-                  onClick={refresh}
+                  onClick={() => {
+                    refresh();
+                    void checkForUpdate({ quiet: true });
+                  }}
                   disabled={sync.status === 'running' || state.status !== 'ready'}
                 >
                   Mettre à jour maintenant
@@ -119,20 +124,7 @@ export function SettingsScreen() {
           </div>
         </section>
 
-        <section className={common.section} aria-labelledby="settings-about">
-          <h2 id="settings-about" className={common.sectionTitle}>
-            À propos
-          </h2>
-          <div className={common.card}>
-            <dl className={common.definitionList}>
-              <dt>Version</dt>
-              <dd>
-                {__APP_VERSION__}
-                {__APP_COMMIT__ && ` (${__APP_COMMIT__})`}
-              </dd>
-            </dl>
-          </div>
-        </section>
+        <AboutSection />
       </div>
     </>
   );

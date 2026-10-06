@@ -4,22 +4,26 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { lanQrCode } from './build/lan-qr.ts';
+import { currentCommit, versionFile } from './build/version.ts';
 
 export default defineConfig(({ mode }) => {
   const lan = mode === 'lan';
-  const commit = process.env.CF_PAGES_COMMIT_SHA ?? process.env.GITHUB_SHA ?? '';
+  const commit = currentCommit();
+  const version = process.env.npm_package_version ?? '0.0.0';
 
   return {
     plugins: [
       react(),
       lan && basicSsl({ name: 'nuagerie-dev' }),
       lan && lanQrCode(),
+      versionFile({ version, commit }),
       VitePWA({
         // Custom service worker: the thumbnail cache needs our own logic.
         strategies: 'injectManifest',
         srcDir: 'src',
         filename: 'sw.ts',
-        registerType: 'autoUpdate',
+        // A new version waits until the user chooses to load it (banner, settings).
+        registerType: 'prompt',
         injectRegister: false,
         manifest: {
           id: '/',
@@ -52,8 +56,8 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     define: {
-      __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.0.0'),
-      __APP_COMMIT__: JSON.stringify(commit.slice(0, 7)),
+      __APP_VERSION__: JSON.stringify(version),
+      __APP_COMMIT__: JSON.stringify(commit),
     },
     server: {
       host: lan ? true : 'localhost',

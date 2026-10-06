@@ -12,8 +12,11 @@ declare let self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: (string | PrecacheEntry)[];
 };
 
-// New versions take over immediately: a deploy is visible on the next load.
-void self.skipWaiting();
+// A new version waits until the app asks for it ("Mettre à jour"), so the page
+// is never reloaded by surprise. The first install takes control at once.
+self.addEventListener('message', (event) => {
+  if ((event.data as { type?: string } | null)?.type === 'SKIP_WAITING') void self.skipWaiting();
+});
 clientsClaim();
 
 // App shell: everything produced by the build is precached.
