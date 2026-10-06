@@ -1,0 +1,35 @@
+# Local working notes, never committed
+PROMPT_V0.md
+
+# Local configuration (Client ID, etc.) — only .env.example is versioned
+.env
+.env.*
+!.env.example
+
+# Optional local deny-list used by scripts/check-tracked.mjs
+.private-patterns
+
+# Dependencies and build output
+node_modules/
+dist/
+dev-dist/
+*.tsbuildinfo
+
+# Tests
+coverage/
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+
+# Local tooling
+.wrangler/
+.vite/
+*.local
+*.log
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.claude/

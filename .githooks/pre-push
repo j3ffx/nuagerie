@@ -1,0 +1,4 @@
+#!/bin/sh
+# Refuse to push if a private file or identity would be published.
+# Enabled with: git config core.hooksPath .githooks
+exec node scripts/check-tracked.mjs
