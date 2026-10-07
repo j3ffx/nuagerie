@@ -21,7 +21,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('groups the photos by place, and zooms into a group', async ({ page }) => {
-  await expect(zoneTitle(page)).toHaveText(/^[\d\s]+ photos dans cette zone$/);
+  await expect(zoneTitle(page)).toHaveText(/^[\d\s]+ éléments dans cette zone$/);
   await expect(page.getByText('contributeurs OpenStreetMap')).toBeVisible();
   const before = await zoneCount(page);
   // The group with the most photos.

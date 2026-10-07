@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'wouter';
 import { withoutFolders } from '../../data/albums.ts';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
-import { describeItem, formatCount } from '../../lib/format.ts';
+import { describeItem, formatCount, formatItemCount } from '../../lib/format.ts';
 import { readPersistent, writePersistent } from '../../lib/persistent.ts';
 import common from '../../ui/common.module.css';
 import { FilterIcon } from '../../ui/icons.tsx';
@@ -140,8 +140,8 @@ function ZonePanel({
           {total === 0
             ? 'Aucune photo géolocalisée'
             : items.length === 0
-              ? 'Aucune photo dans cette zone'
-              : `${formatCount(items.length)} photo${items.length > 1 ? 's' : ''} dans cette zone`}
+              ? 'Rien dans cette zone'
+              : `${formatItemCount(items.length)} dans cette zone`}
         </h2>
         {zone && items.length > 0 && (
           <Link href={`/carte/zone?b=${formatBounds(zone)}`} className={common.chip}>
