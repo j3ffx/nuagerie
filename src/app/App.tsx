@@ -25,7 +25,7 @@ import { useApplyTheme } from '../lib/theme.ts';
 import styles from './App.module.css';
 import { NavBar } from './NavBar.tsx';
 import { UpdateBanner } from './UpdateBanner.tsx';
-import { scrollToTopOnNewScreen } from './useScrollToTop.ts';
+import { scrollToTopOnNewScreen } from './navigation.ts';
 
 export function App({
   mode,
