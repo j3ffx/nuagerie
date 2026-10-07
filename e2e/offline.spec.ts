@@ -10,6 +10,10 @@ test.beforeEach(async ({ page }) => {
 
 test('says when the device is offline, and keeps working', async ({ page, context }) => {
   await expect(banner(page)).toBeHidden();
+  // As once installed: the app's files, the thumbnail workers too, come from the cache.
+  await expect
+    .poll(() => page.evaluate(async () => (await navigator.serviceWorker.ready).active?.state))
+    .toBe('activated');
 
   await context.setOffline(true);
   await expect(banner(page)).toBeVisible();
