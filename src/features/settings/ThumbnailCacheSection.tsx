@@ -35,8 +35,10 @@ export function ThumbnailCacheSection() {
       <div className={`${common.card} ${common.stack}`}>
         <dl className={common.definitionList}>
           <dt>Sur l’appareil</dt>
-          <dd role="status">
-            {formatMegabytes(usage / MB)} sur {formatMegabytes(sizeMb)}
+          <dd>
+            <span role="status">
+              {formatMegabytes(usage / MB)} sur {formatMegabytes(sizeMb)}
+            </span>
           </dd>
         </dl>
         <label className={styles.field}>

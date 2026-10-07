@@ -103,18 +103,20 @@ export function SettingsScreen() {
               {mode === 'onedrive' && (
                 <>
                   <dt>Mise à jour</dt>
-                  <dd role="status">
-                    {!online
-                      ? 'hors connexion'
-                      : !signedIn
-                        ? 'en pause'
-                        : sync.status === 'running'
-                          ? `en cours${sync.progress ? ` (${formatCount(sync.progress.loaded)})` : '…'}`
-                          : sync.status === 'error'
-                            ? 'échec'
-                            : sync.lastSyncAt
-                              ? formatDateTime(sync.lastSyncAt)
-                              : '—'}
+                  <dd>
+                    <span role="status">
+                      {!online
+                        ? 'hors connexion'
+                        : !signedIn
+                          ? 'en pause'
+                          : sync.status === 'running'
+                            ? `en cours${sync.progress ? ` (${formatCount(sync.progress.loaded)})` : '…'}`
+                            : sync.status === 'error'
+                              ? 'échec'
+                              : sync.lastSyncAt
+                                ? formatDateTime(sync.lastSyncAt)
+                                : '—'}
+                    </span>
                   </dd>
                 </>
               )}

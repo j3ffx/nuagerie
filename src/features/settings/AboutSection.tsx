@@ -33,11 +33,13 @@ export function AboutSection() {
             {__APP_COMMIT__ && ` (${__APP_COMMIT__})`}
           </dd>
           <dt>Mise à jour</dt>
-          <dd role="status">
-            {STATUS_LABELS[status]}
-            {latestCommit && latestCommit !== __APP_COMMIT__ && status !== 'up-to-date'
-              ? ` (${latestCommit})`
-              : ''}
+          <dd>
+            <span role="status">
+              {STATUS_LABELS[status]}
+              {latestCommit && latestCommit !== __APP_COMMIT__ && status !== 'up-to-date'
+                ? ` (${latestCommit})`
+                : ''}
+            </span>
           </dd>
         </dl>
         <p className={common.muted}>
