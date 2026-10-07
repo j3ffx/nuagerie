@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import common from '../ui/common.module.css';
 import { Logo } from '../ui/Logo.tsx';
-import styles from './UpdateBanner.module.css';
+import styles from './Banner.module.css';
 import { applyUpdate, useUpdateState } from './updates.ts';
 
 /** Offers to load a newer version once it is downloaded; never reloads by itself. */

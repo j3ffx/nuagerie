@@ -23,6 +23,8 @@ import { SettingsScreen } from '../features/settings/SettingsScreen.tsx';
 import { SignInScreen } from '../features/welcome/SignInScreen.tsx';
 import { useApplyTheme } from '../lib/theme.ts';
 import styles from './App.module.css';
+import banners from './Banner.module.css';
+import { ConnectionBanner } from './ConnectionBanner.tsx';
 import { NavBar } from './NavBar.tsx';
 import { UpdateBanner } from './UpdateBanner.tsx';
 import { scrollToTopOnNewScreen } from './navigation.ts';
@@ -89,7 +91,10 @@ function Shell() {
         Aller au contenu
       </a>
       <NavBar />
-      <UpdateBanner />
+      <div className={banners.stack}>
+        <UpdateBanner />
+        <ConnectionBanner />
+      </div>
       <main id="main" className={styles.main}>
         <Switch>
           <Route path="/" component={AlbumsScreen} />

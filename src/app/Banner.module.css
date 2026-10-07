@@ -1,14 +1,25 @@
-.banner {
+/* Banners stack above the navigation bar, the most recent at the bottom. */
+.stack {
   position: fixed;
   z-index: 30;
   right: var(--space-3);
   bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + var(--space-3));
   left: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+  max-width: 480px;
+  margin: 0 auto;
+  pointer-events: none;
+}
+
+.stack:empty {
+  display: none;
+}
+
+.banner {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  max-width: 480px;
-  margin: 0 auto;
   padding: var(--space-3) var(--space-1) var(--space-3) var(--space-3);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
@@ -16,10 +27,23 @@
     var(--shadow-soft),
     0 0 0 1px var(--color-border);
   animation: rise var(--duration) var(--ease);
+  pointer-events: auto;
 }
 
 .banner > svg {
   flex: none;
+}
+
+/* An icon in place of the logo, in a soft disc of the same size. */
+.icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-soft);
+  color: var(--color-on-primary-soft);
 }
 
 .text {
@@ -65,7 +89,8 @@
 
 /* Narrow phones: the text needs the logo's room. */
 @media (max-width: 370px) {
-  .banner > svg {
+  .banner > svg,
+  .icon {
     display: none;
   }
 }
@@ -78,7 +103,7 @@
 }
 
 @media (min-width: 900px) {
-  .banner {
+  .stack {
     bottom: var(--space-5);
     left: calc(var(--rail-width) + var(--space-3));
   }

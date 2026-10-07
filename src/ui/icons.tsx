@@ -127,3 +127,13 @@ export function ShareIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function CloudOffIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M7.5 19H17a4 4 0 0 0 1.6-7.67A6 6 0 0 0 8.2 8.2" />
+      <path d="M5.3 9.9A4.5 4.5 0 0 0 7.5 19" />
+      <path d="m3 3 18 18" />
+    </Icon>
+  );
+}
