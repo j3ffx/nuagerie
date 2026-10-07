@@ -1,3 +1,5 @@
+import { isOnline } from '../../lib/online.ts';
+
 /**
  * Minimal Microsoft Graph client: bearer token, retries on throttling and
  * transient errors (honouring Retry-After), typed errors. Read-only usage:
@@ -27,6 +29,8 @@ export interface GraphClientOptions {
   sleep?: (ms: number) => Promise<void>;
   /** Retries after the first attempt (throttling, 5xx, network errors). */
   maxRetries?: number;
+  /** False when the device is known to be offline: network errors are not retried then. */
+  isOnline?: () => boolean;
 }
 
 export interface GraphClient {
@@ -86,6 +90,7 @@ export function createGraphClient(options: GraphClientOptions): GraphClient {
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   const sleep = options.sleep ?? ((ms: number) => new Promise((r) => setTimeout(r, ms)));
   const maxRetries = options.maxRetries ?? 6;
+  const online = options.isOnline ?? isOnline;
 
   async function send(pathOrUrl: string, body?: unknown): Promise<Response> {
     const url = /^https:\/\//.test(pathOrUrl) ? pathOrUrl : `${GRAPH_BASE}${pathOrUrl}`;
@@ -111,8 +116,9 @@ export function createGraphClient(options: GraphClientOptions): GraphClient {
               },
         );
       } catch (error) {
-        // Network failure (offline, DNS…): retry, then give up with the original error.
-        if (attempt >= maxRetries) throw error;
+        // Network failure (DNS, flaky link…): retry, then give up with the original error.
+        // Offline, waiting is pointless: the app tries again once the connection is back.
+        if (attempt >= maxRetries || !online()) throw error;
         await sleep(retryDelay(attempt, null));
         continue;
       }

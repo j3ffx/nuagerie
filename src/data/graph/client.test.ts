@@ -7,7 +7,7 @@ const json = (body: unknown, status = 200, headers: Record<string, string> = {})
     headers: { 'Content-Type': 'application/json', ...headers },
   });
 
-function setup(responses: (Response | Error)[]) {
+function setup(responses: (Response | Error)[], isOnline = () => true) {
   const calls: { url: string; init: RequestInit | undefined }[] = [];
   const fetch = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
     calls.push({ url: String(url), init });
@@ -24,6 +24,7 @@ function setup(responses: (Response | Error)[]) {
       sleeps.push(ms);
     },
     maxRetries: 3,
+    isOnline,
   });
   return { client, calls, sleeps };
 }
@@ -74,6 +75,13 @@ describe('createGraphClient', () => {
     const { client, sleeps } = setup([new TypeError('Failed to fetch'), json({ ok: true })]);
     await expect(client.getJson('/x')).resolves.toEqual({ ok: true });
     expect(sleeps).toHaveLength(1);
+  });
+
+  it('does not retry network errors while the device is offline', async () => {
+    const { client, calls, sleeps } = setup([new TypeError('Failed to fetch')], () => false);
+    await expect(client.getJson('/x')).rejects.toThrow('Failed to fetch');
+    expect(calls).toHaveLength(1);
+    expect(sleeps).toHaveLength(0);
   });
 
   it('gives up after maxRetries', async () => {
