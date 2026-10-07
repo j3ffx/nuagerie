@@ -57,7 +57,15 @@ test('opens a photo of the zone, then its place on the map, with a link to Maps'
   await expect(maps).toHaveAttribute('href', /^geo:-?\d+\.\d+,-?\d+\.\d+\?q=/);
   await expect(page.locator('[class*="focused"]')).toHaveCount(1);
 
-  // Away from the photo, the link (which is about that photo) goes.
+  // Zoomed out to a region, or moved away: the link (about that place) goes.
+  const zoomStep = async (name: string) => {
+    await page.getByRole('button', { name, exact: true }).click();
+    await page.waitForTimeout(350); // one zoom animation at a time
+  };
+  for (let i = 0; i < 4; i++) await zoomStep('Dézoomer');
+  await expect(maps).toBeHidden();
+  for (let i = 0; i < 4; i++) await zoomStep('Zoomer');
+  await expect(maps).toBeVisible();
   for (const dx of [-300, -300]) {
     await page.mouse.move(180, 300);
     await page.mouse.down();

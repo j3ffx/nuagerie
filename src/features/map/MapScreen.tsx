@@ -22,6 +22,8 @@ const MapView = lazy(() => import('./MapView.tsx'));
 
 /** Last view of the map, so coming back to the tab finds it as it was left. */
 const VIEW_KEY = 'map.view';
+/** The map opens on a photo at zoom 16; below a town's scale, the Maps link goes. */
+const MAPS_LINK_MIN_ZOOM = 13;
 /** Thumbnails in the strip under the map; the zone's grid shows them all. */
 const STRIP = 30;
 
@@ -38,6 +40,7 @@ export function MapScreen() {
   const [params] = useSearchParams();
   const { photoId, open, show, close } = useViewer();
   const [zone, setZone] = useState<Bounds | null>(null);
+  const [zoom, setZoom] = useState<number | null>(null);
 
   const items = useMemo(() => (index ? withoutFolders(index, excluded) : []), [index, excluded]);
   const located = useMemo(() => items.filter((item) => item.latitude !== null), [items]);
@@ -55,6 +58,7 @@ export function MapScreen() {
   const onMove = useCallback((view: MapViewState, bounds: Bounds) => {
     writePersistent(VIEW_KEY, view);
     setZone(bounds);
+    setZoom(view.zoom);
   }, []);
   const onOpen = useCallback((item: MediaItem) => open(item.id), [open]);
 
@@ -102,6 +106,7 @@ export function MapScreen() {
             items={zoneItems}
             total={located.length}
             zone={zone}
+            zoom={zoom}
             focus={focus}
             onOpen={onOpen}
           />
@@ -119,20 +124,25 @@ function ZonePanel({
   items,
   total,
   zone,
+  zoom,
   focus,
   onOpen,
 }: {
   items: readonly MediaItem[];
   total: number;
   zone: Bounds | null;
+  zoom: number | null;
   focus: MediaItem | null;
   onOpen: (item: MediaItem) => void;
 }) {
-  // Offered only while the photo it is for is on screen.
+  // Offered only while the photo it is for is on screen, at the scale of its
+  // place: zoomed out to a region or the world, it no longer reads as "this place".
   const focusPosition =
     focus?.latitude != null &&
     focus.longitude != null &&
     zone !== null &&
+    zoom !== null &&
+    zoom >= MAPS_LINK_MIN_ZOOM &&
     itemsInBounds([focus], zone).length > 0
       ? { latitude: focus.latitude, longitude: focus.longitude }
       : null;
