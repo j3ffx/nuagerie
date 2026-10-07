@@ -14,6 +14,38 @@
   min-height: 0;
   background: var(--color-surface-2);
   font-family: inherit;
+  /* Leaflet's layers stack inside the map, under the offline note. */
+  isolation: isolate;
+}
+
+/* Where no tile shows (offline, loading), the theme's colour instead of Leaflet's grey. */
+.map:global(.leaflet-container) {
+  background: var(--color-surface-2);
+}
+
+/* Offline: a note at the top left, clear of the zoom buttons. */
+.offline {
+  position: absolute;
+  z-index: 1;
+  top: var(--space-3);
+  left: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: calc(100% - var(--tap-min) - 3 * var(--space-3));
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.offline svg {
+  flex: none;
 }
 
 /* Leaflet's zoom buttons, at touch size. */
@@ -24,8 +56,15 @@
   line-height: var(--tap-min);
 }
 
-.map :global(.leaflet-control-attribution) {
+/* The credit in the theme's colours: Leaflet's see-through white fails contrast on dark. */
+.map:global(.leaflet-container) :global(.leaflet-control-attribution) {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
   font-size: 11px;
+}
+
+.map :global(.leaflet-control-attribution a) {
+  color: var(--color-primary);
 }
 
 /* Dark theme: the same tiles, inverted into a night map. */

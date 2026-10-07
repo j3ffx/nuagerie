@@ -4,9 +4,10 @@ import { withoutFolders } from '../../data/albums.ts';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { describeItem, formatCount, formatItemCount } from '../../lib/format.ts';
+import { useOnline } from '../../lib/online.ts';
 import { readPersistent, writePersistent } from '../../lib/persistent.ts';
 import common from '../../ui/common.module.css';
-import { FilterIcon } from '../../ui/icons.tsx';
+import { CloudOffIcon, FilterIcon } from '../../ui/icons.tsx';
 import { IndexStatus } from '../../ui/IndexStatus.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import { Thumbnail } from '../../ui/Thumbnail.tsx';
@@ -41,6 +42,7 @@ export function MapScreen() {
   const { photoId, open, show, close } = useViewer();
   const [zone, setZone] = useState<Bounds | null>(null);
   const [zoom, setZoom] = useState<number | null>(null);
+  const online = useOnline();
 
   const items = useMemo(() => (index ? withoutFolders(index, excluded) : []), [index, excluded]);
   const located = useMemo(() => items.filter((item) => item.latitude !== null), [items]);
@@ -102,6 +104,13 @@ export function MapScreen() {
               onOpen={onOpen}
             />
           </Suspense>
+          {!online && (
+            // Tiles seen lately may come from the browser's cache: the rest stays blank.
+            <p className={styles.offline} role="status">
+              <CloudOffIcon width={18} height={18} />
+              Hors connexion · carte incomplète
+            </p>
+          )}
           <ZonePanel
             items={zoneItems}
             total={located.length}

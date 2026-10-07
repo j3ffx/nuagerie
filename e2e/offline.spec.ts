@@ -50,6 +50,18 @@ test('crosses out sharing and saving in the viewer while offline', async ({ page
   await expect(viewer.getByRole('button', { name: 'Télécharger' })).toBeEnabled();
 });
 
+test('says on the map that its background may be missing offline', async ({ page, context }) => {
+  await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
+  await page.goto('/carte');
+  const note = page.getByText('Hors connexion · carte incomplète');
+  await expect(page.getByText(/dans cette zone/)).toBeVisible();
+  await expect(note).toBeHidden();
+  await context.setOffline(true);
+  await expect(note).toBeVisible();
+  await context.setOffline(false);
+  await expect(note).toBeHidden();
+});
+
 test('starts with no network once installed', async ({ page, context }) => {
   await expect
     .poll(() => page.evaluate(async () => (await navigator.serviceWorker.ready).active?.state))
