@@ -71,5 +71,10 @@
     "workbox-build": "^7.4.1",
     "workbox-window": "^7.4.1",
     "wrangler": "^4.147.0"
+  },
+  "overrides": {
+    "miniflare": {
+      "sharp": "^0.35.5"
+    }
   }
 }
