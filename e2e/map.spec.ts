@@ -59,6 +59,31 @@ test('opens a photo of the zone, then its place on the map, with a link to Maps'
   );
 });
 
+test('stays within the world, and zooms close enough to part nearby photos', async ({ page }) => {
+  // Dragging far down cannot show the blank beyond the North Pole.
+  for (let i = 0; i < 4; i++) {
+    await page.mouse.move(180, 200);
+    await page.mouse.down();
+    await page.mouse.move(180, 650, { steps: 8 });
+    await page.mouse.up();
+  }
+  const mapTop = await page
+    .locator('.leaflet-container')
+    .evaluate((map) => map.getBoundingClientRect().top);
+  const tilesTop = await page
+    .locator('.leaflet-tile-loaded')
+    .evaluateAll((tiles) => Math.min(...tiles.map((tile) => tile.getBoundingClientRect().top)));
+  expect(tilesTop).toBeLessThanOrEqual(mapTop + 1);
+
+  // Zoom in all the way: the button stops at the closest level, past the tiles' 19.
+  const zoomIn = page.getByRole('button', { name: 'Zoomer', exact: true });
+  for (let i = 0; i < 30 && !(await zoomIn.getAttribute('class'))?.includes('disabled'); i++) {
+    await zoomIn.click();
+    await page.waitForTimeout(350); // one zoom animation at a time
+  }
+  await expect(zoomIn).toHaveClass(/disabled/);
+});
+
 test('lists every photo of the zone in a grid', async ({ page }) => {
   const count = await zoneCount(page);
   await page.getByRole('link', { name: 'Tout voir' }).click();

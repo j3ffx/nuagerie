@@ -33,6 +33,13 @@ export type MapMarker =
     }
   | { kind: 'photo'; latitude: number; longitude: number; item: MediaItem };
 
+/**
+ * Closest zoom of the map (tiles stop at 19 and are enlarged beyond). Photos
+ * are still grouped there: those taken a few metres apart would overlap, so
+ * they stay one group, which opens them instead of zooming.
+ */
+export const MAX_ZOOM = 21;
+
 export interface ClusterIndex {
   located: MediaItem[];
   index: Supercluster<PointProps, ClusterProps>;
@@ -47,7 +54,7 @@ export function buildClusterIndex(items: readonly MediaItem[]): ClusterIndex {
     // In 512-pixel tile units: about 65 screen pixels on Leaflet's 256-pixel
     // tiles, a bit more than a marker, so groups don't overlap.
     radius: 130,
-    maxZoom: 18,
+    maxZoom: MAX_ZOOM,
     map: (props) => ({ cover: props.index, takenAt: props.takenAt }),
     reduce: (accumulated, props) => {
       if (props.takenAt > accumulated.takenAt) {
@@ -95,6 +102,21 @@ export function markersInView(clusters: ClusterIndex, bounds: Bounds, zoom: numb
 /** Zoom level at which a group splits into smaller ones. */
 export function expansionZoom(clusters: ClusterIndex, clusterId: number): number {
   return clusters.index.getClusterExpansionZoom(clusterId);
+}
+
+/** Whether a group can still split by zooming in, or only shows its photos. */
+export function canExpand(clusters: ClusterIndex, clusterId: number): boolean {
+  return expansionZoom(clusters, clusterId) <= MAX_ZOOM;
+}
+
+/** The photos of a group, most recent first. */
+export function photosOf(clusters: ClusterIndex, clusterId: number): MediaItem[] {
+  return clusters.index
+    .getLeaves(clusterId, Infinity)
+    .map((leaf) => leaf.properties.index)
+    .sort((a, b) => a - b)
+    .map((i) => clusters.located[i])
+    .filter((item): item is MediaItem => item !== undefined);
 }
 
 /**

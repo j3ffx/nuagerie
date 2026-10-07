@@ -3,6 +3,9 @@ import type { MediaItem } from '../../data/model.ts';
 import {
   boundsOf,
   buildClusterIndex,
+  canExpand,
+  MAX_ZOOM,
+  photosOf,
   expansionZoom,
   formatBounds,
   itemsInBounds,
@@ -51,6 +54,20 @@ describe('map clusters', () => {
     ]);
     const streets = markersInView(clusters, world, 18);
     expect(streets.filter((m) => m.kind === 'photo')).toHaveLength(4);
+  });
+
+  it('keeps photos a metre apart together at the closest zoom, but not those 10 m away', () => {
+    const close = buildClusterIndex([
+      photo('a', 45.76401, 4.83501, 2),
+      photo('b', 45.76402, 4.83502, 3),
+      photo('ten-metres', 45.7641, 4.8351, 1),
+    ]);
+    const markers = markersInView(close, world, MAX_ZOOM);
+    const group = markers.find((marker) => marker.kind === 'cluster');
+    if (group?.kind !== 'cluster') throw new Error('expected a group');
+    expect(canExpand(close, group.id)).toBe(false);
+    expect(photosOf(close, group.id).map((item) => item.id)).toEqual(['a', 'b']);
+    expect(markers.some((m) => m.kind === 'photo' && m.item.id === 'ten-metres')).toBe(true);
   });
 
   it('tells the zoom at which a group splits', () => {

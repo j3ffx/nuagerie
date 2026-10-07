@@ -6,7 +6,15 @@ import { useData } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
 import type { ThumbnailHandle } from '../../data/thumbnails/thumbnailStore.ts';
 import { describeItem, formatCount } from '../../lib/format.ts';
-import { buildClusterIndex, expansionZoom, markersInView, type Bounds } from './clusters.ts';
+import {
+  buildClusterIndex,
+  canExpand,
+  expansionZoom,
+  markersInView,
+  MAX_ZOOM,
+  photosOf,
+  type Bounds,
+} from './clusters.ts';
 import styles from './MapScreen.module.css';
 
 export interface MapViewState {
@@ -95,13 +103,20 @@ export default function MapView({
     for (const marker of markersInView(clusters, bounds, map.getZoom())) {
       const position: L.LatLngTuple = [marker.latitude, marker.longitude];
       if (marker.kind === 'cluster') {
+        // Photos taken at the same spot never split: the group opens them.
+        const expands = canExpand(clusters, marker.id);
         L.marker(position, {
           icon: icon(marker.cover, marker.count),
-          title: `${formatCount(marker.count)} photos, agrandir`,
+          title: `${formatCount(marker.count)} éléments, ${expands ? 'agrandir' : 'ouvrir'}`,
           keyboard: true,
         })
           .on('click', () => {
-            const zoom = Math.min(expansionZoom(clusters, marker.id), 19);
+            if (!expands) {
+              const first = photosOf(clusters, marker.id)[0];
+              if (first) onOpen(first);
+              return;
+            }
+            const zoom = expansionZoom(clusters, marker.id);
             if (still()) map.setView(position, zoom, { animate: false });
             else map.flyTo(position, zoom, { duration: 0.4 });
           })
@@ -129,6 +144,7 @@ export default function MapView({
       attributionControl: true,
       worldCopyJump: true,
       minZoom: 2,
+      maxZoom: MAX_ZOOM,
       // The world ends at the poles: no dragging into the blank above or below.
       maxBounds: L.latLngBounds([-85.0511, -1e5], [85.0511, 1e5]),
       maxBoundsViscosity: 1,
@@ -138,7 +154,8 @@ export default function MapView({
       .zoom({ position: 'topright', zoomInTitle: 'Zoomer', zoomOutTitle: 'Dézoomer' })
       .addTo(map);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
+      maxNativeZoom: 19,
+      maxZoom: MAX_ZOOM,
       className: styles.tiles,
       // OpenStreetMap asks for a Referer, which the site's policy withholds otherwise.
       referrerPolicy: 'strict-origin-when-cross-origin',
