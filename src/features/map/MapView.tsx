@@ -153,6 +153,8 @@ export default function MapView({
       // A little momentum, as in map apps: a flicked map glides a bit further
       // (Leaflet's default stops short)…
       inertiaDeceleration: 2000,
+      // Tiles appear at once (no fade from grey), cached ones especially.
+      fadeAnimation: false,
       // …and pinches may end between levels, so their momentum shows.
       zoomSnap: 0.25,
     });
@@ -165,6 +167,13 @@ export default function MapView({
       maxNativeZoom: 19,
       maxZoom: MAX_ZOOM,
       className: styles.tiles,
+      // Tiles come from the browser's cache when seen before (OpenStreetMap
+      // allows a day, plus a week while refreshing). On phones Leaflet waits
+      // for the gesture to end before loading new tiles and drops the ones
+      // just off screen, which looked like a reload at every move: load while
+      // moving, and keep more tiles around.
+      updateWhenIdle: false,
+      keepBuffer: 4,
       // OpenStreetMap asks for a Referer, which the site's policy withholds otherwise.
       referrerPolicy: 'strict-origin-when-cross-origin',
       attribution:
