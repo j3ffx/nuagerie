@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from 'react';
 import { useData } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { describeItem } from '../../lib/format.ts';
+import { useOnline } from '../../lib/online.ts';
 import { useThumbnailUrl } from '../../ui/useThumbnailUrl.ts';
 import { fitSize, itemAspect, type Size } from './gestures.ts';
 import styles from './Viewer.module.css';
@@ -92,6 +93,14 @@ function VideoPlayer({ item, active }: { item: MediaItem; active: boolean }) {
   const failed = () =>
     setState({ status: 'unavailable', message: 'Vidéo inaccessible pour le moment' });
 
+  // Offline, the video waits for the network, then starts again by itself.
+  const online = useOnline();
+  const [wasOnline, setWasOnline] = useState(online);
+  if (wasOnline !== online) {
+    setWasOnline(online);
+    if (online && state.status === 'unavailable') setState({ status: 'waiting' });
+  }
+
   // On screen: get the URL and play. Not yet: warm the URL cache only.
   const waiting = state.status === 'waiting';
   useEffect(() => {
@@ -110,11 +119,13 @@ function VideoPlayer({ item, active }: { item: MediaItem; active: boolean }) {
     };
   }, [waiting, active, source, item]);
 
-  if (state.status === 'unavailable') {
+  if (state.status === 'unavailable' || (!online && state.status === 'waiting')) {
     return (
       <div className={styles.videoCover}>
         <p className={styles.notice} role="status">
-          {state.message}
+          {online && state.status === 'unavailable'
+            ? state.message
+            : 'Hors connexion : la vidéo se lira au retour du réseau'}
         </p>
       </div>
     );
