@@ -51,14 +51,21 @@ export default function MapView({
     handles.current = [];
   };
 
-  /** A round thumbnail, with the number of photos for a group. */
+  /**
+   * A round thumbnail, with the number of photos for a group. The disc is
+   * drawn by the marker itself, so it shows while the thumbnail loads.
+   */
   const icon = (item: MediaItem, count: number | null) => {
     const element = document.createElement('div');
     element.className = styles.marker ?? '';
+    const disc = document.createElement('span');
+    disc.className = styles.disc ?? '';
     const image = document.createElement('img');
     image.alt = '';
     image.draggable = false;
-    element.append(image);
+    image.onload = () => (image.dataset.loaded = 'true');
+    disc.append(image);
+    element.append(disc);
     if (count !== null) {
       const badge = document.createElement('span');
       badge.className = styles.count ?? '';
