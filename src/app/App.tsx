@@ -18,6 +18,7 @@ import { AllFilterScreen } from '../features/all/AllFilterScreen.tsx';
 import { AllScreen } from '../features/all/AllScreen.tsx';
 import { DiagnosticScreen } from '../features/diagnostic/DiagnosticScreen.tsx';
 import { MapScreen } from '../features/map/MapScreen.tsx';
+import { ZoneScreen } from '../features/map/ZoneScreen.tsx';
 import { SettingsScreen } from '../features/settings/SettingsScreen.tsx';
 import { SignInScreen } from '../features/welcome/SignInScreen.tsx';
 import { useApplyTheme } from '../lib/theme.ts';
@@ -81,6 +82,7 @@ function Shell() {
           <Route path="/tout" component={AllScreen} />
           <Route path="/tout/filtre" component={AllFilterScreen} />
           <Route path="/carte" component={MapScreen} />
+          <Route path="/carte/zone" component={ZoneScreen} />
           <Route path="/reglages" component={SettingsScreen} />
           <Route path="/diagnostic" component={DiagnosticScreen} />
           <Route>

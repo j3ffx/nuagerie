@@ -1,0 +1,182 @@
+import 'leaflet/dist/leaflet.css';
+
+import L from 'leaflet';
+import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
+import { useData } from '../../data/dataContext.ts';
+import type { MediaItem } from '../../data/model.ts';
+import type { ThumbnailHandle } from '../../data/thumbnails/thumbnailStore.ts';
+import { describeItem, formatCount } from '../../lib/format.ts';
+import { buildClusterIndex, expansionZoom, markersInView, type Bounds } from './clusters.ts';
+import styles from './MapScreen.module.css';
+
+export interface MapViewState {
+  latitude: number;
+  longitude: number;
+  zoom: number;
+}
+
+/**
+ * The map itself (Leaflet, OpenStreetMap tiles), loaded only when the map
+ * screen opens. Groups and photos are redrawn after each move: only the
+ * markers inside the view exist, each showing a cached thumbnail.
+ */
+export default function MapView({
+  items,
+  initial,
+  focus,
+  onMove,
+  onOpen,
+}: {
+  /** Photos to place (those without a position are ignored). */
+  items: readonly MediaItem[];
+  /** Where to start: a remembered view, a focused photo, or all photos (null). */
+  initial: MapViewState | Bounds | null;
+  /** A photo to point at (coming from the viewer). */
+  focus: MediaItem | null;
+  onMove: (view: MapViewState, bounds: Bounds) => void;
+  onOpen: (item: MediaItem) => void;
+}) {
+  const { store } = useData().thumbnails;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.LayerGroup | null>(null);
+  const handles = useRef<ThumbnailHandle[]>([]);
+  /** Set once the map has a view: before that it has no bounds. */
+  const placed = useRef(false);
+  const clusters = useMemo(() => buildClusterIndex(items), [items]);
+  const still = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const releaseThumbnails = () => {
+    handles.current.forEach((handle) => handle.release());
+    handles.current = [];
+  };
+
+  /** A round thumbnail, with the number of photos for a group. */
+  const icon = (item: MediaItem, count: number | null) => {
+    const element = document.createElement('div');
+    element.className = styles.marker ?? '';
+    const image = document.createElement('img');
+    image.alt = '';
+    image.draggable = false;
+    element.append(image);
+    if (count !== null) {
+      const badge = document.createElement('span');
+      badge.className = styles.count ?? '';
+      badge.textContent = formatCount(count);
+      element.append(badge);
+    }
+    const handle = store.acquire(item, 'medium');
+    handles.current.push(handle);
+    handle.promise.then(
+      (url) => {
+        image.src = url;
+      },
+      () => undefined, // no thumbnail: the coloured disc stays
+    );
+    const size = count === null ? 48 : 56;
+    return L.divIcon({ html: element, className: '', iconSize: [size, size] });
+  };
+
+  const redraw = useEffectEvent(() => {
+    const map = mapRef.current;
+    const layer = markersRef.current;
+    if (!map || !layer || !placed.current) return;
+    const b = map.getBounds();
+    const bounds: Bounds = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    releaseThumbnails();
+    layer.clearLayers();
+    for (const marker of markersInView(clusters, bounds, map.getZoom())) {
+      const position: L.LatLngTuple = [marker.latitude, marker.longitude];
+      if (marker.kind === 'cluster') {
+        L.marker(position, {
+          icon: icon(marker.cover, marker.count),
+          title: `${formatCount(marker.count)} photos, agrandir`,
+          keyboard: true,
+        })
+          .on('click', () => {
+            const zoom = Math.min(expansionZoom(clusters, marker.id), 19);
+            if (still()) map.setView(position, zoom, { animate: false });
+            else map.flyTo(position, zoom, { duration: 0.4 });
+          })
+          .addTo(layer);
+      } else {
+        L.marker(position, {
+          icon: icon(marker.item, null),
+          title: describeItem(marker.item),
+          keyboard: true,
+        })
+          .on('click', () => onOpen(marker.item))
+          .addTo(layer);
+      }
+    }
+    const center = map.getCenter();
+    onMove({ latitude: center.lat, longitude: center.lng, zoom: map.getZoom() }, bounds);
+  });
+
+  // The map is created once; the markers follow the photos and the view.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const map = L.map(container, {
+      zoomControl: false,
+      attributionControl: true,
+      worldCopyJump: true,
+      minZoom: 2,
+    });
+    map.attributionControl.setPrefix(false);
+    L.control
+      .zoom({ position: 'topright', zoomInTitle: 'Zoomer', zoomOutTitle: 'Dézoomer' })
+      .addTo(map);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      className: styles.tiles,
+      // OpenStreetMap asks for a Referer, which the site's policy withholds otherwise.
+      referrerPolicy: 'strict-origin-when-cross-origin',
+      attribution:
+        '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">contributeurs OpenStreetMap</a>',
+    }).addTo(map);
+    markersRef.current = L.layerGroup().addTo(map);
+    mapRef.current = map;
+    map.on('moveend', () => redraw());
+    // The container's size changes with the screen (rotation, panel).
+    const observer = new ResizeObserver(() => map.invalidateSize());
+    observer.observe(container);
+    return () => {
+      observer.disconnect();
+      releaseThumbnails();
+      map.remove();
+      mapRef.current = null;
+      markersRef.current = null;
+      placed.current = false;
+    };
+  }, []);
+
+  // Starting view (and new targets: a photo from the viewer).
+  const place = useEffectEvent(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    placed.current = true;
+    if (focus?.latitude != null && focus.longitude != null) {
+      map.setView([focus.latitude, focus.longitude], 16);
+    } else if (initial && 'zoom' in initial) {
+      map.setView([initial.latitude, initial.longitude], initial.zoom);
+    } else if (initial) {
+      const [west, south, east, north] = initial;
+      map.fitBounds(
+        [
+          [south, west],
+          [north, east],
+        ],
+        { padding: [24, 24], maxZoom: 14 },
+      );
+    } else {
+      map.setView([46.6, 2.4], 5); // France, when no photo has a position
+    }
+  });
+  useEffect(() => place(), [focus?.id]);
+
+  // New photos (filter, sync): redraw in place.
+  useEffect(() => redraw(), [clusters]);
+
+  return <div ref={containerRef} className={styles.map} />;
+}

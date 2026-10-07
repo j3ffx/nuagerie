@@ -1,34 +1,181 @@
-import { useMemo } from 'react';
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'wouter';
+import { withoutFolders } from '../../data/albums.ts';
 import { useMediaIndex } from '../../data/dataContext.ts';
-import { formatCount } from '../../lib/format.ts';
-import { MapIcon } from '../../ui/icons.tsx';
+import type { MediaItem } from '../../data/model.ts';
+import { describeItem, formatCount } from '../../lib/format.ts';
+import { readPersistent, writePersistent } from '../../lib/persistent.ts';
 import common from '../../ui/common.module.css';
+import { FilterIcon } from '../../ui/icons.tsx';
 import { IndexStatus } from '../../ui/IndexStatus.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
+import { Thumbnail } from '../../ui/Thumbnail.tsx';
+import allStyles from '../all/AllScreen.module.css';
+import { useAllFilter } from '../all/useAllFilter.ts';
+import { photoHref, useViewer } from '../viewer/useViewer.ts';
+import { Viewer } from '../viewer/Viewer.tsx';
+import { boundsOf, formatBounds, itemsInBounds, mapsHref, type Bounds } from './clusters.ts';
+import type { MapViewState } from './MapView.tsx';
 import styles from './MapScreen.module.css';
 
+const MapView = lazy(() => import('./MapView.tsx'));
+
+/** Last view of the map, so coming back to the tab finds it as it was left. */
+const VIEW_KEY = 'map.view';
+/** Thumbnails in the strip under the map; the zone's grid shows them all. */
+const STRIP = 30;
+
+/**
+ * The photos on a world map, grouped by place. A tap on a group zooms in, a
+ * tap on a photo opens it. The photos of the zone on screen are listed
+ * underneath, with a link to see them all in a grid. Same folder filter as
+ * "Tout". Opened from the viewer (`?focus=<id>`), it points at that photo and
+ * offers to open the place in the phone's map app.
+ */
 export function MapScreen() {
   const index = useMediaIndex();
-  const located = useMemo(
-    () => index?.items.filter((item) => item.latitude !== null).length ?? 0,
-    [index],
+  const { excluded } = useAllFilter();
+  const [params] = useSearchParams();
+  const { photoId, open, show, close } = useViewer();
+  const [zone, setZone] = useState<Bounds | null>(null);
+
+  const items = useMemo(() => (index ? withoutFolders(index, excluded) : []), [index, excluded]);
+  const located = useMemo(() => items.filter((item) => item.latitude !== null), [items]);
+  const focusId = params.get('focus');
+  const focus = useMemo(
+    () => (focusId ? (index?.items.find((item) => item.id === focusId) ?? null) : null),
+    [index, focusId],
   );
+  const [initial] = useState<MapViewState | Bounds | null>(() =>
+    readPersistent<MapViewState | null>(VIEW_KEY, null),
+  );
+  const zoneItems = useMemo(() => (zone ? itemsInBounds(located, zone) : []), [located, zone]);
+  const hiddenCount = index ? [...excluded].filter((id) => index.folders.has(id)).length : 0;
+
+  const onMove = useCallback((view: MapViewState, bounds: Bounds) => {
+    writePersistent(VIEW_KEY, view);
+    setZone(bounds);
+  }, []);
+  const onOpen = useCallback((item: MediaItem) => open(item.id), [open]);
+
+  // The viewer swipes through the zone's photos; a photo outside it (a link) shows alone.
+  const viewerItems = useMemo(() => {
+    if (photoId === null) return [];
+    if (zoneItems.some((item) => item.id === photoId)) return zoneItems;
+    const item = index?.items.find((candidate) => candidate.id === photoId);
+    return item ? [item] : [];
+  }, [photoId, zoneItems, index]);
+  const viewerIndex = viewerItems.findIndex((item) => item.id === photoId);
 
   return (
     <>
-      <ScreenHeader title="Carte" />
-      <div className={common.page}>
-        <IndexStatus />
-        {index && (
-          <div className={`${common.card} ${styles.placeholder}`}>
-            <MapIcon width={40} height={40} className={styles.icon} />
-            <p className={styles.title}>La carte arrive bientôt</p>
-            <p className={common.muted}>
-              {formatCount(located)} photos géolocalisées l’attendent déjà.
-            </p>
-          </div>
+      <ScreenHeader
+        title="Carte"
+        actions={
+          <Link
+            href="/tout/filtre?retour=carte"
+            className={`${common.chip} ${allStyles.filter}`}
+            aria-label={
+              hiddenCount > 0
+                ? `Filtrer par albums (${formatCount(hiddenCount)} masqué${hiddenCount > 1 ? 's' : ''})`
+                : 'Filtrer par albums'
+            }
+          >
+            <FilterIcon width={18} height={18} />
+            {hiddenCount > 0 ? formatCount(hiddenCount) : 'Filtrer'}
+          </Link>
+        }
+      />
+      <IndexStatus />
+      {index && (
+        <div className={styles.screen}>
+          <Suspense fallback={<div className={styles.map} />}>
+            <MapView
+              items={located}
+              initial={initial ?? boundsOf(located)}
+              focus={focus}
+              onMove={onMove}
+              onOpen={onOpen}
+            />
+          </Suspense>
+          <ZonePanel
+            items={zoneItems}
+            total={located.length}
+            zone={zone}
+            focus={focus}
+            onOpen={onOpen}
+          />
+        </div>
+      )}
+      {viewerIndex >= 0 && (
+        <Viewer items={viewerItems} index={viewerIndex} onShow={show} onClose={close} />
+      )}
+    </>
+  );
+}
+
+/** The photos of the zone on screen: count, a strip of thumbnails, the full grid. */
+function ZonePanel({
+  items,
+  total,
+  zone,
+  focus,
+  onOpen,
+}: {
+  items: readonly MediaItem[];
+  total: number;
+  zone: Bounds | null;
+  focus: MediaItem | null;
+  onOpen: (item: MediaItem) => void;
+}) {
+  const focusPosition =
+    focus?.latitude != null && focus.longitude != null
+      ? { latitude: focus.latitude, longitude: focus.longitude }
+      : null;
+
+  return (
+    <section className={styles.panel} aria-labelledby="map-zone">
+      <div className={styles.panelHeader}>
+        <h2 id="map-zone" className={styles.panelTitle}>
+          {total === 0
+            ? 'Aucune photo géolocalisée'
+            : items.length === 0
+              ? 'Aucune photo dans cette zone'
+              : `${formatCount(items.length)} photo${items.length > 1 ? 's' : ''} dans cette zone`}
+        </h2>
+        {zone && items.length > 0 && (
+          <Link href={`/carte/zone?b=${formatBounds(zone)}`} className={common.chip}>
+            Tout voir
+          </Link>
         )}
       </div>
-    </>
+      {items.length > 0 && (
+        <ul className={styles.strip}>
+          {items.slice(0, STRIP).map((item) => (
+            <li key={item.id}>
+              <a
+                href={photoHref(item.id)}
+                className={styles.stripItem}
+                aria-label={describeItem(item)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  onOpen(item);
+                }}
+              >
+                <Thumbnail item={item} decorative />
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+      {focusPosition && (
+        <a
+          className={`${common.buttonSoft} ${styles.maps}`}
+          href={mapsHref(focusPosition.latitude, focusPosition.longitude)}
+        >
+          Ouvrir dans Maps
+        </a>
+      )}
+    </section>
   );
 }

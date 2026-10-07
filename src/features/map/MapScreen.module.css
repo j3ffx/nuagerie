@@ -1,17 +1,127 @@
-.placeholder {
-  display: grid;
-  justify-items: center;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
-  padding: var(--space-6) var(--space-4);
-  text-align: center;
+/* Map and zone panel fill the space between the screen header and the bottom bar. */
+.screen {
+  position: fixed;
+  top: calc(var(--header-height) + env(safe-area-inset-top));
+  right: 0;
+  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
+  left: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.icon {
-  color: var(--color-primary);
+.map {
+  flex: 1;
+  min-height: 0;
+  background: var(--color-surface-2);
+  font-family: inherit;
 }
 
-.title {
-  font-size: 18px;
+/* Leaflet's zoom buttons, at touch size. */
+.map :global(.leaflet-control-zoom a) {
+  width: var(--tap-min);
+  height: var(--tap-min);
+  font-size: 22px;
+  line-height: var(--tap-min);
+}
+
+.map :global(.leaflet-control-attribution) {
+  font-size: 11px;
+}
+
+/* Dark theme: the same tiles, inverted into a night map. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .tiles {
+    filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
+  }
+}
+
+:root[data-theme='dark'] .tiles {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
+}
+
+/* A photo or a group: a round thumbnail with a white ring. */
+.marker {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.marker img {
+  width: 100%;
+  height: 100%;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--color-thumb-placeholder);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
+  object-fit: cover;
+}
+
+.count {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 24px;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 12px;
   font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+}
+
+.panel {
+  flex: none;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-3);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+}
+
+.panelTitle {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.strip {
+  display: flex;
+  gap: var(--space-1);
+  margin: 0 calc(-1 * var(--space-4));
+  padding: 0 var(--space-4);
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+
+.stripItem {
+  display: block;
+  width: 72px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+}
+
+.maps {
+  justify-self: start;
+}
+
+@media (min-width: 900px) {
+  .screen {
+    bottom: 0;
+    left: var(--rail-width);
+  }
 }

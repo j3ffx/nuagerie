@@ -63,11 +63,6 @@ test('shows every item grouped by month', async ({ page }) => {
   await expect(first.locator('img')).toHaveJSProperty('complete', true);
 });
 
-test('counts geotagged photos on the map placeholder', async ({ page }) => {
-  await page.goto('/carte');
-  await expect(page.getByText(/[\d\s]+ photos géolocalisées/)).toBeVisible();
-});
-
 test('remembers the theme across reloads', async ({ page }) => {
   await page.goto('/reglages');
   await page.getByText('Sombre', { exact: true }).click();

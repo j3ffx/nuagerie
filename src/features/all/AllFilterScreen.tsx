@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'wouter';
+import { Link, useSearchParams } from 'wouter';
 import { folderTree, type FolderNode } from '../../data/albums.ts';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import { formatCount } from '../../lib/format.ts';
@@ -27,6 +27,9 @@ export function AllFilterScreen() {
   const index = useMediaIndex();
   const tree = useMemo(() => (index ? folderTree(index) : []), [index]);
   const { excluded, setShown, showAll } = useAllFilter();
+  // The same filter serves the map: come back where it was opened from.
+  const [params] = useSearchParams();
+  const fromMap = params.get('retour') === 'carte';
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 
@@ -76,9 +79,13 @@ export function AllFilterScreen() {
   return (
     <>
       <ScreenHeader
-        title="Filtrer « Tout »"
+        title={fromMap ? 'Filtrer la carte' : 'Filtrer « Tout »'}
         leading={
-          <Link href="/tout" className={albumStyles.back} aria-label="Retour à Tout">
+          <Link
+            href={fromMap ? '/carte' : '/tout'}
+            className={albumStyles.back}
+            aria-label={fromMap ? 'Retour à la carte' : 'Retour à Tout'}
+          >
             <BackIcon />
           </Link>
         }
@@ -88,8 +95,8 @@ export function AllFilterScreen() {
         {index && (
           <>
             <p className={`${common.muted} ${styles.help}`}>
-              Décoche un dossier pour masquer ses photos dans « Tout ». Ses sous-dossiers sont
-              masqués avec lui. Les albums ne changent pas.
+              Décoche un dossier pour masquer ses photos dans « Tout » et sur la carte. Ses
+              sous-dossiers sont masqués avec lui. Les albums ne changent pas.
             </p>
             <label className={styles.search}>
               <span className="visually-hidden">Rechercher un dossier</span>
