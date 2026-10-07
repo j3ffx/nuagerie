@@ -150,7 +150,13 @@ export default function MapView({
       // The world ends at the poles: no dragging into the blank above or below.
       maxBounds: L.latLngBounds([-85.0511, -1e5], [85.0511, 1e5]),
       maxBoundsViscosity: 1,
+      // A little momentum, as in map apps: a flicked map glides a bit further
+      // (Leaflet's default stops short)…
+      inertiaDeceleration: 2000,
+      // …and pinches may end between levels, so their momentum shows.
+      zoomSnap: 0.25,
     });
+    addPinchMomentum(map);
     map.attributionControl.setPrefix(false);
     L.control
       .zoom({ position: 'topright', zoomInTitle: 'Zoomer', zoomOutTitle: 'Dézoomer' })
@@ -166,7 +172,10 @@ export default function MapView({
     }).addTo(map);
     markersRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
-    map.on('moveend', () => redraw());
+    map.on('moveend', () => {
+      container.dataset.zoom = String(map.getZoom()); // for the tests
+      redraw();
+    });
     // The container's size changes with the screen (rotation, panel). Never
     // zoom out so far that the world is shorter than the map.
     const observer = new ResizeObserver(() => {
@@ -212,4 +221,44 @@ export default function MapView({
   useEffect(() => redraw(), [clusters, focus?.id]);
 
   return <div ref={containerRef} className={styles.map} />;
+}
+
+/** Extra zoom per unit of pinch speed (levels per second), and its cap. */
+const PINCH_MOMENTUM_S = 0.2;
+const PINCH_MOMENTUM_MAX = 0.5;
+
+/**
+ * Leaflet stops a pinch dead where the fingers leave. This carries it on a
+ * little, in proportion to the pinch's speed at the end, through Leaflet's
+ * own end-of-pinch animation. It wraps a private method of Leaflet 1.9's
+ * touch-zoom handler (`_onTouchEnd`, `_zoom`): check it on a major upgrade.
+ */
+function addPinchMomentum(map: L.Map) {
+  const handler = map.touchZoom as unknown as {
+    _zooming?: boolean;
+    _zoom: number;
+    _onTouchEnd: () => void;
+  };
+  const samples: { time: number; zoom: number }[] = [];
+  map.on('zoom', () => {
+    if (!handler._zooming) return;
+    const time = performance.now();
+    samples.push({ time, zoom: handler._zoom });
+    while (samples.length > 0 && time - (samples[0]?.time ?? time) > 100) samples.shift();
+  });
+  const end = handler._onTouchEnd.bind(handler);
+  handler._onTouchEnd = () => {
+    const first = samples[0];
+    const last = samples.at(-1);
+    samples.length = 0;
+    if (handler._zooming && first && last && last.time - first.time > 16) {
+      const speed = (last.zoom - first.zoom) / ((last.time - first.time) / 1000);
+      const extra = Math.max(
+        -PINCH_MOMENTUM_MAX,
+        Math.min(PINCH_MOMENTUM_MAX, speed * PINCH_MOMENTUM_S),
+      );
+      handler._zoom = last.zoom + extra;
+    }
+    end();
+  };
 }
