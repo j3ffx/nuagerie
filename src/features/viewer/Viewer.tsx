@@ -13,6 +13,7 @@ import { useData, useMediaIndex } from '../../data/dataContext.ts';
 import { lookupPlace } from '../../data/places/places.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { formatPlace, formatTakenDateTime } from '../../lib/format.ts';
+import { useOnline } from '../../lib/online.ts';
 import { BackIcon, ChevronIcon, DownloadIcon, MapIcon } from '../../ui/icons.tsx';
 import {
   clampZoom,
@@ -482,6 +483,8 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
   const album = index?.folders.get(item.albumId)?.name ?? null;
   const [downloading, setDownloading] = useState(false);
   const place = usePlaceName(item);
+  // Sharing and saving need the original file: crossed out while offline.
+  const offline = !useOnline();
 
   /** The original file, saved by the browser (OneDrive serves it as an attachment). */
   const download = async () => {
@@ -522,16 +525,17 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
           {album && <p className={styles.album}>{album}</p>}
         </div>
         {!(item.kind === 'video' && source.mode === 'demo') && (
-          <ShareButton key={item.id} item={item} />
+          <ShareButton key={item.id} item={item} offline={offline} />
         )}
         {!(item.kind === 'video' && source.mode === 'demo') && (
           <button
             type="button"
             className={styles.icon}
             onClick={() => void download()}
-            disabled={downloading}
-            aria-label="Télécharger"
-            title="Télécharger"
+            disabled={downloading || offline}
+            data-offline={offline || undefined}
+            aria-label={offline ? 'Télécharger (hors connexion)' : 'Télécharger'}
+            title={offline ? 'Télécharger (hors connexion)' : 'Télécharger'}
           >
             <DownloadIcon />
           </button>

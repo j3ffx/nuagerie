@@ -27,6 +27,25 @@ test('says when the device is offline, and keeps working', async ({ page, contex
   await expect(banner(page)).toBeHidden();
 });
 
+test('crosses out sharing and saving in the viewer while offline', async ({ page, context }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'canShare', { value: () => true });
+    Object.defineProperty(navigator, 'share', { value: async () => undefined });
+  });
+  await page.goto('/tout');
+  await page.getByRole('main').locator('a[data-item-id]').first().click();
+  const viewer = page.getByRole('dialog', { name: 'Visionneuse' });
+  await expect(viewer.getByRole('button', { name: 'Télécharger' })).toBeEnabled();
+
+  await context.setOffline(true);
+  await expect(viewer.getByRole('button', { name: 'Partager (hors connexion)' })).toBeDisabled();
+  await expect(viewer.getByRole('button', { name: 'Télécharger (hors connexion)' })).toBeDisabled();
+
+  await context.setOffline(false);
+  await expect(viewer.getByRole('button', { name: 'Partager' })).toBeEnabled();
+  await expect(viewer.getByRole('button', { name: 'Télécharger' })).toBeEnabled();
+});
+
 test('starts with no network once installed', async ({ page, context }) => {
   await expect
     .poll(() => page.evaluate(async () => (await navigator.serviceWorker.ready).active?.state))

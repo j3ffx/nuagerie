@@ -20,7 +20,7 @@ const MESSAGE_MS = 4000;
  * per item, so its state never outlives the photo. A failure says so for a
  * moment and leaves the button ready for another try.
  */
-export function ShareButton({ item }: { item: MediaItem }) {
+export function ShareButton({ item, offline }: { item: MediaItem; offline: boolean }) {
   const { source, thumbnails } = useData();
   const [state, setState] = useState<State>({ status: 'idle' });
 
@@ -60,7 +60,11 @@ export function ShareButton({ item }: { item: MediaItem }) {
     else setState({ status: 'failed' });
   };
 
-  const label = state.status === 'ready' ? 'Partager (prêt, toucher à nouveau)' : 'Partager';
+  const label = offline
+    ? 'Partager (hors connexion)'
+    : state.status === 'ready'
+      ? 'Partager (prêt, toucher à nouveau)'
+      : 'Partager';
 
   return (
     <>
@@ -68,6 +72,8 @@ export function ShareButton({ item }: { item: MediaItem }) {
         type="button"
         className={styles.icon}
         onClick={() => void onClick()}
+        disabled={offline}
+        data-offline={offline || undefined}
         aria-busy={state.status === 'preparing'}
         data-ready={state.status === 'ready' || undefined}
         aria-label={label}

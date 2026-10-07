@@ -203,6 +203,24 @@
   opacity: 0.5;
 }
 
+/* Not possible offline: greyed out and crossed out. */
+.icon[data-offline] {
+  position: relative;
+}
+
+.icon[data-offline]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 30px;
+  height: 2px;
+  margin: auto;
+  border-radius: 1px;
+  background: currentColor;
+  box-shadow: 0 0 0 1.5px rgb(0 0 0 / 0.55);
+  transform: rotate(-45deg);
+}
+
 /* A short message under the top bar. */
 .toast {
   position: absolute;
