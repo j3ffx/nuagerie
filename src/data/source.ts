@@ -18,6 +18,8 @@ export interface DataSource {
   refresh?(onProgress?: (progress: IndexProgress) => void): Promise<MediaIndex | null>;
   /** Forgets the local copy, so the next load enumerates everything again. */
   reset?(): Promise<void>;
+  /** Subfolders of a drive folder ("/" for the drive root), by name, to choose root folders. */
+  listFolders?(path: string): Promise<DriveFolder[]>;
   /** Anonymous summary of the index and checks of the Graph assumptions. */
   diagnose?(): Promise<DiagnosticReport>;
   /**
@@ -38,3 +40,12 @@ export interface DataSource {
 
 /** Image bytes to keep in the cache, or (when they cannot be read) a URL to show as is. */
 export type ThumbnailData = { blob: Blob } | { url: string };
+
+/** A folder of the drive, as shown when choosing root folders. */
+export interface DriveFolder {
+  name: string;
+  /** From the drive root, e.g. "/Documents/Scans". */
+  path: string;
+  /** Whether it holds anything (files or folders). */
+  hasChildren: boolean;
+}

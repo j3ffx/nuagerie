@@ -1,4 +1,3 @@
-import { readPersistent } from '../../lib/persistent.ts';
 import { currentDateContext, resolveCaptureDate } from '../dates.ts';
 import { summarize } from '../diagnostics.ts';
 import { createGraphClient, GraphError, type GraphClient } from '../graph/client.ts';
@@ -13,7 +12,8 @@ import { createOriginalUrlLoader } from '../graph/originals.ts';
 import type { GraphDriveItem } from '../graph/types.ts';
 import type { IndexProgress, MediaIndex } from '../model.ts';
 import { buildIndex } from '../normalize.ts';
-import type { DataSource } from '../source.ts';
+import type { DataSource, DriveFolder } from '../source.ts';
+import { childPath, readRootPaths } from '../roots.ts';
 import { IndexStore, type IndexMeta, type RootSyncState } from '../store.ts';
 
 /** Started offline, with no index kept on the device yet. */
@@ -23,10 +23,6 @@ export class OfflineError extends Error {
     this.name = 'OfflineError';
   }
 }
-
-/** Folders scanned by default; more can be added in the settings. */
-export const DEFAULT_ROOT_PATHS = ['/Pictures'];
-export const ROOT_PATHS_KEY = 'rootPaths';
 
 /**
  * Live checks of what the documentation leaves open, on the real drive.
@@ -170,6 +166,11 @@ async function checkThumbnails(
   return checks;
 }
 
+interface FolderPage {
+  value: Pick<GraphDriveItem, 'name' | 'folder'>[];
+  '@odata.nextLink'?: string;
+}
+
 export interface OneDriveSourceOptions {
   /**
    * The signed-in account, or null when the app started offline without one:
@@ -203,7 +204,7 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
 
   /** Meta matching the current account and root paths, created (with scope detection) if needed. */
   async function prepareMeta(store: IndexStore): Promise<IndexMeta> {
-    const paths = readPersistent<string[]>(ROOT_PATHS_KEY, DEFAULT_ROOT_PATHS);
+    const paths = readRootPaths();
     const existing = await store.getMeta();
     const samePaths = existing?.rootFolders.map((r) => r.path).join('\n') === paths.join('\n');
     if (options.accountId === null) {
@@ -351,6 +352,29 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
         ),
         lastSyncAt: meta.lastSyncAt ? new Date(meta.lastSyncAt).toISOString() : null,
       });
+    },
+
+    async listFolders(path) {
+      const encoded = path.split('/').filter(Boolean).map(encodeURIComponent).join('/');
+      let url: string | null =
+        `${encoded ? `/me/drive/root:/${encoded}:` : '/me/drive/root'}/children` +
+        '?$select=name,folder&$top=999';
+      const folders: DriveFolder[] = [];
+      while (url) {
+        const page: FolderPage = await client.getJson<FolderPage>(url);
+        for (const item of page.value) {
+          if (!item.folder || !item.name) continue;
+          folders.push({
+            name: item.name,
+            path: childPath(path, item.name),
+            hasChildren: (item.folder.childCount ?? 0) > 0,
+          });
+        }
+        url = page['@odata.nextLink'] ?? null;
+      }
+      return folders.sort((a, b) =>
+        a.name.localeCompare(b.name, 'fr', { sensitivity: 'base', numeric: true }),
+      );
     },
 
     fetchThumbnail: thumbnails,

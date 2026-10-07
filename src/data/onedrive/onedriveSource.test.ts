@@ -131,4 +131,36 @@ describe('createOneDriveSource', () => {
     await expect(source(graph.client, null).loadIndex()).rejects.toThrow(/Hors connexion/);
     expect(graph.calls).toEqual([]);
   });
+
+  it('lists the subfolders of a drive folder, page by page, by name', async () => {
+    const calls: string[] = [];
+    const client: GraphClient = {
+      batch: () => Promise.reject(new Error('unexpected batch')),
+      async getJson<T>(url: string): Promise<T> {
+        calls.push(url);
+        if (url === 'https://graph/next') {
+          return { value: [{ name: 'Bureau', folder: { childCount: 0 } }] } as T;
+        }
+        return {
+          value: [
+            { name: 'Scans', folder: { childCount: 3 } },
+            { name: 'notes.txt' },
+            { name: 'Années 2000', folder: { childCount: 1 } },
+          ],
+          '@odata.nextLink': 'https://graph/next',
+        } as T;
+      },
+    };
+
+    const folders = await source(client).listFolders?.('/Mes documents');
+
+    expect(calls[0]).toBe('/me/drive/root:/Mes%20documents:/children?$select=name,folder&$top=999');
+    expect(folders).toEqual([
+      { name: 'Années 2000', path: '/Mes documents/Années 2000', hasChildren: true },
+      { name: 'Bureau', path: '/Mes documents/Bureau', hasChildren: false },
+      { name: 'Scans', path: '/Mes documents/Scans', hasChildren: true },
+    ]);
+    await source(client).listFolders?.('/');
+    expect(calls.at(-2)).toBe('/me/drive/root/children?$select=name,folder&$top=999');
+  });
 });
