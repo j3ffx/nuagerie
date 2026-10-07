@@ -56,6 +56,12 @@ Puis ouvrir <http://localhost:5173>. Installation détaillée, test sur téléph
 déploiement et connexion à OneDrive : [docs/SETUP.md](docs/SETUP.md). Les règles du dépôt
 pour contribuer : [CLAUDE.md](CLAUDE.md).
 
+## Nouveautés et problèmes
+
+Ce que chaque version apporte : [CHANGELOG.md](CHANGELOG.md), aussi affiché dans l’application après
+une mise à jour. Un problème ou une idée : Réglages → À propos → « Signaler un problème », ou
+directement dans les [issues](https://github.com/j3ffx/nuagerie/issues).
+
 ## Stack
 
 React, TypeScript (strict) et Vite ; MSAL pour la connexion Microsoft ; vite-plugin-pwa

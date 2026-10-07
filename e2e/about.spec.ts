@@ -17,6 +17,19 @@ test('lists what each version brought, from the settings', async ({ page }) => {
   await expect(page).toHaveURL('/reglages');
 });
 
+test('reports a problem on GitHub with the version and device, nothing personal', async ({
+  page,
+}) => {
+  await page.goto('/reglages');
+  const href = await page.getByRole('link', { name: 'Signaler un problème' }).getAttribute('href');
+  const url = new URL(href ?? '');
+  expect(`${url.origin}${url.pathname}`).toBe('https://github.com/j3ffx/nuagerie/issues/new');
+  const body = url.searchParams.get('body') ?? '';
+  expect(body).toContain(`Version : ${version}`);
+  expect(body).toContain('Données : démo');
+  expect(body).toMatch(/Appareil : Android \d+ · Chrome \d+/);
+});
+
 test('tells once what is new after an update', async ({ page }) => {
   test.skip(version === '0.0.0', 'No released version yet');
   // As if the previous version was the last one seen.
