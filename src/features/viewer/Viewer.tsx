@@ -11,7 +11,7 @@ import { createPortal } from 'react-dom';
 import { useData, useMediaIndex } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { formatCoordinates, formatTakenDateTime } from '../../lib/format.ts';
-import { BackIcon, ChevronIcon, MapIcon, OpenIcon } from '../../ui/icons.tsx';
+import { BackIcon, ChevronIcon, DownloadIcon, MapIcon } from '../../ui/icons.tsx';
 import {
   clampZoom,
   closesOnDrag,
@@ -464,20 +464,23 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
   const { source } = useData();
   const index = useMediaIndex();
   const album = index?.folders.get(item.albumId)?.name ?? null;
-  const [opening, setOpening] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
-  const openOriginal = async () => {
-    // Opened before the (async) URL is known, or the browser would block the window.
-    const target = window.open('', '_blank');
-    setOpening(true);
+  /** The original file, saved by the browser (OneDrive serves it as an attachment). */
+  const download = async () => {
+    setDownloading(true);
     try {
       const url = await source.getOriginalUrl(item);
-      if (url && target) target.location.href = url;
-      else target?.close();
+      if (url) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = item.name;
+        link.click();
+      }
     } catch {
-      target?.close();
+      // Nothing to save now; the button stays available.
     } finally {
-      setOpening(false);
+      setDownloading(false);
     }
   };
 
@@ -505,12 +508,12 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
           <button
             type="button"
             className={styles.icon}
-            onClick={() => void openOriginal()}
-            disabled={opening}
-            aria-label="Ouvrir l’original"
-            title="Ouvrir l’original"
+            onClick={() => void download()}
+            disabled={downloading}
+            aria-label="Télécharger"
+            title="Télécharger"
           >
-            <OpenIcon />
+            <DownloadIcon />
           </button>
         )}
       </header>

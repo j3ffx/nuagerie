@@ -113,3 +113,13 @@ test('opens straight from a link, and says demo videos cannot play', async ({ pa
   await expect(viewer(page)).toBeHidden();
   await expect(page).toHaveURL(/\/tout$/);
 });
+
+test('downloads the original file', async ({ page }) => {
+  const photo = cells(page)
+    .filter({ hasNot: page.locator('svg') })
+    .first();
+  await photo.click();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Télécharger' }).click();
+  expect((await download).suggestedFilename()).toMatch(/\.(jpe?g|png|heic|webp|gif)$/i);
+});
