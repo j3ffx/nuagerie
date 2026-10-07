@@ -175,3 +175,31 @@ test('shares the photo through the system share sheet, not the Download folder',
     .toEqual([expect.stringMatching(/^\S+\.\w+ image\/\w+ [1-9]\d*$/)]);
   expect(downloaded).toBe(false);
 });
+
+test('says when sharing failed, and lets the user try again', async ({ page }) => {
+  await page.addInitScript(() => {
+    let calls = 0;
+    const shared: string[] = [];
+    Object.assign(window, { shared });
+    Object.defineProperty(navigator, 'canShare', { value: () => true });
+    Object.defineProperty(navigator, 'share', {
+      value: async ({ files }: { files: File[] }) => {
+        if (calls++ === 0) throw new DOMException('Share failed', 'DataError');
+        shared.push(...files.map((file) => file.name));
+      },
+    });
+  });
+  await page.reload();
+  await cells(page)
+    .filter({ hasNot: page.locator('svg') })
+    .first()
+    .click();
+  const button = page.getByRole('button', { name: 'Partager' });
+  await button.click();
+  await expect(viewer(page).getByRole('status')).toHaveText(/Partage impossible/);
+  await expect(button).toBeEnabled();
+  await button.click();
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { shared: string[] }).shared.length))
+    .toBe(1);
+});

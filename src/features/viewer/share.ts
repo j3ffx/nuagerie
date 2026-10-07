@@ -7,33 +7,44 @@ export function canShareFiles(): boolean {
   return typeof navigator.share === 'function' && typeof navigator.canShare === 'function';
 }
 
+const DOWNLOAD_TIMEOUT_MS = 60_000;
+
 /**
  * The file to hand to the share sheet: the original when its host lets the
- * app read it, otherwise, for a photo, the large JPEG version (as on screen).
- * Nothing is written to the phone's Download folder.
+ * app read it and the share sheet takes its type, otherwise, for a photo,
+ * the large JPEG version (as on screen; also what HEIC becomes). Nothing is
+ * written to the phone's Download folder.
  */
 export async function shareableFile(
   item: MediaItem,
   source: Pick<DataSource, 'getOriginalUrl'>,
   store: Pick<ThumbnailStore, 'acquire'>,
+  accepts: (file: File) => boolean,
 ): Promise<File | null> {
   try {
     const url = await source.getOriginalUrl(item);
     if (url) {
-      const response = await fetch(url, { credentials: 'omit' });
+      const response = await fetch(url, {
+        credentials: 'omit',
+        signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
+      });
       if (response.ok) {
         const blob = await response.blob();
-        return new File([blob], item.name, { type: item.mimeType || blob.type });
+        const file = new File([blob], item.name, { type: item.mimeType || blob.type });
+        if (accepts(file)) return file;
       }
     }
   } catch {
-    // The original's host refuses cross-origin reads: fall back below.
+    // Unreadable original (host, network, timeout): fall back below.
   }
   if (item.kind !== 'image') return null;
   const handle = store.acquire(item, 'large');
   try {
     const blob = await (await fetch(await handle.promise)).blob();
-    return new File([blob], item.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+    const file = new File([blob], `${item.name.replace(/\.[^.]+$/, '')}.jpg`, {
+      type: 'image/jpeg',
+    });
+    return accepts(file) ? file : null;
   } catch {
     return null;
   } finally {

@@ -172,6 +172,21 @@
   opacity: 0.5;
 }
 
+/* A short message under the top bar. */
+.toast {
+  position: absolute;
+  top: calc(100% - var(--space-4));
+  left: 50%;
+  max-width: calc(100% - 2 * var(--space-4));
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: rgb(0 0 0 / 0.8);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
 /* Shared file ready, waiting for a second tap. */
 .icon[data-ready] {
   background: var(--color-primary);
