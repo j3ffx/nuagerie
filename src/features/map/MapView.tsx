@@ -129,6 +129,9 @@ export default function MapView({
       attributionControl: true,
       worldCopyJump: true,
       minZoom: 2,
+      // The world ends at the poles: no dragging into the blank above or below.
+      maxBounds: L.latLngBounds([-85.0511, -1e5], [85.0511, 1e5]),
+      maxBoundsViscosity: 1,
     });
     map.attributionControl.setPrefix(false);
     L.control
@@ -145,8 +148,12 @@ export default function MapView({
     markersRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
     map.on('moveend', () => redraw());
-    // The container's size changes with the screen (rotation, panel).
-    const observer = new ResizeObserver(() => map.invalidateSize());
+    // The container's size changes with the screen (rotation, panel). Never
+    // zoom out so far that the world is shorter than the map.
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize();
+      map.setMinZoom(Math.max(2, Math.ceil(Math.log2(container.clientHeight / 256))));
+    });
     observer.observe(container);
     return () => {
       observer.disconnect();
