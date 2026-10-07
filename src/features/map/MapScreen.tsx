@@ -128,8 +128,12 @@ function ZonePanel({
   focus: MediaItem | null;
   onOpen: (item: MediaItem) => void;
 }) {
+  // Offered only while the photo it is for is on screen.
   const focusPosition =
-    focus?.latitude != null && focus.longitude != null
+    focus?.latitude != null &&
+    focus.longitude != null &&
+    zone !== null &&
+    itemsInBounds([focus], zone).length > 0
       ? { latitude: focus.latitude, longitude: focus.longitude }
       : null;
 
@@ -173,7 +177,7 @@ function ZonePanel({
           className={`${common.buttonSoft} ${styles.maps}`}
           href={mapsHref(focusPosition.latitude, focusPosition.longitude)}
         >
-          Ouvrir dans Maps
+          Ouvrir ce lieu dans Maps
         </a>
       )}
     </section>

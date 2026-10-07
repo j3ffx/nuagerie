@@ -53,10 +53,18 @@ test('opens a photo of the zone, then its place on the map, with a link to Maps'
   await place.click();
   await expect(page).toHaveURL(/\/carte\?focus=/);
   await expect(viewer).toBeHidden();
-  await expect(page.getByRole('link', { name: 'Ouvrir dans Maps' })).toHaveAttribute(
-    'href',
-    /^geo:-?\d+\.\d+,-?\d+\.\d+\?q=/,
-  );
+  const maps = page.getByRole('link', { name: 'Ouvrir ce lieu dans Maps' });
+  await expect(maps).toHaveAttribute('href', /^geo:-?\d+\.\d+,-?\d+\.\d+\?q=/);
+  await expect(page.locator('[class*="focused"]')).toHaveCount(1);
+
+  // Away from the photo, the link (which is about that photo) goes.
+  for (const dx of [-300, -300]) {
+    await page.mouse.move(180, 300);
+    await page.mouse.down();
+    await page.mouse.move(180 + dx, 300, { steps: 8 });
+    await page.mouse.up();
+  }
+  await expect(maps).toBeHidden();
 });
 
 test('stays within the world, and zooms close enough to part nearby photos', async ({ page }) => {

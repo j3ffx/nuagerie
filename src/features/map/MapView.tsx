@@ -63,9 +63,9 @@ export default function MapView({
    * A round thumbnail, with the number of photos for a group. The disc is
    * drawn by the marker itself, so it shows while the thumbnail loads.
    */
-  const icon = (item: MediaItem, count: number | null) => {
+  const icon = (item: MediaItem, count: number | null, focused: boolean) => {
     const element = document.createElement('div');
-    element.className = styles.marker ?? '';
+    element.className = `${styles.marker ?? ''} ${focused ? (styles.focused ?? '') : ''}`;
     const disc = document.createElement('span');
     disc.className = styles.disc ?? '';
     const image = document.createElement('img');
@@ -105,8 +105,10 @@ export default function MapView({
       if (marker.kind === 'cluster') {
         // Photos taken at the same spot never split: the group opens them.
         const expands = canExpand(clusters, marker.id);
+        const focused =
+          focus !== null && photosOf(clusters, marker.id).some((p) => p.id === focus.id);
         L.marker(position, {
-          icon: icon(marker.cover, marker.count),
+          icon: icon(marker.cover, marker.count, focused),
           title: `${formatCount(marker.count)} éléments, ${expands ? 'agrandir' : 'ouvrir'}`,
           keyboard: true,
         })
@@ -123,7 +125,7 @@ export default function MapView({
           .addTo(layer);
       } else {
         L.marker(position, {
-          icon: icon(marker.item, null),
+          icon: icon(marker.item, null, marker.item.id === focus?.id),
           title: describeItem(marker.item),
           keyboard: true,
         })
@@ -206,8 +208,8 @@ export default function MapView({
   });
   useEffect(() => place(), [focus?.id]);
 
-  // New photos (filter, sync): redraw in place.
-  useEffect(() => redraw(), [clusters]);
+  // New photos (filter, sync), or a new photo to point at: redraw in place.
+  useEffect(() => redraw(), [clusters, focus?.id]);
 
   return <div ref={containerRef} className={styles.map} />;
 }

@@ -69,6 +69,14 @@
   opacity: 1;
 }
 
+/* The photo the map was opened for. */
+.focused .disc {
+  border-color: var(--color-primary);
+  box-shadow:
+    0 0 0 3px #fff,
+    0 2px 8px rgb(0 0 0 / 0.45);
+}
+
 .count {
   position: absolute;
   top: -4px;
