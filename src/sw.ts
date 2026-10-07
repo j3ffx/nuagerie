@@ -26,4 +26,5 @@ precacheAndRoute(self.__WB_MANIFEST);
 // SPA: every navigation is answered with the cached index.html.
 registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html')));
 
-// TODO: thumbnail cache (Cache Storage, key id + size + eTag, LRU capped at 500 MB).
+// Thumbnails are cached by the page itself (src/data/thumbnails/), in Cache Storage:
+// the page holds the Graph token, and the cache works in development too.
