@@ -44,6 +44,9 @@ agréable aussi sur PC.
 
 ## Essayer
 
+En ligne, sans compte ni installation : <https://nuagerie.pages.dev/?demo=1> (la démo,
+avec ses photos factices). Ou en local :
+
 ```bash
 npm install
 npm run dev:demo
