@@ -154,6 +154,39 @@ describe('buildAlbums', () => {
   });
 });
 
+describe('a root with files of its own', () => {
+  /* Scans/ (s1)  2019/ (s2)  Anciennes/ (o1) */
+  const scans = buildIndex(
+    [
+      folder('scans', 'Scans', 'docs'),
+      folder('scans-y', '2019', 'scans'),
+      folder('old', 'Anciennes', 'scans'),
+      photo('s1', 'scans', '2020-02-02'),
+      photo('s2', 'scans-y', '2019-01-01'),
+      photo('o1', 'old', '2001-01-01'),
+    ],
+    ['scans'],
+    date,
+  );
+
+  it('is an album of its own files, its subfolders staying first-level albums', () => {
+    expect(folderTree(scans).map((node) => node.folder.name)).toEqual(['Scans', 'Anciennes']);
+    expect(folderTree(scans)[0]?.children).toEqual([]);
+    const { home, byId } = buildAlbums(scans, { checked: null, hidden: [] });
+    expect(ids(home).sort()).toEqual(['old', 'scans']);
+    expect(itemIds(byId.get('scans')?.items)).toEqual(['s1', 's2']);
+    expect(byId.get('scans')?.subAlbumCount).toBe(0);
+  });
+
+  it('is not an album without files of its own', () => {
+    expect(folderTree(index).map((node) => node.folder.id)).not.toContain('pics');
+  });
+
+  it('hides only its own files when excluded', () => {
+    expect(itemIds(withoutFolders(scans, new Set(['scans'])))).toEqual(['o1']);
+  });
+});
+
 describe('sortAlbums', () => {
   const { home } = buildAlbums(index, { checked: ['cam', 'alb', 'evt', 'garden'], hidden: [] });
 

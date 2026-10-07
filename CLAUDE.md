@@ -78,6 +78,8 @@ commit metadata.
 - **Albums:** a folder is a potential album. Technical folders are never albums: years (`^\d{4}$`),
   months under a year (`^(0[1-9]|1[0-2])$`) and `Sans date`; their files belong to the nearest
   non-technical parent (`src/data/technical.ts`). An album shows only its own files, not its sub-albums'.
+  A root of the perimeter (`/Pictures`, or a folder added in the settings) is an album only when it has
+  files of its own; its subfolders stay first-level albums.
 - **Grids show Graph thumbnails only**, never the original file. They are kept on the device
   (`src/data/thumbnails/`: Cache Storage, keyed by id + size + eTag, size-capped), and grids are
   virtualized (`src/ui/grid/`): only the rows near the screen exist in the DOM. The viewer shows the

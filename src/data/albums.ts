@@ -2,7 +2,9 @@ import type { Folder, MediaIndex, MediaItem } from './model.ts';
 
 /**
  * Album model (CLAUDE.md → Invariants → Albums).
- *  - A non-technical folder is a potential album.
+ *  - A non-technical folder is a potential album. A perimeter root (e.g. Pictures) is
+ *    one only when it has files of its own: an album of those files, its subfolders
+ *    staying first-level albums.
  *  - A checked folder whose ancestors are all unchecked is an album on the home screen.
  *  - The non-technical subfolders of an album are its sub-albums: tiles at the top of
  *    its page, each of which can be hidden. They never appear on the home screen.
@@ -69,13 +71,26 @@ function childrenMap(index: MediaIndex): Map<string, Folder[]> {
   return children;
 }
 
+/** Roots holding files of their own (directly or in their technical folders). */
+function rootsWithFiles(index: MediaIndex): Set<string> {
+  const roots = new Set(index.rootFolderIds);
+  const found = new Set<string>();
+  for (const item of index.items) if (roots.has(item.albumId)) found.add(item.albumId);
+  return found;
+}
+
 export function folderTree(index: MediaIndex): FolderNode[] {
   const children = childrenMap(index);
+  const withFiles = rootsWithFiles(index);
   const build = (folder: Folder): FolderNode => ({
     folder,
     children: (children.get(folder.id) ?? []).map(build),
   });
-  return index.rootFolderIds.flatMap((rootId) => (children.get(rootId) ?? []).map(build));
+  return index.rootFolderIds.flatMap((rootId) => {
+    const root = index.folders.get(rootId);
+    const own = root && withFiles.has(rootId) ? [{ folder: root, children: [] }] : [];
+    return [...own, ...(children.get(rootId) ?? []).map(build)];
+  });
 }
 
 /** First-level folders of the perimeter: the default selection. */
@@ -98,8 +113,11 @@ export function buildAlbums(index: MediaIndex, selection: AlbumSelection): Album
 
   const byId = new Map<string, Album>();
 
+  const roots = new Set(index.rootFolderIds);
+
   const build = (folder: Folder, parentId: string | null): Album => {
-    const subFolders = children.get(folder.id) ?? [];
+    // A root's subfolders are first-level albums, not its sub-albums.
+    const subFolders = roots.has(folder.id) ? [] : (children.get(folder.id) ?? []);
     const subAlbums = subFolders.map((sub) => build(sub, folder.id));
     const items = itemsByAlbum.get(folder.id) ?? [];
     const firstDated = items.find((item) => item.takenAt !== null) ?? null;
@@ -200,19 +218,23 @@ export function orderItems(items: readonly MediaItem[], order: PhotoOrder): Medi
 
 /**
  * Items outside the excluded folders, and outside everything below them
- * (hiding "Applis" hides "Applis/WhatsApp" too). Order is kept.
+ * (hiding "Applis" hides "Applis/WhatsApp" too). Order is kept. Excluding a
+ * root hides its own files only, as its subfolders are albums of their own.
  */
 export function withoutFolders(
   index: MediaIndex,
   excluded: ReadonlySet<string>,
 ): readonly MediaItem[] {
   if (excluded.size === 0) return index.items;
+  const roots = new Set(index.rootFolderIds);
   const hidden = new Map<string, boolean>();
   const isHidden = (folderId: string | null): boolean => {
     if (folderId === null) return false;
     const known = hidden.get(folderId);
     if (known !== undefined) return known;
-    const value = excluded.has(folderId) || isHidden(index.folders.get(folderId)?.parentId ?? null);
+    const parentId = index.folders.get(folderId)?.parentId ?? null;
+    const value =
+      excluded.has(folderId) || (parentId !== null && !roots.has(parentId) && isHidden(parentId));
     hidden.set(folderId, value);
     return value;
   };
