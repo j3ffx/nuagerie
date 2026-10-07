@@ -66,7 +66,57 @@ async function checkApi(
       return `${withThumbs.length}/${files.length} fichiers avec miniatures`;
     }),
     ...(await checkThumbnails(client, sampleIds, thumbnails)),
+    ...(await checkOriginal(client, sampleIds[0])),
   ];
+}
+
+/** Host of a URL with its first label hidden (random server names). */
+const maskedHost = (url: string) => new URL(url).hostname.replace(/^[^.]+/, '*');
+
+/**
+ * Whether the app may read a URL's bytes (CORS), telling a Content-Security-
+ * Policy block (host to allow in public/_headers) from a CORS refusal. Only
+ * the first 64 KB are asked for.
+ */
+async function probeRead(url: string): Promise<string> {
+  let cspBlocked = false;
+  const onViolation = () => {
+    cspBlocked = true;
+  };
+  document.addEventListener('securitypolicyviolation', onViolation);
+  try {
+    const response = await fetch(url, { credentials: 'omit', headers: { Range: 'bytes=0-65535' } });
+    const blob = await response.blob();
+    return `oui (${response.status}, ${blob.type || 'type inconnu'}, ${Math.round(blob.size / 1024)} Ko lus)`;
+  } catch (error) {
+    await new Promise((resolve) => setTimeout(resolve, 0)); // the violation event comes after
+    return cspBlocked ? 'non (hôte bloqué par la CSP)' : `non (${String(error)})`;
+  } finally {
+    document.removeEventListener('securitypolicyviolation', onViolation);
+  }
+}
+
+/** Where original files are served from, and whether the app may read them (sharing). */
+async function checkOriginal(client: GraphClient, id: string | undefined) {
+  if (!id) return [];
+  try {
+    const item = await client.getJson<{ '@microsoft.graph.downloadUrl'?: string }>(
+      `/me/drive/items/${encodeURIComponent(id)}`,
+    );
+    const url = item['@microsoft.graph.downloadUrl'];
+    if (!url) return [{ check: 'URL de l’original', result: 'absente' }];
+    return [
+      { check: 'hôte des originaux', result: maskedHost(url) },
+      { check: 'lecture de l’original (CORS, partage)', result: await probeRead(url) },
+    ];
+  } catch (error) {
+    return [
+      {
+        check: 'URL de l’original',
+        result: `erreur ${error instanceof GraphError ? `${error.status} ${error.code}` : String(error)}`,
+      },
+    ];
+  }
 }
 
 /** Batched thumbnail URLs, where they are served from, and whether their bytes can be read (CORS). */
@@ -100,31 +150,9 @@ async function checkThumbnails(
   }
   const url = urls[0];
   if (!url) return checks;
-  // Host only, first label hidden (random server names).
-  const hosts = [...new Set(urls.map((u) => new URL(u).hostname.replace(/^[^.]+/, '*')))];
+  const hosts = [...new Set(urls.map(maskedHost))];
   checks.push({ check: 'hôte des miniatures', result: hosts.join(', ') });
-  // Tells a Content-Security-Policy block (host to allow in public/_headers) from a CORS refusal.
-  let cspBlocked = false;
-  const onViolation = () => {
-    cspBlocked = true;
-  };
-  document.addEventListener('securitypolicyviolation', onViolation);
-  try {
-    const response = await fetch(url, { credentials: 'omit' });
-    const blob = await response.blob();
-    checks.push({
-      check: 'lecture des octets (CORS)',
-      result: `oui (${response.status}, ${blob.type || 'type inconnu'}, ${Math.round(blob.size / 1024)} Ko)`,
-    });
-  } catch (error) {
-    await new Promise((resolve) => setTimeout(resolve, 0)); // the violation event comes after
-    checks.push({
-      check: 'lecture des octets (CORS)',
-      result: cspBlocked ? 'non (hôte bloqué par la CSP)' : `non (${String(error)})`,
-    });
-  } finally {
-    document.removeEventListener('securitypolicyviolation', onViolation);
-  }
+  checks.push({ check: 'lecture des octets (CORS)', result: await probeRead(url) });
   const readable = thumbnails.bytesReadable();
   checks.push({
     check: 'cache des miniatures',
