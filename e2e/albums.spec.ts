@@ -29,6 +29,22 @@ test('opens an album, its sub-albums, and goes back to the parent', async ({ pag
   await expect(page).toHaveURL('/');
 });
 
+test('opens an album at its top, and goes back to where the home was', async ({ page }) => {
+  const scrollY = () => page.evaluate(() => window.scrollY);
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect.poll(scrollY).toBeGreaterThan(300);
+  const home = await scrollY();
+
+  await homeAlbums(page).getByRole('link').last().click();
+  await expect(page).toHaveURL(/\/album\//);
+  await expect(page.getByRole('main').locator('a[data-item-id]').first()).toBeVisible();
+  expect(await scrollY()).toBe(0);
+
+  await page.goBack();
+  await expect(homeAlbums(page)).toBeVisible();
+  await expect.poll(scrollY).toBe(home);
+});
+
 test('sorts the home albums and remembers the choice', async ({ page }) => {
   await page.getByLabel('Trier les albums par').selectOption('name');
   await expect

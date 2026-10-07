@@ -5,7 +5,7 @@ import '../styles/global.css';
 import type { AccountInfo } from '@azure/msal-browser';
 import { MsalProvider } from '@azure/msal-react';
 import { useState } from 'react';
-import { Redirect, Route, Switch } from 'wouter';
+import { Redirect, Route, Router, Switch } from 'wouter';
 import { getAccessToken, getMsal } from '../auth/msal.ts';
 import { DataProvider } from '../data/DataProvider.tsx';
 import { createDemoSource } from '../data/demo/demoSource.ts';
@@ -25,7 +25,7 @@ import { useApplyTheme } from '../lib/theme.ts';
 import styles from './App.module.css';
 import { NavBar } from './NavBar.tsx';
 import { UpdateBanner } from './UpdateBanner.tsx';
-import { useScrollToTop } from './useScrollToTop.ts';
+import { scrollToTopOnNewScreen } from './useScrollToTop.ts';
 
 export function App({
   mode,
@@ -60,13 +60,14 @@ function Data({ mode, create }: { mode: DataMode; create: () => DataSource }) {
   const [source] = useState(create);
   return (
     <DataProvider mode={mode} source={source}>
-      <Shell />
+      <Router aroundNav={scrollToTopOnNewScreen}>
+        <Shell />
+      </Router>
     </DataProvider>
   );
 }
 
 function Shell() {
-  useScrollToTop();
   return (
     <div className={styles.shell}>
       <a className={styles.skipLink} href="#main">
