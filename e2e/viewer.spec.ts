@@ -147,3 +147,31 @@ test('names the place of a geotagged photo, found on the device', async ({ page 
   // No request left the app: coordinates stay on the device.
   expect(placeRequests).toEqual([]);
 });
+
+test('shares the photo through the system share sheet, not the Download folder', async ({
+  page,
+}) => {
+  // Headless Chromium has no share sheet: record what would be shared.
+  await page.addInitScript(() => {
+    const shared: string[] = [];
+    Object.assign(window, { shared });
+    Object.defineProperty(navigator, 'canShare', { value: () => true });
+    Object.defineProperty(navigator, 'share', {
+      value: async ({ files }: { files: File[] }) => {
+        for (const file of files) shared.push(`${file.name} ${file.type} ${file.size}`);
+      },
+    });
+  });
+  await page.reload();
+  await cells(page)
+    .filter({ hasNot: page.locator('svg') })
+    .first()
+    .click();
+  let downloaded = false;
+  page.on('download', () => (downloaded = true));
+  await page.getByRole('button', { name: 'Partager' }).click();
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { shared: string[] }).shared))
+    .toEqual([expect.stringMatching(/^\S+\.\w+ image\/\w+ [1-9]\d*$/)]);
+  expect(downloaded).toBe(false);
+});

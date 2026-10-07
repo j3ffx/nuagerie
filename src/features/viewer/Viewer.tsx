@@ -25,6 +25,7 @@ import {
   type Size,
   type Zoom,
 } from './gestures.ts';
+import { ShareButton } from './ShareButton.tsx';
 import { ViewerSlide } from './ViewerSlide.tsx';
 import styles from './Viewer.module.css';
 
@@ -473,7 +474,7 @@ export function Viewer({
   );
 }
 
-/** Date, album and place of the picture, close and "open the original" buttons. */
+/** Date, album and place of the picture; close, share and download buttons. */
 function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) {
   const { source } = useData();
   const index = useMediaIndex();
@@ -519,6 +520,9 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
           </p>
           {album && <p className={styles.album}>{album}</p>}
         </div>
+        {!(item.kind === 'video' && source.mode === 'demo') && (
+          <ShareButton key={item.id} item={item} />
+        )}
         {!(item.kind === 'video' && source.mode === 'demo') && (
           <button
             type="button"
