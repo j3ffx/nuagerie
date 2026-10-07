@@ -160,10 +160,11 @@ describe('time zone helpers', () => {
 });
 
 describe('demo dataset as an oracle', () => {
-  it('finds the expected date of every one of the 20,000 synthetic files', () => {
+  it('finds the expected date of every synthetic file', () => {
     const dataset = generateDemoDataset(context);
     const media = dataset.items.filter((item) => item.file && 'demoExpectedDate' in item);
-    expect(media.length).toBe(20_000);
+    // 20,000 in /Pictures, plus the few kept outside it.
+    expect(media.length).toBe(20_052);
     const mismatches = media
       .map((item) => ({
         name: item.name,

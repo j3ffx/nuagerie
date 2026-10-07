@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { buildIndex } from '../normalize.ts';
-import { DEMO_ROOT_ID, generateDemoDataset, type DemoDriveItem } from './generator.ts';
+import {
+  DEMO_DRIVE_ROOT_ID,
+  DEMO_ROOT_ID,
+  generateDemoDataset,
+  type DemoDriveItem,
+} from './generator.ts';
 
 const NOW = Date.UTC(2026, 9, 6, 12, 0, 0);
 const dataset = generateDemoDataset({ nowWallClock: NOW });
@@ -18,8 +23,18 @@ const ratio = (predicate: (item: DemoDriveItem) => boolean) =>
 
 describe('generateDemoDataset', () => {
   it('produces exactly the requested number of photos and videos', () => {
-    expect(media).toHaveLength(20_000);
     expect(index.items).toHaveLength(20_000);
+  });
+
+  it('keeps a few folders outside /Pictures, out of the default perimeter', () => {
+    const topLevel = folders
+      .filter((item) => item.parentReference?.id === DEMO_DRIVE_ROOT_ID)
+      .map((item) => item.name)
+      .sort();
+    expect(topLevel).toEqual(['Documents', 'Musique', 'Pictures']);
+    const scans = folders.find((item) => item.name === 'Scans');
+    expect(media.filter((item) => item.parentReference?.id === scans?.id)).toHaveLength(40);
+    expect(media.length - index.items.length).toBe(52);
   });
 
   it('is deterministic for a given seed', () => {

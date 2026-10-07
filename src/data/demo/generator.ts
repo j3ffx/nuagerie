@@ -32,7 +32,7 @@ export interface DemoOptions {
 }
 
 export const DEMO_ROOT_ID = 'demo!pictures';
-const DEMO_DRIVE_ROOT_ID = 'demo!root';
+export const DEMO_DRIVE_ROOT_ID = 'demo!root';
 const DAY = 86_400_000;
 const UNDATED_SHARE = 0.023;
 const MEMES_SHARE = 0.004;
@@ -55,6 +55,8 @@ interface Bucket {
   /** Pick dates towards the end of the range (people take more photos lately). */
   recentBias: boolean;
   camera: readonly [string, string] | null;
+  /** Path from the drive root, outside the default perimeter (/Pictures). */
+  outside: boolean;
 }
 
 const ym = (year: number, month: number) => Date.UTC(year, month - 1, 1);
@@ -84,6 +86,7 @@ function bucket(
     session: [1, 4],
     recentBias: true,
     camera: null,
+    outside: false,
     ...options,
   };
 }
@@ -286,6 +289,19 @@ function buildBuckets(now: number): Bucket[] {
   return buckets;
 }
 
+/**
+ * Folders outside /Pictures, which the settings can add to the perimeter: a
+ * few scans right in their folder (a root with files of its own), with fixed
+ * counts on top of the requested media count.
+ */
+function buildOutsideBuckets(now: number): (readonly [Bucket, number])[] {
+  const scans = { styles: [['img', 1]], video: 0, exif: 0.3, outside: true } as const;
+  return [
+    [bucket(['Documents', 'Scans'], 0, ym(2016, 1), now, scans), 40],
+    [bucket(['Documents', 'Scans', 'Anciennes'], 0, ym(2016, 1), endOfMonth(2017, 12), scans), 12],
+  ];
+}
+
 /** Where undated files live, with their share of the undated total. */
 const UNDATED_FOLDERS: readonly (readonly [readonly string[], number])[] = [
   [['Camera Roll', 'Sans date'], 0.4],
@@ -366,6 +382,25 @@ export function generateDemoDataset(options: DemoOptions = {}): DemoDataset {
     return id;
   };
 
+  /** A folder from the drive root; under Pictures, the same folders as ensureFolder. */
+  const ensureDriveFolder = (path: readonly string[]): string => {
+    if (path.length === 0) return DEMO_DRIVE_ROOT_ID;
+    if (path[0] === 'Pictures') return ensureFolder(path.slice(1));
+    const key = `/${path.join('/')}`;
+    const existing = folderIds.get(key);
+    if (existing) return existing;
+    const parentId = ensureDriveFolder(path.slice(0, -1));
+    const id = `demo!f${folderIds.size}`;
+    folderIds.set(key, id);
+    folders.push({
+      id,
+      name: path.at(-1) ?? '',
+      folder: { childCount: 0 },
+      parentReference: { id: parentId },
+    });
+    return id;
+  };
+
   const uniqueName = (folderId: string, name: string): string => {
     let names = namesByFolder.get(folderId);
     if (!names) {
@@ -386,8 +421,9 @@ export function generateDemoDataset(options: DemoOptions = {}): DemoDataset {
     name: string,
     kind: MediaKind,
     extra: Partial<DemoDriveItem>,
+    fromDriveRoot = false,
   ): void => {
-    const parentId = ensureFolder(path);
+    const parentId = fromDriveRoot ? ensureDriveFolder(path) : ensureFolder(path);
     const id = `demo!${nextId++}`;
     const finalName = uniqueName(parentId, name);
     files.push({
@@ -443,8 +479,8 @@ export function generateDemoDataset(options: DemoOptions = {}): DemoDataset {
     buckets.map((b) => b.weight),
   );
 
-  buckets.forEach((b, bucketIndex) => {
-    let remaining = counts[bucketIndex] ?? 0;
+  const fillBucket = (b: Bucket, count: number) => {
+    let remaining = count;
     let counter = randomInt(random, 1, 4000);
     const end = Math.min(b.to, now);
 
@@ -504,11 +540,12 @@ export function generateDemoDataset(options: DemoOptions = {}): DemoDataset {
             longitude: round6(session.place.longitude + gaussian(random) * session.spread),
           };
         }
-        addFile(path, name, kind, extra);
+        addFile(path, name, kind, extra, b.outside);
       }
       remaining -= size;
     }
-  });
+  };
+  buckets.forEach((b, bucketIndex) => fillBucket(b, counts[bucketIndex] ?? 0));
 
   // Undated files: in "Sans date" folders, plus a memes album with no dates at all.
   const undatedCounts = splitCount(
@@ -544,6 +581,24 @@ export function generateDemoDataset(options: DemoOptions = {}): DemoDataset {
     [['Camera Roll'], 'Thumbs.db'],
   ] as const) {
     const parentId = ensureFolder(path);
+    const id = `demo!${nextId++}`;
+    files.push({
+      id,
+      name,
+      eTag: `"{${id}},1"`,
+      size: randomInt(random, 1, 500) * 1_000,
+      parentReference: { id: parentId },
+      file: { mimeType: mimeTypeOf(name) },
+    });
+  }
+
+  // Outside the default perimeter, generated last so the files above never change.
+  for (const [b, count] of buildOutsideBuckets(now)) fillBucket(b, count);
+  for (const [path, name] of [
+    [['Documents', 'Factures'], 'facture-2025-03.pdf'],
+    [['Musique'], 'playlist.m3u'],
+  ] as const) {
+    const parentId = ensureDriveFolder(path);
     const id = `demo!${nextId++}`;
     files.push({
       id,
