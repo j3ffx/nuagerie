@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App.tsx';
 import { initUpdates } from './app/updates.ts';
+import { initWhatsNew } from './app/whatsNew.ts';
 import { hasSignedInBefore, initAuth, REDIRECT_PATH } from './auth/msal.ts';
 import { resolveDataMode } from './data/mode.ts';
 import { ConnectingScreen } from './features/welcome/SignInScreen.tsx';
@@ -22,6 +23,7 @@ async function start() {
 
   // Production only (no service worker in dev, so hot reload is never stale).
   initUpdates();
+  initWhatsNew();
 
   const element = document.getElementById('root');
   if (!element) throw new Error('Missing #root element');

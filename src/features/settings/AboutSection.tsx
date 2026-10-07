@@ -4,6 +4,7 @@ import {
   useUpdateState,
   type UpdateStatus,
 } from '../../app/updates.ts';
+import { Link } from 'wouter';
 import common from '../../ui/common.module.css';
 
 const STATUS_LABELS: Record<UpdateStatus, string> = {
@@ -15,7 +16,7 @@ const STATUS_LABELS: Record<UpdateStatus, string> = {
   error: 'vérification impossible',
 };
 
-/** Version of the app, and manual update check. */
+/** Version of the app, what is new, and manual update check. */
 export function AboutSection() {
   const { status, latestCommit } = useUpdateState();
   const busy = status === 'checking' || status === 'downloading';
@@ -42,13 +43,6 @@ export function AboutSection() {
             </span>
           </dd>
         </dl>
-        <p className={common.muted}>
-          Noms de lieux :{' '}
-          <a href="https://www.geonames.org/" target="_blank" rel="noreferrer">
-            GeoNames
-          </a>
-          , licence CC BY 4.0.
-        </p>
         {status === 'ready' ? (
           <button type="button" className={common.button} onClick={applyUpdate}>
             Installer la nouvelle version
@@ -63,6 +57,16 @@ export function AboutSection() {
             Rechercher une mise à jour
           </button>
         )}
+        <Link href="/nouveautes?retour=%2Freglages" className={common.buttonSoft}>
+          Nouveautés
+        </Link>
+        <p className={common.muted}>
+          Noms de lieux :{' '}
+          <a href="https://www.geonames.org/" target="_blank" rel="noreferrer">
+            GeoNames
+          </a>
+          , licence CC BY 4.0.
+        </p>
       </div>
     </section>
   );

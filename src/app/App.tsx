@@ -21,6 +21,7 @@ import { MapScreen } from '../features/map/MapScreen.tsx';
 import { ZoneScreen } from '../features/map/ZoneScreen.tsx';
 import { FoldersScreen } from '../features/settings/FoldersScreen.tsx';
 import { SettingsScreen } from '../features/settings/SettingsScreen.tsx';
+import { WhatsNewScreen } from '../features/settings/WhatsNewScreen.tsx';
 import { SignInScreen } from '../features/welcome/SignInScreen.tsx';
 import { useApplyTheme } from '../lib/theme.ts';
 import styles from './App.module.css';
@@ -28,6 +29,7 @@ import banners from './Banner.module.css';
 import { ConnectionBanner } from './ConnectionBanner.tsx';
 import { NavBar } from './NavBar.tsx';
 import { UpdateBanner } from './UpdateBanner.tsx';
+import { WhatsNewBanner } from './WhatsNewBanner.tsx';
 import { scrollToTopOnNewScreen } from './navigation.ts';
 
 export function App({
@@ -94,6 +96,7 @@ function Shell() {
       <NavBar />
       <div className={banners.stack}>
         <UpdateBanner />
+        <WhatsNewBanner />
         <ConnectionBanner />
       </div>
       <main id="main" className={styles.main}>
@@ -107,6 +110,7 @@ function Shell() {
           <Route path="/carte/zone" component={ZoneScreen} />
           <Route path="/reglages" component={SettingsScreen} />
           <Route path="/reglages/dossiers" component={FoldersScreen} />
+          <Route path="/nouveautes" component={WhatsNewScreen} />
           <Route path="/diagnostic" component={DiagnosticScreen} />
           <Route>
             <Redirect to="/" replace />

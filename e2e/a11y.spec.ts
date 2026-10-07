@@ -63,6 +63,11 @@ const SCREENS: { name: string; path: string; ready: (page: Page) => Promise<void
     ready: (page) => expect(page.getByRole('button', { name: 'Ajouter Documents' })).toBeVisible(),
   },
   {
+    name: 'news',
+    path: '/nouveautes',
+    ready: (page) => expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible(),
+  },
+  {
     name: 'diagnostic',
     path: '/diagnostic',
     ready: (page) => expect(page.getByRole('heading', { level: 1 })).toBeVisible(),

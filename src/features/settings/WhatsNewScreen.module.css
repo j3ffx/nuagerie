@@ -1,0 +1,30 @@
+.version {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+  margin-bottom: var(--space-2);
+  padding: 0 var(--space-1);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.date {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sectionTitle {
+  margin-bottom: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.items {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+}
