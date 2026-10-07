@@ -37,6 +37,9 @@ Pour les vraies données, copier `.env.example` en `.env` et y renseigner le Cli
 | `npm run deploy`                                        | Build, vérification du contenu publié, puis mise en ligne sur Cloudflare Pages (§5).          |
 
 La première fois, Playwright a besoin de son navigateur : `npx playwright install chromium`.
+`npm run e2e` construit l’application puis la sert sur le port 4173. Si un serveur y tourne
+déjà (`npm run preview`, ou un ancien lancement resté ouvert), Playwright le réutilise sans
+reconstruire : lancer `npm run build` avant, ou arrêter ce serveur.
 
 Le mode démo s’active aussi avec `?demo=1` dans l’URL (mémorisé sur l’appareil ;
 `?demo=0` le désactive), et automatiquement quand aucun Client ID n’est configuré.
