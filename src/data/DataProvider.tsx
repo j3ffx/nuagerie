@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { isOnline } from '../lib/online.ts';
 import { DataContext, type DataState, type SyncState } from './dataContext.ts';
 import type { DataMode, DataSource } from './source.ts';
 import { createThumbnails } from './thumbnails/setup.ts';
@@ -12,14 +13,16 @@ function errorMessage(error: unknown): string {
 /**
  * Shows the index as soon as it is available (local copy first), then keeps
  * it up to date in the background, again when the app comes back to the
- * foreground.
+ * foreground or the connection comes back.
  */
 export function DataProvider({
   mode,
+  signedIn,
   source,
   children,
 }: {
   mode: DataMode;
+  signedIn: boolean;
   source: DataSource;
   children: ReactNode;
 }) {
@@ -30,7 +33,7 @@ export function DataProvider({
   const [thumbnails] = useState(() => createThumbnails(mode, source));
 
   const refresh = useCallback(() => {
-    if (!source.refresh || syncing.current) return;
+    if (!source.refresh || syncing.current || !isOnline()) return;
     syncing.current = true;
     setSync((s) => ({ ...s, status: 'running', progress: null, message: null }));
     source
@@ -73,7 +76,11 @@ export function DataProvider({
       if (document.visibilityState === 'visible') refresh();
     };
     document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
+    window.addEventListener('online', refresh);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('online', refresh);
+    };
   }, [refresh]);
 
   const resetIndex = useCallback(async () => {
@@ -84,7 +91,9 @@ export function DataProvider({
   }, [source]);
 
   return (
-    <DataContext.Provider value={{ mode, source, thumbnails, state, sync, refresh, resetIndex }}>
+    <DataContext.Provider
+      value={{ mode, signedIn, source, thumbnails, state, sync, refresh, resetIndex }}
+    >
       {children}
     </DataContext.Provider>
   );

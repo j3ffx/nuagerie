@@ -30,23 +30,30 @@ import { scrollToTopOnNewScreen } from './navigation.ts';
 export function App({
   mode,
   account,
+  offline,
   authError,
 }: {
   mode: DataMode;
   account: AccountInfo | null;
+  /** Started offline without a session: the index kept on the device, no updates. */
+  offline: boolean;
   authError: string | null;
 }) {
   useApplyTheme();
 
-  if (mode === 'demo') return <Data mode="demo" create={createDemoSource} />;
+  if (mode === 'demo') return <Data mode="demo" signedIn={false} create={createDemoSource} />;
 
   return (
     <MsalProvider instance={getMsal()}>
-      {account ? (
+      {account || offline ? (
         <Data
           mode="onedrive"
+          signedIn={account !== null}
           create={() =>
-            createOneDriveSource({ accountId: account.homeAccountId, getToken: getAccessToken })
+            createOneDriveSource({
+              accountId: account?.homeAccountId ?? null,
+              getToken: getAccessToken,
+            })
           }
         />
       ) : (
@@ -56,10 +63,18 @@ export function App({
   );
 }
 
-function Data({ mode, create }: { mode: DataMode; create: () => DataSource }) {
+function Data({
+  mode,
+  signedIn,
+  create,
+}: {
+  mode: DataMode;
+  signedIn: boolean;
+  create: () => DataSource;
+}) {
   const [source] = useState(create);
   return (
-    <DataProvider mode={mode} source={source}>
+    <DataProvider mode={mode} signedIn={signedIn} source={source}>
       <Router aroundNav={scrollToTopOnNewScreen}>
         <Shell />
       </Router>

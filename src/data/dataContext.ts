@@ -18,6 +18,8 @@ export interface SyncState {
 
 export interface DataContextValue {
   mode: DataMode;
+  /** OneDrive with an account; false in demo mode and when started offline without one. */
+  signedIn: boolean;
   source: DataSource;
   thumbnails: Thumbnails;
   state: DataState;

@@ -2,6 +2,7 @@ import { Link } from 'wouter';
 import { useData } from '../../data/dataContext.ts';
 import { isDemoForced, leaveDemoMode } from '../../data/mode.ts';
 import { formatCount, formatDateTime } from '../../lib/format.ts';
+import { useOnline } from '../../lib/online.ts';
 import { useThemePreference, type ThemePreference } from '../../lib/theme.ts';
 import common from '../../ui/common.module.css';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
@@ -18,7 +19,8 @@ const THEMES: { value: ThemePreference; label: string }[] = [
 
 export function SettingsScreen() {
   const [theme, setTheme] = useThemePreference();
-  const { mode, state, sync, refresh, resetIndex } = useData();
+  const { mode, signedIn, state, sync, refresh, resetIndex } = useData();
+  const online = useOnline();
   const index = state.status === 'ready' ? state.index : null;
 
   const confirmReset = () => {
@@ -82,13 +84,17 @@ export function SettingsScreen() {
                 <>
                   <dt>Mise à jour</dt>
                   <dd role="status">
-                    {sync.status === 'running'
-                      ? `en cours${sync.progress ? ` (${formatCount(sync.progress.loaded)})` : '…'}`
-                      : sync.status === 'error'
-                        ? 'échec'
-                        : sync.lastSyncAt
-                          ? formatDateTime(sync.lastSyncAt)
-                          : '—'}
+                    {!online
+                      ? 'hors connexion'
+                      : !signedIn
+                        ? 'en pause'
+                        : sync.status === 'running'
+                          ? `en cours${sync.progress ? ` (${formatCount(sync.progress.loaded)})` : '…'}`
+                          : sync.status === 'error'
+                            ? 'échec'
+                            : sync.lastSyncAt
+                              ? formatDateTime(sync.lastSyncAt)
+                              : '—'}
                   </dd>
                 </>
               )}
@@ -96,7 +102,7 @@ export function SettingsScreen() {
             {sync.status === 'error' && sync.message && (
               <p className={common.muted}>{sync.message}</p>
             )}
-            {mode === 'onedrive' && (
+            {mode === 'onedrive' && signedIn && (
               <>
                 <button
                   type="button"
@@ -105,11 +111,16 @@ export function SettingsScreen() {
                     refresh();
                     void checkForUpdate({ quiet: true });
                   }}
-                  disabled={sync.status === 'running' || state.status !== 'ready'}
+                  disabled={!online || sync.status === 'running' || state.status !== 'ready'}
                 >
                   Mettre à jour maintenant
                 </button>
-                <button type="button" className={common.buttonSoft} onClick={confirmReset}>
+                <button
+                  type="button"
+                  className={common.buttonSoft}
+                  onClick={confirmReset}
+                  disabled={!online}
+                >
                   Relancer l’indexation complète
                 </button>
                 <Link href="/diagnostic" className={common.buttonSoft}>

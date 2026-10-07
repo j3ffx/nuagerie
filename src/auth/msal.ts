@@ -3,6 +3,7 @@ import {
   PublicClientApplication,
   type AccountInfo,
 } from '@azure/msal-browser';
+import { isOnline } from '../lib/online.ts';
 import { readPersistent, removePersistent, writePersistent } from '../lib/persistent.ts';
 
 /**
@@ -44,16 +45,19 @@ export function getMsal(): PublicClientApplication {
   return instance;
 }
 
-/** Initializes MSAL, completes a pending redirect and returns the signed-in account. */
+/**
+ * Initializes MSAL, completes a pending redirect and returns the signed-in
+ * account. Offline, only an account still in the local cache counts: signing
+ * in again needs Microsoft, so the app starts without an account and shows
+ * the index kept on the device.
+ */
 export async function initAuth(): Promise<AccountInfo | null> {
   const msal = getMsal();
   await msal.initialize();
   const result = await msal.handleRedirectPromise();
-  const account =
-    result?.account ??
-    msal.getActiveAccount() ??
-    msal.getAllAccounts()[0] ??
-    (await signInSilently(msal));
+  const cached = result?.account ?? msal.getActiveAccount() ?? msal.getAllAccounts()[0] ?? null;
+  if (!cached && !isOnline()) return null;
+  const account = cached ?? (await signInSilently(msal));
   if (account) {
     msal.setActiveAccount(account);
     writePersistent(LOGIN_HINT_KEY, account.username);
@@ -62,6 +66,11 @@ export async function initAuth(): Promise<AccountInfo | null> {
   }
   await signInAgain();
   return null;
+}
+
+/** Signed in on this device before, and not signed out since. */
+export function hasSignedInBefore(): boolean {
+  return readPersistent<string | null>(LOGIN_HINT_KEY, null) !== null;
 }
 
 /** Set while an automatic sign-in redirect is under way, so a failed one is not repeated. */
@@ -136,7 +145,8 @@ export async function getAccessToken(): Promise<string> {
     const result = await msal.acquireTokenSilent({ scopes: GRAPH_SCOPES, account });
     return result.accessToken;
   } catch (error) {
-    if (error instanceof InteractionRequiredAuthError) {
+    // Offline, Microsoft's page cannot load: keep the app (and its local index) on screen.
+    if (error instanceof InteractionRequiredAuthError && isOnline()) {
       await msal.acquireTokenRedirect({ scopes: GRAPH_SCOPES, account });
     }
     throw error;

@@ -16,6 +16,14 @@ import { buildIndex } from '../normalize.ts';
 import type { DataSource } from '../source.ts';
 import { IndexStore, type IndexMeta, type RootSyncState } from '../store.ts';
 
+/** Started offline, with no index kept on the device yet. */
+export class OfflineError extends Error {
+  constructor() {
+    super('Hors connexion, et aucune photo n’est encore enregistrée sur cet appareil.');
+    this.name = 'OfflineError';
+  }
+}
+
 /** Folders scanned by default; more can be added in the settings. */
 export const DEFAULT_ROOT_PATHS = ['/Pictures'];
 export const ROOT_PATHS_KEY = 'rootPaths';
@@ -163,7 +171,11 @@ async function checkThumbnails(
 }
 
 export interface OneDriveSourceOptions {
-  accountId: string;
+  /**
+   * The signed-in account, or null when the app started offline without one:
+   * the index kept on the device is shown as is, and never updated or replaced.
+   */
+  accountId: string | null;
   getToken: () => Promise<string>;
   /** For tests. */
   client?: GraphClient;
@@ -194,6 +206,10 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
     const paths = readPersistent<string[]>(ROOT_PATHS_KEY, DEFAULT_ROOT_PATHS);
     const existing = await store.getMeta();
     const samePaths = existing?.rootFolders.map((r) => r.path).join('\n') === paths.join('\n');
+    if (options.accountId === null) {
+      if (existing && samePaths) return existing;
+      throw new OfflineError();
+    }
     if (existing && existing.accountId === options.accountId && samePaths) return existing;
 
     // Another account or another perimeter: start from a clean index.
@@ -284,6 +300,8 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
     return { meta, changes };
   }
 
+  const signedIn = options.accountId !== null;
+
   return {
     mode: 'onedrive',
 
@@ -298,17 +316,19 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
       return buildFromStore(store, meta);
     },
 
-    async refresh(onProgress) {
-      const store = await getStore();
-      const meta = await prepareMeta(store);
-      const result = await sync(store, meta, onProgress);
-      return result.changes > 0 ? buildFromStore(store, result.meta) : null;
-    },
+    ...(signedIn && {
+      async refresh(onProgress?: (progress: IndexProgress) => void) {
+        const store = await getStore();
+        const meta = await prepareMeta(store);
+        const result = await sync(store, meta, onProgress);
+        return result.changes > 0 ? buildFromStore(store, result.meta) : null;
+      },
 
-    async reset() {
-      const store = await getStore();
-      await store.clear();
-    },
+      async reset() {
+        const store = await getStore();
+        await store.clear();
+      },
+    }),
 
     async diagnose() {
       const store = await getStore();

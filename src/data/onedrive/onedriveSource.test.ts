@@ -61,7 +61,7 @@ describe('createOneDriveSource', () => {
     store = await IndexStore.open(`source-${counter++}`);
   });
 
-  const source = (client: GraphClient, accountId = 'me') =>
+  const source = (client: GraphClient, accountId: string | null = 'me') =>
     createOneDriveSource({ accountId, getToken: async () => 't', client, store });
 
   it('enumerates everything on first start and builds the index', async () => {
@@ -111,5 +111,24 @@ describe('createOneDriveSource', () => {
 
     expect(graph.calls.some((url) => url.startsWith('/me/drive/items/pics/delta?'))).toBe(true);
     expect((await store.getMeta())?.accountId).toBe('someone-else');
+  });
+
+  it('started offline, shows the local copy of any account and never replaces it', async () => {
+    const graph = fakeOneDrive();
+    await source(graph.client, 'me').loadIndex();
+    graph.calls.length = 0;
+
+    const offline = source(graph.client, null);
+    expect((await offline.loadIndex()).items).toHaveLength(2);
+    expect(offline.refresh).toBeUndefined();
+    expect(offline.reset).toBeUndefined();
+    expect(graph.calls).toEqual([]);
+    expect((await store.getMeta())?.accountId).toBe('me');
+  });
+
+  it('started offline with no local copy, says so', async () => {
+    const graph = fakeOneDrive();
+    await expect(source(graph.client, null).loadIndex()).rejects.toThrow(/Hors connexion/);
+    expect(graph.calls).toEqual([]);
   });
 });

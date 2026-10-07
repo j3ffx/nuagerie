@@ -3,9 +3,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App.tsx';
 import { initUpdates } from './app/updates.ts';
-import { initAuth, REDIRECT_PATH } from './auth/msal.ts';
+import { hasSignedInBefore, initAuth, REDIRECT_PATH } from './auth/msal.ts';
 import { resolveDataMode } from './data/mode.ts';
 import { ConnectingScreen } from './features/welcome/SignInScreen.tsx';
+import { isOnline } from './lib/online.ts';
 
 async function start() {
   // MSAL v5 redirect bridge: hands the sign-in response back to the app, renders nothing.
@@ -37,10 +38,12 @@ async function start() {
       authError = error instanceof Error ? error.message : String(error);
     }
   }
+  // Offline with no session to restore: show the index kept on the device.
+  const offline = mode === 'onedrive' && !account && !isOnline() && hasSignedInBefore();
 
   root.render(
     <StrictMode>
-      <App mode={mode} account={account} authError={authError} />
+      <App mode={mode} account={account} offline={offline} authError={authError} />
     </StrictMode>,
   );
 }
