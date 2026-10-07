@@ -141,6 +141,8 @@ export default function MapView({
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    // Reduced motion: no gliding after a flick or a pinch, no animated zoom.
+    const reduced = still();
     const map = L.map(container, {
       zoomControl: false,
       attributionControl: true,
@@ -152,13 +154,15 @@ export default function MapView({
       maxBoundsViscosity: 1,
       // A little momentum, as in map apps: a flicked map glides a bit further
       // (Leaflet's default stops short)…
+      inertia: !reduced,
       inertiaDeceleration: 2000,
+      zoomAnimation: !reduced,
       // Tiles appear at once (no fade from grey), cached ones especially.
       fadeAnimation: false,
       // …and pinches may end between levels, so their momentum shows.
       zoomSnap: 0.25,
     });
-    addPinchMomentum(map);
+    if (!reduced) addPinchMomentum(map);
     map.attributionControl.setPrefix(false);
     L.control
       .zoom({ position: 'topright', zoomInTitle: 'Zoomer', zoomOutTitle: 'Dézoomer' })
