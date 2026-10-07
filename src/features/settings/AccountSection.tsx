@@ -7,8 +7,22 @@ import common from '../../ui/common.module.css';
 /** The signed-in Microsoft account (OneDrive mode only). */
 export function AccountSection() {
   const account = useAccount();
-  const { signedIn } = useData();
+  const { signedIn, source, thumbnails } = useData();
   const online = useOnline();
+
+  /** Signing out leaves nothing of the drive on the device: index and thumbnails go too. */
+  const signOutAndForget = async () => {
+    if (
+      !window.confirm(
+        'Se déconnecter ? Les photos gardées sur cet appareil (index et miniatures) seront effacées.',
+      )
+    ) {
+      return;
+    }
+    await Promise.all([source.reset?.(), thumbnails.disk.clear()]);
+    thumbnails.store.clearMemory();
+    await signOut();
+  };
 
   return (
     <section className={common.section} aria-labelledby="settings-account">
@@ -30,7 +44,12 @@ export function AccountSection() {
               <dt>Accès</dt>
               <dd>lecture seule</dd>
             </dl>
-            <button type="button" className={common.buttonSoft} onClick={() => void signOut()}>
+            <button
+              type="button"
+              className={common.buttonSoft}
+              onClick={() => void signOutAndForget()}
+              disabled={!online}
+            >
               Se déconnecter
             </button>
           </>

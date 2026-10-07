@@ -40,7 +40,7 @@ agréable aussi sur PC.
 - Les noms de lieux sont calculés sur l’appareil : les coordonnées des photos ne sont
   envoyées nulle part.
 - L’index et les miniatures sont gardés dans le navigateur (IndexedDB, Cache Storage), sur
-  l’appareil uniquement.
+  l’appareil uniquement, et effacés à la déconnexion.
 
 ## Essayer
 
