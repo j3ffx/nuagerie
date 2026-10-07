@@ -77,7 +77,7 @@ export function DiagnosticScreen() {
             <section className={common.section}>
               <h2 className={common.sectionTitle}>Vérifications de l’API</h2>
               <div className={common.card}>
-                <dl className={common.definitionList}>
+                <dl className={`${common.definitionList} ${styles.stacked}`}>
                   {report.apiChecks.map(({ check, result }) => (
                     <div key={check} className={styles.row}>
                       <dt>{check}</dt>
@@ -160,7 +160,7 @@ export function DiagnosticScreen() {
                 {report.exifVersusName.length === 0 ? (
                   <p className={common.muted}>Aucun fichier avec les deux dates.</p>
                 ) : (
-                  <dl className={common.definitionList}>
+                  <dl className={`${common.definitionList} ${styles.stacked}`}>
                     {report.exifVersusName.map(({ shape, count, offsets }) => (
                       <div key={shape} className={styles.row}>
                         <dt className={styles.shape}>

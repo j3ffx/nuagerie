@@ -20,3 +20,15 @@
   background: var(--color-warning-bg);
   color: var(--color-warning-text);
 }
+
+/* Long labels and values (API checks, offsets): the value goes under its label. */
+.stacked {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 2px;
+}
+
+.stacked dd {
+  margin-bottom: var(--space-2);
+  overflow-wrap: anywhere;
+  text-align: left;
+}
