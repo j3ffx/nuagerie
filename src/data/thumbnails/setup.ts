@@ -23,5 +23,10 @@ export function createThumbnails(mode: DataMode, source: DataSource): Thumbnails
     loadState: () => readPersistent<CacheState | null>(stateKey, null),
     saveState: (state) => writePersistent(stateKey, state),
   });
-  return { disk, store: new ThumbnailStore(source, disk) };
+  const store = new ThumbnailStore(source, disk);
+  // Thumbnails that failed offline load as soon as the connection is back
+  // (useThumbnailUrl asks again for those on screen).
+  if (typeof window !== 'undefined')
+    window.addEventListener('online', () => store.forgetFailures());
+  return { disk, store };
 }

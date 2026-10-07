@@ -163,6 +163,13 @@ export class ThumbnailStore {
     }
   }
 
+  /** Lets failed thumbnails be asked for again (the connection is back). */
+  forgetFailures() {
+    for (const [key, entry] of this.entries) {
+      if (entry.failedAt !== null) this.entries.delete(key);
+    }
+  }
+
   /** Forgets every image in memory (after the disk cache is cleared). */
   clearMemory() {
     for (const key of this.idle) {

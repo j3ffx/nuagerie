@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react';
 import { useData } from '../data/dataContext.ts';
 import type { MediaItem, ThumbnailSize } from '../data/model.ts';
 import { thumbnailKey } from '../data/thumbnails/thumbnailStore.ts';
+import { useOnline } from '../lib/online.ts';
 
 /** URL of the item's thumbnail once available (memory, cache or network), else null. */
 export function useThumbnailUrl(item: MediaItem, size: ThumbnailSize): string | null {
   const { store } = useData().thumbnails;
   const key = thumbnailKey(item, size);
   const [loaded, setLoaded] = useState<{ key: string; url: string } | null>(null);
+  // Back online: ask again for a thumbnail that failed while offline.
+  const online = useOnline();
 
   useEffect(() => {
     const handle = store.acquire(item, size);
@@ -24,7 +27,7 @@ export function useThumbnailUrl(item: MediaItem, size: ThumbnailSize): string | 
       active = false;
       handle.release();
     };
-  }, [store, item, size, key]);
+  }, [store, item, size, key, online]);
 
   return loaded?.key === key ? loaded.url : store.peek(item, size);
 }

@@ -210,6 +210,21 @@ describe('ThumbnailStore', () => {
     await expect(store.acquire(item('a'), 'medium').promise).rejects.toThrow();
     expect(fetchThumbnail).toHaveBeenCalledTimes(1);
   });
+
+  it('asks again for failed thumbnails once failures are forgotten (back online)', async () => {
+    const fetchThumbnail = vi
+      .fn<DataSource['fetchThumbnail']>()
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce({ blob: bytes(2) });
+    const { store } = setupStore(fetchThumbnail);
+    const first = store.acquire(item('a'), 'medium');
+    await expect(first.promise).rejects.toThrow('Failed to fetch');
+
+    store.forgetFailures();
+    await expect(store.acquire(item('a'), 'medium').promise).resolves.toMatch(/^blob:/);
+    first.release();
+    expect(fetchThumbnail).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('createLimiter', () => {
