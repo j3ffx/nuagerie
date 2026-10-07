@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useData } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { describeItem } from '../../lib/format.ts';
@@ -69,73 +69,77 @@ export const ViewerSlide = memo(function ViewerSlide({
   );
 });
 
-/** Plays on demand, from the file's download URL (asked for again once if it expired). */
+/**
+ * Starts as soon as the video is on screen, from the file's download URL
+ * (asked for again once if it expired). A neighbouring video gets its URL
+ * ahead of time, so swiping to it starts at once. Without permission to play
+ * on its own, the native controls offer the play button.
+ */
 function VideoPlayer({ item, active }: { item: MediaItem; active: boolean }) {
   const { source } = useData();
   const [state, setState] = useState<
-    | { status: 'idle' }
-    | { status: 'loading' }
-    | { status: 'playing'; url: string; retried: boolean }
+    | { status: 'waiting' }
+    | { status: 'ready'; url: string; retried: boolean }
     | { status: 'unavailable'; message: string }
-  >({ status: 'idle' });
-  const videoRef = useRef<HTMLVideoElement>(null);
+  >({ status: 'waiting' });
 
-  // Swiped away: stop the sound.
-  useEffect(() => {
-    if (!active) videoRef.current?.pause();
-  }, [active]);
-
-  const play = async (retried = false) => {
-    setState({ status: 'loading' });
-    try {
-      const url = await source.getOriginalUrl(item);
-      setState(
-        url
-          ? { status: 'playing', url, retried }
-          : { status: 'unavailable', message: 'Lecture des vidéos indisponible en démo' },
-      );
-    } catch {
-      setState({ status: 'unavailable', message: 'Vidéo inaccessible pour le moment' });
-    }
-  };
-
-  if (state.status === 'playing') {
-    return (
-      <video
-        ref={videoRef}
-        className={styles.video}
-        src={state.url}
-        controls
-        autoPlay
-        playsInline
-        onError={() => {
-          if (!state.retried) void play(true);
-          else setState({ status: 'unavailable', message: 'Lecture impossible' });
-        }}
-      />
+  const ready = (url: string | null, retried: boolean) =>
+    setState(
+      url
+        ? { status: 'ready', url, retried }
+        : { status: 'unavailable', message: 'Lecture des vidéos indisponible en démo' },
     );
-  }
+  const failed = () =>
+    setState({ status: 'unavailable', message: 'Vidéo inaccessible pour le moment' });
 
-  return (
-    <div className={styles.videoCover}>
-      {state.status === 'unavailable' ? (
+  // On screen: get the URL and play. Not yet: warm the URL cache only.
+  const waiting = state.status === 'waiting';
+  useEffect(() => {
+    if (!waiting) return;
+    let cancelled = false;
+    source.getOriginalUrl(item).then(
+      (url) => {
+        if (!cancelled && active) ready(url, false);
+      },
+      () => {
+        if (!cancelled && active) failed();
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [waiting, active, source, item]);
+
+  if (state.status === 'unavailable') {
+    return (
+      <div className={styles.videoCover}>
         <p className={styles.notice} role="status">
           {state.message}
         </p>
-      ) : (
-        <button
-          type="button"
-          className={styles.play}
-          onClick={() => void play()}
-          disabled={state.status === 'loading'}
-          aria-label="Lire la vidéo"
-          tabIndex={active ? 0 : -1}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M8 5.5v13l10.5-6.5Z" />
-          </svg>
-        </button>
-      )}
-    </div>
+      </div>
+    );
+  }
+  // Swiped away, the player goes: the sound stops with it.
+  if (state.status === 'waiting' || !active) {
+    return (
+      <div className={styles.videoCover} aria-hidden="true">
+        {active && <span className={styles.spinner} />}
+      </div>
+    );
+  }
+  return (
+    <video
+      className={styles.video}
+      src={state.url}
+      aria-label={describeItem(item)}
+      controls
+      autoPlay
+      playsInline
+      onError={() => {
+        if (state.retried) setState({ status: 'unavailable', message: 'Lecture impossible' });
+        // The download URL may have expired: ask for it once more.
+        else source.getOriginalUrl(item).then((url) => ready(url, true), failed);
+      }}
+    />
   );
 }

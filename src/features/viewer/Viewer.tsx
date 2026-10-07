@@ -29,6 +29,8 @@ import styles from './Viewer.module.css';
 
 const TAP_MOVE = 10;
 const DOUBLE_TAP_MS = 300;
+/** Height of a video's native control bar, left to the video. */
+const CONTROL_BAR = 64;
 
 type Mode = 'idle' | 'pending' | 'swipe' | 'pan' | 'pinch' | 'dismiss' | 'ignore';
 
@@ -45,6 +47,8 @@ interface Gesture {
   startZoom: Zoom;
   startDistance: number;
   startMid: { x: number; y: number };
+  /** Started on a video: a plain tap is the video's (play, pause, controls). */
+  onVideo: boolean;
 }
 
 const newGesture = (): Gesture => ({
@@ -60,6 +64,7 @@ const newGesture = (): Gesture => ({
   startZoom: NO_ZOOM,
   startDistance: 1,
   startMid: { x: 0, y: 0 },
+  onVideo: false,
 });
 
 /** Runs `done` after a CSS transition, at once when motion is reduced (no transition). */
@@ -209,10 +214,15 @@ export function Viewer({
   const fromCentre = (x: number, y: number) => ({ x: x - view.width / 2, y: y - view.height / 2 });
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    // Video controls and buttons keep their own touches.
-    if ((event.target as HTMLElement).closest('video, button, a')) return;
+    const target = event.target as HTMLElement;
+    // Buttons keep their own touches, and so does a video's control bar.
+    if (target.closest('button, a')) return;
+    const video = target.closest('video');
+    if (video && event.clientY > video.getBoundingClientRect().bottom - CONTROL_BAR) return;
     const g = gesture.current;
-    event.currentTarget.setPointerCapture(event.pointerId);
+    // Captured once the gesture is known, so that taps still reach a video.
+    if (!video) event.currentTarget.setPointerCapture(event.pointerId);
+    g.onVideo = video !== null;
     g.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
     if (g.pointers.size === 2) {
@@ -281,6 +291,9 @@ export function Viewer({
       if (zoom.current.scale > 1.01) g.mode = 'pan';
       else if (Math.abs(dx) > Math.abs(dy)) g.mode = 'swipe';
       else g.mode = dy > 0 ? 'dismiss' : 'ignore';
+      if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }
     }
     if (g.mode === 'pan') {
       applyZoom(
@@ -345,7 +358,7 @@ export function Viewer({
           },
           () => setTrack(0),
         );
-    } else if (mode === 'pending') {
+    } else if (mode === 'pending' && !g.onVideo) {
       onTap(event.clientX, event.clientY, event.timeStamp);
     }
   };

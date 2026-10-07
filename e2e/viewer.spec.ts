@@ -105,8 +105,9 @@ test('opens straight from a link, and says demo videos cannot play', async ({ pa
   const id = await video.getAttribute('data-item-id');
   await page.goto(`/tout?photo=${encodeURIComponent(id ?? '')}`);
   await expect(viewer(page)).toBeVisible();
-  await page.getByRole('button', { name: 'Lire la vidéo' }).click();
+  // A video starts on its own; demo videos have nothing to play.
   await expect(viewer(page).getByText('Lecture des vidéos indisponible en démo')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Télécharger' })).toBeHidden();
 
   // No history entry of ours: closing stays on the screen.
   await page.keyboard.press('Escape');
