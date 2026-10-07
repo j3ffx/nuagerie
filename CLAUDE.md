@@ -109,6 +109,21 @@ ships with Node 22 (npm 10): let npm write `package-lock.json`, never edit it by
 change with `npx npm@10 ci` in a clean clone. `overrides` in `package.json` forces a fixed `sharp`
 (pulled in by wrangler's miniflare); drop it once miniflare depends on a fixed version.
 
+## Releases
+
+Semantic versioning: `0.x.0` for a milestone of features, `0.x.y` for fixes, `1.0.0` once the app is
+considered complete. `CHANGELOG.md` (in French, for users) says what each version brings: the app
+shows it after an update ("Nouveautés"), and a unit test requires an entry for the version in
+`package.json`.
+
+1. Write the version's entry at the top of `CHANGELOG.md` (`## x.y.z — YYYY-MM-DD`, then
+   `### Nouveautés` / `### Corrections` lists).
+2. `npm version x.y.z --no-git-tag-version`, then commit `package.json`, `package-lock.json` and
+   `CHANGELOG.md` as `chore(release): x.y.z`.
+3. `git tag vx.y.z`: a lightweight tag, as an annotated one would record the time (see Privacy).
+4. `git push && git push origin vx.y.z`: `.github/workflows/release.yml` checks the tag against
+   `package.json` and publishes the GitHub release with that version's notes.
+
 ## Deployment
 
 On every push, the `deploy` job of `.github/workflows/ci.yml` deploys after all checks pass (secrets
