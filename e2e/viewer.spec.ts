@@ -124,3 +124,26 @@ test('downloads the original file', async ({ page }) => {
   await page.getByRole('button', { name: 'Télécharger' }).click();
   expect((await download).suggestedFilename()).toMatch(/\.(jpe?g|png|heic|webp|gif)$/i);
 });
+
+test('names the place of a geotagged photo, found on the device', async ({ page }) => {
+  const placeRequests: string[] = [];
+  page.on('request', (request) => {
+    const { protocol, hostname } = new URL(request.url());
+    if (protocol.startsWith('http') && hostname !== 'localhost') placeRequests.push(request.url());
+  });
+  await page.goto('/');
+  await page
+    .getByRole('list', { name: 'Albums' })
+    .getByRole('link', { name: /^Camera Roll/ })
+    .click();
+  await cells(page).first().click();
+  const footer = viewer(page).locator('footer');
+  // Not every photo has a position: move on until one does.
+  for (let i = 0; i < 20 && !(await footer.isVisible()); i++) {
+    await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(400);
+  }
+  await expect(footer).toHaveText(/^(Près de )?\S.*, France$/);
+  // No request left the app: coordinates stay on the device.
+  expect(placeRequests).toEqual([]);
+});

@@ -9,8 +9,9 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useData, useMediaIndex } from '../../data/dataContext.ts';
+import { lookupPlace } from '../../data/places/places.ts';
 import type { MediaItem } from '../../data/model.ts';
-import { formatCoordinates, formatTakenDateTime } from '../../lib/format.ts';
+import { formatPlace, formatTakenDateTime } from '../../lib/format.ts';
 import { BackIcon, ChevronIcon, DownloadIcon, MapIcon } from '../../ui/icons.tsx';
 import {
   clampZoom,
@@ -478,6 +479,7 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
   const index = useMediaIndex();
   const album = index?.folders.get(item.albumId)?.name ?? null;
   const [downloading, setDownloading] = useState(false);
+  const place = usePlaceName(item);
 
   /** The original file, saved by the browser (OneDrive serves it as an attachment). */
   const download = async () => {
@@ -530,12 +532,32 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
           </button>
         )}
       </header>
-      {item.latitude !== null && item.longitude !== null && (
+      {place && (
         <footer className={styles.bottom}>
           <MapIcon width={18} height={18} />
-          <span>{formatCoordinates(item.latitude, item.longitude)}</span>
+          <span>{place}</span>
         </footer>
       )}
     </>
   );
+}
+
+/** "Annecy, France" for a geotagged photo, once the place list is loaded; null otherwise. */
+function usePlaceName(item: MediaItem): string | null {
+  const [found, setFound] = useState<{ id: string; name: string | null } | null>(null);
+  const { latitude, longitude } = item;
+  useEffect(() => {
+    if (latitude === null || longitude === null) return;
+    let cancelled = false;
+    lookupPlace(latitude, longitude).then(
+      (place) => {
+        if (!cancelled) setFound({ id: item.id, name: place ? formatPlace(place) : null });
+      },
+      () => undefined, // no place list (offline before it was ever loaded): no name
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [item.id, latitude, longitude]);
+  return found?.id === item.id ? found.name : null;
 }

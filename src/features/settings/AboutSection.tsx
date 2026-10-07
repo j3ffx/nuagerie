@@ -40,6 +40,13 @@ export function AboutSection() {
               : ''}
           </dd>
         </dl>
+        <p className={common.muted}>
+          Noms de lieux :{' '}
+          <a href="https://www.geonames.org/" target="_blank" rel="noreferrer">
+            GeoNames
+          </a>
+          , licence CC BY 4.0.
+        </p>
         {status === 'ready' ? (
           <button type="button" className={common.button} onClick={applyUpdate}>
             Installer la nouvelle version

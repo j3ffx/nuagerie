@@ -73,16 +73,20 @@ export function formatTakenDateTime(item: { takenAt: number; dateSource: string 
     : takenDateTimeFormat.format(item.takenAt);
 }
 
-const coordinateFormat = new Intl.NumberFormat('fr-FR', {
-  minimumFractionDigits: 4,
-  maximumFractionDigits: 4,
-});
+const countryNames = new Intl.DisplayNames(['fr'], { type: 'region' });
 
-/** "48,8566° N, 2,3522° E" */
-export function formatCoordinates(latitude: number, longitude: number): string {
-  const lat = `${coordinateFormat.format(Math.abs(latitude))}° ${latitude < 0 ? 'S' : 'N'}`;
-  const lon = `${coordinateFormat.format(Math.abs(longitude))}° ${longitude < 0 ? 'O' : 'E'}`;
-  return `${lat}, ${lon}`;
+/**
+ * "Annecy, France"; "Près de Chamonix, France" when the photo is a fair
+ * way from the nearest town (mountains, sea shore).
+ */
+export function formatPlace(place: { name: string; country: string; km: number }): string {
+  let country = place.country;
+  try {
+    country = countryNames.of(place.country) ?? place.country;
+  } catch {
+    // Unknown code: keep it as is.
+  }
+  return `${place.km > 15 ? `Près de ${place.name}` : place.name}, ${country}`;
 }
 
 /** "06/10/26" */

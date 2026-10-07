@@ -24,3 +24,7 @@ déploiement et connexion à OneDrive : [docs/SETUP.md](docs/SETUP.md).
 ## Stack
 
 React, TypeScript, Vite, vite-plugin-pwa, Vitest, Playwright.
+
+Les lieux des photos sont nommés sur l’appareil, sans service en ligne, avec la liste des
+villes de [GeoNames](https://www.geonames.org/) (licence CC BY 4.0), générée par
+`scripts/build-places.mjs`.

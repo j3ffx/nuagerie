@@ -21,6 +21,8 @@
 /version.json
   Cache-Control: no-cache
 
-# Fingerprinted build output never changes.
+# Fingerprinted build output never changes, nor do versioned place lists.
 /assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/places/*
   Cache-Control: public, max-age=31536000, immutable
