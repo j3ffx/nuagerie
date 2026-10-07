@@ -4,6 +4,7 @@
 //  - no private pattern from the local, ignored `.private-patterns` file.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { isPublicDataset } from './public-datasets.mjs';
 
 const DIST = 'dist';
 const errors = [];
@@ -35,6 +36,7 @@ if (existsSync('.private-patterns')) {
     .map((line) => new RegExp(line, 'i'));
   for (const file of files) {
     if (!/\.(html|js|mjs|css|json|webmanifest|svg|txt)$|_headers$/.test(file)) continue;
+    if (isPublicDataset(file)) continue;
     const content = readFileSync(file, 'utf8');
     for (const re of patterns)
       if (re.test(content)) errors.push(`private pattern ${re} in ${file}`);

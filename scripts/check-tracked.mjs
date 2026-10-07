@@ -12,6 +12,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
+import { isPublicDataset } from './public-datasets.mjs';
 
 const git = (...args) =>
   execFileSync('git', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
@@ -60,7 +61,7 @@ if (existsSync('.private-patterns')) {
     .map((line) => new RegExp(line, 'i'));
 
   for (const file of tracked) {
-    if (!existsSync(file)) continue;
+    if (!existsSync(file) || isPublicDataset(file)) continue;
     const content = readFileSync(file, 'utf8');
     for (const re of patterns) {
       if (re.test(content)) errors.push(`private pattern ${re} found in ${file}`);
