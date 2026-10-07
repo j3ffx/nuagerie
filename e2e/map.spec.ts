@@ -34,6 +34,31 @@ test('groups the photos by place, and zooms into a group', async ({ page }) => {
   await expect.poll(() => zoneCount(page)).toBeLessThan(before);
 });
 
+test('opens a photo of the zone, then its place on the map, with a link to Maps', async ({
+  page,
+}) => {
+  await page.locator('section[aria-labelledby="map-zone"] ul a').first().click();
+  const viewer = page.getByRole('dialog', { name: 'Visionneuse' });
+  await expect(viewer).toBeVisible();
+  // Swiping goes through the zone's photos.
+  await page.keyboard.press('ArrowRight');
+  await expect(page).toHaveURL(/photo=/);
+
+  // Not every photo of the strip shows a place before the list loads: wait for one.
+  const place = viewer.locator('footer a');
+  for (let i = 0; i < 20 && !(await place.isVisible()); i++) {
+    await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(400);
+  }
+  await place.click();
+  await expect(page).toHaveURL(/\/carte\?focus=/);
+  await expect(viewer).toBeHidden();
+  await expect(page.getByRole('link', { name: 'Ouvrir dans Maps' })).toHaveAttribute(
+    'href',
+    /^geo:-?\d+\.\d+,-?\d+\.\d+\?q=/,
+  );
+});
+
 test('lists every photo of the zone in a grid', async ({ page }) => {
   const count = await zoneCount(page);
   await page.getByRole('link', { name: 'Tout voir' }).click();

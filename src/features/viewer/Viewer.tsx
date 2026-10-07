@@ -8,6 +8,7 @@ import {
   type WheelEvent as ReactWheelEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { Link } from 'wouter';
 import { useData, useMediaIndex } from '../../data/dataContext.ts';
 import { lookupPlace } from '../../data/places/places.ts';
 import type { MediaItem } from '../../data/model.ts';
@@ -538,8 +539,14 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
       </header>
       {place && (
         <footer className={styles.bottom}>
-          <MapIcon width={18} height={18} />
-          <span>{place}</span>
+          <Link
+            href={`/carte?focus=${encodeURIComponent(item.id)}`}
+            className={styles.place}
+            aria-label={`${place}, voir sur la carte`}
+          >
+            <MapIcon width={18} height={18} />
+            <span>{place}</span>
+          </Link>
         </footer>
       )}
     </>
