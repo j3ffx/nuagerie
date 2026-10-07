@@ -1,6 +1,7 @@
 import { useMsal } from '@azure/msal-react';
 import { signIn } from '../../auth/msal.ts';
 import { enterDemoMode } from '../../data/mode.ts';
+import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
 import { Logo } from '../../ui/Logo.tsx';
 import styles from './SignInScreen.module.css';
@@ -8,6 +9,7 @@ import styles from './SignInScreen.module.css';
 /** OneDrive mode without a signed-in account. */
 export function SignInScreen({ error }: { error: string | null }) {
   const { inProgress } = useMsal();
+  const online = useOnline();
   const busy = inProgress !== 'none';
 
   return (
@@ -18,17 +20,23 @@ export function SignInScreen({ error }: { error: string | null }) {
         Les photos et vidéos de OneDrive, rangées par albums, par date et par lieu. Lecture seule :
         Nuagerie ne modifie jamais rien.
       </p>
-      {error && (
-        <p className={styles.error} role="alert">
-          La connexion n’a pas abouti. Réessayer devrait suffire.
+      {!online ? (
+        <p className={styles.error} role="status">
+          Hors connexion : la connexion à Microsoft attend le réseau.
         </p>
+      ) : (
+        error && (
+          <p className={styles.error} role="alert">
+            La connexion n’a pas abouti. Réessayer devrait suffire.
+          </p>
+        )
       )}
       <div className={styles.actions}>
         <button
           type="button"
           className={common.button}
           onClick={() => void signIn()}
-          disabled={busy}
+          disabled={busy || !online}
         >
           Se connecter avec Microsoft
         </button>
