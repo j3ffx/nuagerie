@@ -85,8 +85,14 @@ commit metadata.
   virtualized (`src/ui/grid/`): only the rows near the screen exist in the DOM. The viewer shows the
   large Graph thumbnail (JPEG, HEIC included); an original file is downloaded only on demand (video
   playback, "Ouvrir l'original").
+- **Offline:** the index kept on the device (IndexedDB) shows with no network, even when no Microsoft
+  session can be restored (the OneDrive source then runs with `accountId: null`: read only, never
+  updated nor replaced). Only signing out, a full reindex or a change of root folders erases it.
+  Whatever needs the network (sharing, saving an original, reindexing, signing out) is disabled
+  offline rather than left to fail.
 - **Accessibility:** contrast ≥ 4.5:1 (tokens in `src/styles/tokens.css`), visible focus, touch targets
-  ≥ 44 px, `alt` text, `prefers-reduced-motion` respected.
+  ≥ 44 px, `alt` text, `prefers-reduced-motion` respected (scripted motion included, e.g. the map's
+  momentum). `e2e/a11y.spec.ts` checks every screen against WCAG 2.1 AA with axe, light and dark.
 
 ## Layout
 
@@ -95,6 +101,13 @@ commit metadata.
 - `src/sw.ts`: service worker (vite-plugin-pwa, `injectManifest`).
 - `e2e/`: Playwright tests in demo mode on a phone-sized screen, against the production build.
 - `scripts/`: repository checks and git hook helpers. `build/`: Vite plugins for development.
+
+## Dependencies
+
+Keep them few, and say why in the commit that adds one. The CI installs with `npm ci` and the npm that
+ships with Node 22 (npm 10): let npm write `package-lock.json`, never edit it by hand, and check a lock
+change with `npx npm@10 ci` in a clean clone. `overrides` in `package.json` forces a fixed `sharp`
+(pulled in by wrangler's miniflare); drop it once miniflare depends on a fixed version.
 
 ## Deployment
 
