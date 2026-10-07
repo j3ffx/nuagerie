@@ -57,23 +57,51 @@ export async function initAuth(): Promise<AccountInfo | null> {
   if (account) {
     msal.setActiveAccount(account);
     writePersistent(LOGIN_HINT_KEY, account.username);
+    sessionStorage.removeItem(AUTO_SIGN_IN_KEY);
+    return account;
   }
-  return account;
+  await signInAgain();
+  return null;
+}
+
+/** Set while an automatic sign-in redirect is under way, so a failed one is not repeated. */
+const AUTO_SIGN_IN_KEY = 'nuagerie.autoSignIn';
+
+/**
+ * Signed in before and never signed out: go back through Microsoft's page,
+ * which lets a known account straight through (what tapping "Se connecter"
+ * did). Only once per session: if Microsoft sends the user back without an
+ * account, the sign-in screen is shown instead of looping.
+ */
+async function signInAgain(): Promise<void> {
+  const loginHint = readPersistent<string | null>(LOGIN_HINT_KEY, null);
+  if (!loginHint || sessionStorage.getItem(AUTO_SIGN_IN_KEY)) return;
+  sessionStorage.setItem(AUTO_SIGN_IN_KEY, '1');
+  await getMsal().loginRedirect({ scopes: GRAPH_SCOPES, loginHint });
+  // The page is leaving for Microsoft: keep the connecting screen until then.
+  await new Promise(() => undefined);
 }
 
 /**
  * The previous session's tokens are gone, but Microsoft's own session usually
- * is not: a hidden sign-in with the last account name needs no screen.
+ * is not: a hidden sign-in with the last account name needs no screen. It
+ * runs in an iframe, where browsers that partition third-party cookies (as on
+ * the phone) hide that session; signInAgain() then takes over.
  */
 async function signInSilently(msal: PublicClientApplication): Promise<AccountInfo | null> {
   const loginHint = readPersistent<string | null>(LOGIN_HINT_KEY, null);
-  if (!loginHint) return null;
+  // Failed before on this device: don't wait for it again, redirect at once.
+  if (!loginHint || !readPersistent(SILENT_SIGN_IN_KEY, true)) return null;
   try {
     return (await msal.ssoSilent({ scopes: GRAPH_SCOPES, loginHint })).account;
   } catch {
-    return null; // Microsoft wants the user: the sign-in screen is shown.
+    writePersistent(SILENT_SIGN_IN_KEY, false);
+    return null;
   }
 }
+
+/** Whether the hidden sign-in can work in this browser (false once it failed). */
+const SILENT_SIGN_IN_KEY = 'silentSignIn';
 
 export function signIn(): Promise<void> {
   const loginHint = readPersistent<string | null>(LOGIN_HINT_KEY, null);
