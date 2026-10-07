@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'wouter';
+import { Link, useSearchParams } from 'wouter';
 import { folderTree, type FolderNode } from '../../data/albums.ts';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import { formatCount } from '../../lib/format.ts';
@@ -32,6 +32,9 @@ export function ChooseAlbumsScreen() {
   const index = useMediaIndex();
   const tree = useMemo(() => (index ? folderTree(index) : []), [index]);
   const { checked, hidden, setChecked, setHidden, reset, selection } = useAlbumSelection();
+  // Also opened from the settings: go back there.
+  const [params] = useSearchParams();
+  const fromSettings = params.get('retour') === 'reglages';
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 
@@ -77,7 +80,11 @@ export function ChooseAlbumsScreen() {
       <ScreenHeader
         title="Choisir les albums"
         leading={
-          <Link href="/" className={albumStyles.back} aria-label="Retour aux albums">
+          <Link
+            href={fromSettings ? '/reglages' : '/'}
+            className={albumStyles.back}
+            aria-label={fromSettings ? 'Retour aux réglages' : 'Retour aux albums'}
+          >
             <BackIcon />
           </Link>
         }

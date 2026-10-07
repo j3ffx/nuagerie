@@ -1,6 +1,7 @@
 import { Link } from 'wouter';
 import { useData } from '../../data/dataContext.ts';
 import { isDemoForced, leaveDemoMode } from '../../data/mode.ts';
+import { folderName, useRootPaths } from '../../data/roots.ts';
 import { formatCount, formatDateTime } from '../../lib/format.ts';
 import { useOnline } from '../../lib/online.ts';
 import { useThemePreference, type ThemePreference } from '../../lib/theme.ts';
@@ -21,6 +22,7 @@ export function SettingsScreen() {
   const [theme, setTheme] = useThemePreference();
   const { mode, signedIn, state, sync, refresh, resetIndex } = useData();
   const online = useOnline();
+  const roots = useRootPaths();
   const index = state.status === 'ready' ? state.index : null;
 
   const confirmReset = () => {
@@ -57,6 +59,24 @@ export function SettingsScreen() {
         </section>
 
         {mode === 'onedrive' && <AccountSection />}
+
+        <section className={common.section} aria-labelledby="settings-photos">
+          <h2 id="settings-photos" className={common.sectionTitle}>
+            Photos
+          </h2>
+          <div className={`${common.card} ${common.stack}`}>
+            <dl className={common.definitionList}>
+              <dt>{roots.length > 1 ? 'Dossiers' : 'Dossier'}</dt>
+              <dd>{roots.map(folderName).join(', ')}</dd>
+            </dl>
+            <Link href="/reglages/dossiers" className={common.buttonSoft}>
+              Choisir les dossiers
+            </Link>
+            <Link href="/albums/choisir?retour=reglages" className={common.buttonSoft}>
+              Choisir les albums
+            </Link>
+          </div>
+        </section>
 
         <section className={common.section} aria-labelledby="settings-data">
           <h2 id="settings-data" className={common.sectionTitle}>

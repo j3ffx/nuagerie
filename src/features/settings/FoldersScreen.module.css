@@ -1,0 +1,131 @@
+.help {
+  margin-bottom: var(--space-4);
+  font-size: 14px;
+}
+
+.list {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+ul.list {
+  margin: 0;
+  list-style: none;
+}
+
+.row,
+.location {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 56px;
+}
+
+.row + .row,
+.location + *,
+.location + ul > .row:first-child {
+  border-top: 1px solid var(--color-border);
+}
+
+.location {
+  padding-right: var(--space-2);
+}
+
+/* Same left edge as the names inside the folder buttons. */
+.row > .text,
+.location .text {
+  padding-left: var(--space-2);
+}
+
+.text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The folder's name opens it; the whole row is the target. */
+.open {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.open:disabled {
+  cursor: default;
+}
+
+.chevron {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--color-text-muted);
+}
+
+.up {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text);
+}
+
+.action {
+  flex: none;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-soft);
+  color: var(--color-on-primary-soft);
+  font-weight: 800;
+}
+
+.state {
+  padding: var(--space-4) var(--space-2);
+}
+
+.save {
+  margin-top: var(--space-3);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

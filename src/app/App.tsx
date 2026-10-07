@@ -19,6 +19,7 @@ import { AllScreen } from '../features/all/AllScreen.tsx';
 import { DiagnosticScreen } from '../features/diagnostic/DiagnosticScreen.tsx';
 import { MapScreen } from '../features/map/MapScreen.tsx';
 import { ZoneScreen } from '../features/map/ZoneScreen.tsx';
+import { FoldersScreen } from '../features/settings/FoldersScreen.tsx';
 import { SettingsScreen } from '../features/settings/SettingsScreen.tsx';
 import { SignInScreen } from '../features/welcome/SignInScreen.tsx';
 import { useApplyTheme } from '../lib/theme.ts';
@@ -105,6 +106,7 @@ function Shell() {
           <Route path="/carte" component={MapScreen} />
           <Route path="/carte/zone" component={ZoneScreen} />
           <Route path="/reglages" component={SettingsScreen} />
+          <Route path="/reglages/dossiers" component={FoldersScreen} />
           <Route path="/diagnostic" component={DiagnosticScreen} />
           <Route>
             <Redirect to="/" replace />
