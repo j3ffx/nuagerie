@@ -9,7 +9,7 @@ const DESCRIPTIONS: Record<string, string> = {
   'User.Read': 'Connaître ton nom et ton adresse',
   offline_access: 'Rester connecté sans redemander ton mot de passe',
   'Files.ReadWrite.AppFolder':
-    'Écrire dans un seul dossier, Applis/Nuagerie, pour la synchronisation (favoris, préférences)',
+    'Écrire dans un seul dossier, Applis/Nuagerie, pour la synchronisation (favoris, préférences, index)',
   openid: 'Te connecter avec ton compte Microsoft',
   profile: 'Te connecter avec ton compte Microsoft',
   email: 'Te connecter avec ton compte Microsoft',

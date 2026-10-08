@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { Redirect, Route, Router, Switch } from 'wouter';
 import { getAccessToken, getMsal } from '../auth/msal.ts';
 import { DataProvider } from '../data/DataProvider.tsx';
+import { createAppFolderSnapshots } from '../data/sync/appFolderSnapshots.ts';
 import { SyncProvider } from '../data/sync/SyncProvider.tsx';
 import { createDemoSource } from '../data/demo/demoSource.ts';
 import { createOneDriveSource } from '../data/onedrive/onedriveSource.ts';
@@ -62,6 +63,7 @@ export function App({
             createOneDriveSource({
               accountId: account?.homeAccountId ?? null,
               getToken: getAccessToken,
+              snapshots: createAppFolderSnapshots(),
             })
           }
         />

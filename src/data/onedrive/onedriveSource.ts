@@ -15,6 +15,7 @@ import { buildIndex } from '../normalize.ts';
 import type { DataSource, DriveFolder } from '../source.ts';
 import { childPath, readRootPaths } from '../roots.ts';
 import { IndexStore, type IndexMeta, type RootSyncState } from '../store.ts';
+import { snapshotDue, usableSnapshot, type IndexSnapshots } from '../sync/indexSnapshot.ts';
 
 /** Started offline, with no index kept on the device yet. */
 export class OfflineError extends Error {
@@ -178,6 +179,8 @@ export interface OneDriveSourceOptions {
    */
   accountId: string | null;
   getToken: () => Promise<string>;
+  /** The copy of the index shared with the user's other devices, when the sync allows it. */
+  snapshots?: IndexSnapshots;
   /** For tests. */
   client?: GraphClient;
   store?: IndexStore;
@@ -285,6 +288,8 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
       ...meta,
       lastSyncAt: Date.now(),
       lastCount: count,
+      // The copy left for the other devices falls behind.
+      ...(changes > 0 && meta.snapshot ? { snapshot: { ...meta.snapshot, stale: true } } : {}),
       ...(full
         ? {
             lastFullSync: {
@@ -303,16 +308,64 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
 
   const signedIn = options.accountId !== null;
 
+  /**
+   * A new device starts from the copy another one left, when it covers the
+   * same account and folders: shown at once, then brought up to date by delta.
+   */
+  async function restoreSnapshot(store: IndexStore, meta: IndexMeta): Promise<IndexMeta | null> {
+    if (!options.snapshots || options.accountId === null) return null;
+    const snapshot = await options.snapshots.load();
+    if (!usableSnapshot(snapshot, options.accountId, meta.rootFolders)) return null;
+    await store.applyChanges(snapshot.items, []);
+    const restored: IndexMeta = {
+      ...meta,
+      channels: snapshot.channels,
+      lastSyncAt: snapshot.savedAt,
+      lastCount: snapshot.items.length,
+      snapshot: { savedAt: snapshot.savedAt, stale: false },
+    };
+    await store.setMeta(restored);
+    return restored;
+  }
+
+  /** Leaves a copy of a complete index for the other devices, at most once a day; never blocks. */
+  let saving = false;
+  async function saveSnapshot(store: IndexStore, meta: IndexMeta): Promise<void> {
+    if (!options.snapshots || options.accountId === null || saving) return;
+    if (!snapshotDue(meta.snapshot)) return;
+    saving = true;
+    try {
+      const savedAt = Date.now();
+      const saved = await options.snapshots.save({
+        schema: 1,
+        savedAt,
+        accountId: options.accountId,
+        rootFolders: meta.rootFolders,
+        channels: meta.channels,
+        items: await store.loadItems(),
+      });
+      const latest = await store.getMeta();
+      if (saved && latest) await store.setMeta({ ...latest, snapshot: { savedAt, stale: false } });
+    } catch {
+      // Tried again after the next change.
+    } finally {
+      saving = false;
+    }
+  }
+
   return {
     mode: 'onedrive',
 
     async loadIndex(onProgress) {
       const store = await getStore();
       let meta = await prepareMeta(store);
+      const fresh = meta.channels.every((c) => c.deltaLink === null && c.resumeLink === null);
+      if (fresh) meta = (await restoreSnapshot(store, meta).catch(() => null)) ?? meta;
       const complete = meta.channels.every((c) => c.deltaLink !== null && c.resumeLink === null);
       if (!complete) {
         // First start (or an interrupted one): wait for the full enumeration.
         ({ meta } = await sync(store, meta, onProgress));
+        void saveSnapshot(store, meta);
       }
       return buildFromStore(store, meta);
     },
@@ -322,6 +375,7 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
         const store = await getStore();
         const meta = await prepareMeta(store);
         const result = await sync(store, meta, onProgress);
+        void saveSnapshot(store, result.meta);
         return result.changes > 0 ? buildFromStore(store, result.meta) : null;
       },
 

@@ -29,7 +29,7 @@ export function SyncSection() {
     const answer = await confirm({
       title: 'Activer la synchronisation ?',
       message:
-        'Nuagerie va demander à Microsoft le droit d’écrire dans un seul dossier, Applis/Nuagerie, pour y ranger tes favoris et tes préférences. Tes photos restent en lecture seule, et tu pourras arrêter à tout moment.',
+        'Nuagerie va demander à Microsoft le droit d’écrire dans un seul dossier, Applis/Nuagerie, pour y ranger tes favoris, tes préférences et l’index de tes photos. Tes photos restent en lecture seule, et tu pourras arrêter à tout moment.',
       confirmLabel: 'Activer',
     });
     if (answer) await sync.enable();
@@ -74,9 +74,10 @@ export function SyncSection() {
         ) : !sync.enabled ? (
           <>
             <p className={common.muted}>
-              Tes favoris, tes préférences (albums affichés, tris, filtre de « Tout ») et tes
-              dossiers se rangent dans ton OneDrive, dans un dossier à part (Applis/Nuagerie) : rien
-              ne se perd, et tes autres appareils suivent. Les favoris en ont besoin.
+              Tes favoris, tes préférences (albums affichés, tris, filtre de « Tout »), tes dossiers
+              et l’index de tes photos se rangent dans ton OneDrive, dans un dossier à part
+              (Applis/Nuagerie) : rien ne se perd, tes autres appareils suivent et s’ouvrent en
+              quelques secondes. Les favoris en ont besoin.
             </p>
             <button
               type="button"
@@ -90,8 +91,8 @@ export function SyncSection() {
         ) : (
           <>
             <p className={common.muted}>
-              Favoris, préférences et dossiers rangés dans Applis/Nuagerie, dans ton OneDrive. Tes
-              autres appareils connectés à ce compte suivent tout seuls.
+              Favoris, préférences, dossiers et index rangés dans Applis/Nuagerie, dans ton
+              OneDrive. Tes autres appareils connectés à ce compte suivent tout seuls.
             </p>
             {/* Not granted yet, or withdrawn at Microsoft: the page is the way on. */}
             {!sync.favoritesOn && sync.status !== 'syncing' ? (

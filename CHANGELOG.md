@@ -4,6 +4,13 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## Depuis la dernière version
+
+Petites retouches déjà en ligne, sans nouveau numéro : elles rejoindront la prochaine version.
+
+- Avec la synchronisation, une copie de l’index de tes photos est rangée dans Applis/Nuagerie : un
+  nouvel appareil (ou après une déconnexion) s’ouvre en quelques secondes au lieu de tout relister.
+
 ## 0.2.0 — 2026-10-08
 
 Favoris, et synchronisation entre tes appareils.

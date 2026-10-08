@@ -34,6 +34,16 @@ export interface IndexMeta {
   lastCount: number | null;
   /** Measures of the last full enumeration (diagnostic). */
   lastFullSync?: FullSyncStats | null;
+  /** The copy of the index left for the other devices (src/data/sync/indexSnapshot.ts). */
+  snapshot?: SnapshotInfo | null;
+}
+
+/** What a device knows of the copy of the index in the app folder. */
+export interface SnapshotInfo {
+  /** When the copy this device made or started from was saved. */
+  savedAt: number;
+  /** The index changed since. */
+  stale: boolean;
 }
 
 export interface FullSyncStats {
