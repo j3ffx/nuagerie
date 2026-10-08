@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'wouter';
-import { withinFolder, withoutFolders } from '../../data/albums.ts';
+import { withoutFolders } from '../../data/albums.ts';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { describeItem, formatCount, formatItemCount } from '../../lib/format.ts';
@@ -12,6 +12,7 @@ import { IndexStatus } from '../../ui/IndexStatus.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import { Thumbnail } from '../../ui/Thumbnail.tsx';
 import allStyles from '../all/AllScreen.module.css';
+import { useAlbumPhotos } from '../albums/useAlbumPhotos.ts';
 import { useAllFilter } from '../all/useAllFilter.ts';
 import { photoHref, useViewer } from '../viewer/useViewer.ts';
 import { Viewer } from '../viewer/Viewer.tsx';
@@ -46,9 +47,9 @@ export function MapScreen() {
 
   // Opened from an album's menu (`?album=<id>`): that album and its sub-albums only.
   const albumId = params.get('album');
-  const album = albumId ? (index?.folders.get(albumId) ?? null) : null;
+  const album = useAlbumPhotos(albumId);
   const items = useMemo(
-    () => (!index ? [] : album ? withinFolder(index, album.id) : withoutFolders(index, excluded)),
+    () => (!index ? [] : album ? album.items : withoutFolders(index, excluded)),
     [index, album, excluded],
   );
   const located = useMemo(() => items.filter((item) => item.latitude !== null), [items]);

@@ -176,3 +176,24 @@ export function CheckIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function HideIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M3 3l18 18" />
+      <path d="M10.6 5.1A9.9 9.9 0 0 1 12 5c5 0 9 4.5 10 7a13 13 0 0 1-3.2 4.3" />
+      <path d="M6.1 6.1A13 13 0 0 0 2 12c1 2.5 5 7 10 7a9.7 9.7 0 0 0 5.9-2" />
+      <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+    </Icon>
+  );
+}
+
+export function ExternalIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M14 4h6v6" />
+      <path d="M20 4 11 13" />
+      <path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
+    </Icon>
+  );
+}

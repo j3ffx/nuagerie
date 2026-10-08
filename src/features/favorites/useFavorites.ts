@@ -4,6 +4,9 @@ import { useMediaIndex } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { useSync } from '../../data/sync/syncContext.ts';
 
+/** Id of the Favoris album (its tile, its map), never a OneDrive folder's. */
+export const FAVORITES_ALBUM_ID = 'favoris';
+
 /** The favourite photos and videos still in the index, most recent first, undated last. */
 export function useFavoriteItems(): readonly MediaItem[] {
   const index = useMediaIndex();
@@ -21,7 +24,7 @@ export function useFavoritesAlbum(): Album | null {
     if (items.length === 0) return null;
     const dated = items.filter((item) => item.takenAt !== null);
     return {
-      id: 'favoris',
+      id: FAVORITES_ALBUM_ID,
       name: 'Favoris',
       parentId: null,
       subAlbumIds: [],

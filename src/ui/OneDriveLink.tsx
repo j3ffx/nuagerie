@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useData } from '../data/dataContext.ts';
 import { useOnline } from '../lib/online.ts';
 
@@ -7,7 +7,16 @@ import { useOnline } from '../lib/online.ts';
  * app on a phone, when installed). Its address is asked for as soon as the
  * link shows, so the tap opens it at once. Nothing in the demo.
  */
-export function OneDriveLink({ id, className }: { id: string; className?: string | undefined }) {
+export function OneDriveLink({
+  id,
+  className,
+  children,
+}: {
+  id: string;
+  className?: string | undefined;
+  /** What goes before the words (an icon), when the link is a menu item. */
+  children?: ReactNode;
+}) {
   const { source } = useData();
   const online = useOnline();
   const [found, setFound] = useState<{ id: string; url: string | null } | null>(null);
@@ -33,11 +42,13 @@ export function OneDriveLink({ id, className }: { id: string; className?: string
   const url = found?.id === id ? found.url : null;
   return url && online ? (
     <a className={className} href={url} target="_blank" rel="noopener noreferrer">
-      Ouvrir dans OneDrive
+      {children}
+      <span>Ouvrir dans OneDrive</span>
     </a>
   ) : (
     <span className={className} aria-disabled="true" data-disabled="">
-      {online ? 'Ouvrir dans OneDrive…' : 'Ouvrir dans OneDrive (hors connexion)'}
+      {children}
+      <span>{online ? 'Ouvrir dans OneDrive…' : 'Ouvrir dans OneDrive (hors connexion)'}</span>
     </span>
   );
 }

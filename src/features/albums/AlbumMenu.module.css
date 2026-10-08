@@ -33,6 +33,10 @@
     var(--shadow-soft),
     0 0 0 1px var(--color-border);
   animation: rise var(--duration) var(--ease);
+  /* The finger that opened the menu may still be down: Android would select the text under it. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 @media (min-width: 900px) {
@@ -54,29 +58,35 @@
 
 /* The album's full name, however long. */
 .title {
-  margin: 0 var(--space-2) var(--space-2);
+  margin: 0 var(--space-2) var(--space-3);
   font-size: 20px;
   overflow-wrap: anywhere;
 }
 
-.item {
+/* Rows that read as buttons: a tinted background, an icon, a chevron. */
+.items {
   display: grid;
-  gap: 2px;
-  min-height: 52px;
+  gap: var(--space-2);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
   padding: var(--space-2) var(--space-3);
   border: none;
   border-radius: var(--radius-md);
-  background: transparent;
-  color: inherit;
+  background: var(--color-surface-2);
+  color: var(--color-text);
   font: inherit;
   font-weight: 700;
   text-align: left;
   text-decoration: none;
-  align-content: center;
 }
 
 .item:active:not(:disabled) {
-  background: var(--color-press);
+  filter: var(--press-filter);
 }
 
 .item:disabled,
@@ -84,10 +94,23 @@
   opacity: 0.55;
 }
 
-.label {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
+.icon {
+  flex: none;
+  color: var(--color-primary);
+}
+
+.text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.chevron {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-muted);
 }
 
 .note {
@@ -98,5 +121,5 @@
 
 .cancel {
   composes: buttonSoft from '../../ui/common.module.css';
-  margin-top: var(--space-2);
+  margin-top: var(--space-3);
 }

@@ -47,7 +47,7 @@ export function AlbumsScreen() {
               <ul className={tiles.grid} aria-label="Albums">
                 {favorites && (
                   <li>
-                    <AlbumTile album={favorites} href="/favoris" />
+                    <AlbumTile album={favorites} href="/favoris" menu="favorites" />
                   </li>
                 )}
                 {albums.map((album) => (

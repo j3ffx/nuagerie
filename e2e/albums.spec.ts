@@ -193,3 +193,41 @@ test('hides an album from the home screen with its menu', async ({ page }) => {
     .click();
   await expect(homeAlbums(page).getByRole('link', { name: /^Screenshots/ })).toBeHidden();
 });
+
+test('the Favoris tile has a menu too: its photos on the map', async ({ page }) => {
+  // A geotagged favourite: from a photo whose place is shown.
+  await page.goto('/carte');
+  await page.locator('section[aria-labelledby="map-zone"] ul a').first().click();
+  await page.getByRole('button', { name: 'Ajouter aux favoris' }).click();
+  await page.keyboard.press('Escape');
+  await page.goto('/');
+
+  await longPress(page, /^Favoris/);
+  const menu = page.getByRole('dialog', { name: 'Favoris' });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole('button', { name: /^Masquer/ })).toHaveCount(0);
+  await menu.getByRole('button', { name: 'Voir sur la carte' }).click();
+  await expect(page.getByRole('link', { name: /^Album Favoris seulement/ })).toBeVisible();
+  await expect(page.getByText('1 élément dans cette zone')).toBeVisible();
+});
+
+test('nothing in an album menu can be selected as text, and its rows look like buttons', async ({
+  page,
+}) => {
+  await longPress(page, /^Screenshots/);
+  const menu = page.getByRole('dialog', { name: 'Screenshots' });
+  await expect(menu).toBeVisible();
+  const styles = await menu.evaluate((dialog) => {
+    const sheet = dialog.firstElementChild as HTMLElement;
+    const row = dialog.querySelector('button') as HTMLElement;
+    return {
+      select: getComputedStyle(sheet).userSelect,
+      rowBackground: getComputedStyle(row).backgroundColor,
+      sheetBackground: getComputedStyle(sheet).backgroundColor,
+    };
+  });
+  expect(styles.select).toBe('none');
+  expect(styles.rowBackground).not.toBe('rgba(0, 0, 0, 0)');
+  expect(styles.rowBackground).not.toBe(styles.sheetBackground);
+  expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('');
+});

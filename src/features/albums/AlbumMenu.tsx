@@ -1,20 +1,25 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
-import { withinFolder, type Album } from '../../data/albums.ts';
-import { useMediaIndex } from '../../data/dataContext.ts';
-import { MapIcon } from '../../ui/icons.tsx';
+import type { Album } from '../../data/albums.ts';
+import { ChevronIcon, ExternalIcon, HideIcon, MapIcon } from '../../ui/icons.tsx';
 import { OneDriveLink } from '../../ui/OneDriveLink.tsx';
 import styles from './AlbumMenu.module.css';
+import { useAlbumPhotos } from './useAlbumPhotos.ts';
 import { useAlbumSelection } from './useAlbums.ts';
 
-/** On the home screen, or among an album's sub-albums: hiding it is not the same choice. */
-export type AlbumPlace = 'home' | 'sub';
+/**
+ * Where the tile is: on the home screen, among an album's sub-albums (hiding
+ * them is not the same choice), or the Favoris tile (not a OneDrive folder).
+ */
+export type AlbumPlace = 'home' | 'sub' | 'favorites';
 
 /**
  * The menu of an album tile, opened with a long press (a right click with a
  * mouse): its full name, then hide it, see its photos on the map, open it on
  * OneDrive's website. A native modal dialog: Escape, Android's back gesture
- * or a tap beside it closes it.
+ * or a tap beside it closes it. Nothing in it can be selected as text: the
+ * finger that opened it is often still down, and Android would select
+ * what comes under it.
  */
 export function AlbumMenu({
   album,
@@ -27,13 +32,9 @@ export function AlbumMenu({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const pressedBeside = useRef(false);
-  const index = useMediaIndex();
   const [, navigate] = useLocation();
   const { setChecked, setHidden } = useAlbumSelection();
-  const located = useMemo(
-    () => (index ? withinFolder(index, album.id).some((item) => item.latitude !== null) : false),
-    [index, album.id],
-  );
+  const located = useAlbumPhotos(album.id)?.items.some((item) => item.latitude !== null) ?? false;
 
   useEffect(() => {
     const dialog = ref.current;
@@ -68,26 +69,39 @@ export function AlbumMenu({
         <h2 id="album-menu-title" className={styles.title}>
           {album.name}
         </h2>
-        <button type="button" className={styles.item} onClick={hide}>
-          {place === 'home' ? 'Masquer de l’accueil' : 'Masquer ce sous-album'}
-          <span className={styles.note}>Il revient avec « Choisir les albums ».</span>
-        </button>
-        <button
-          type="button"
-          className={styles.item}
-          onClick={() => {
-            onClose();
-            navigate(`/carte?album=${encodeURIComponent(album.id)}`);
-          }}
-          disabled={!located}
-        >
-          <span className={styles.label}>
-            <MapIcon width={20} height={20} />
-            Voir sur la carte
-          </span>
-          {!located && <span className={styles.note}>Aucune photo localisée.</span>}
-        </button>
-        <OneDriveLink id={album.id} className={styles.item} />
+        <div className={styles.items}>
+          {place !== 'favorites' && (
+            <button type="button" className={styles.item} onClick={hide}>
+              <HideIcon className={styles.icon} />
+              <span className={styles.text}>
+                {place === 'home' ? 'Masquer de l’accueil' : 'Masquer ce sous-album'}
+                <span className={styles.note}>Il revient avec « Choisir les albums ».</span>
+              </span>
+              <ChevronIcon className={styles.chevron} />
+            </button>
+          )}
+          <button
+            type="button"
+            className={styles.item}
+            onClick={() => {
+              onClose();
+              navigate(`/carte?album=${encodeURIComponent(album.id)}`);
+            }}
+            disabled={!located}
+          >
+            <MapIcon className={styles.icon} />
+            <span className={styles.text}>
+              Voir sur la carte
+              {!located && <span className={styles.note}>Aucune photo localisée.</span>}
+            </span>
+            <ChevronIcon className={styles.chevron} />
+          </button>
+          {place !== 'favorites' && (
+            <OneDriveLink id={album.id} className={styles.item}>
+              <ExternalIcon className={styles.icon} />
+            </OneDriveLink>
+          )}
+        </div>
         <button type="button" className={styles.cancel} onClick={onClose} autoFocus>
           Annuler
         </button>

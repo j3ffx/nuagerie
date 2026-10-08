@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'wouter';
-import { withinFolder, withoutFolders } from '../../data/albums.ts';
+import { withoutFolders } from '../../data/albums.ts';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import { formatItemCount } from '../../lib/format.ts';
 import common from '../../ui/common.module.css';
@@ -8,6 +8,7 @@ import { BackIcon } from '../../ui/icons.tsx';
 import { IndexStatus } from '../../ui/IndexStatus.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import albumStyles from '../albums/AlbumScreen.module.css';
+import { useAlbumPhotos } from '../albums/useAlbumPhotos.ts';
 import allStyles from '../all/AllScreen.module.css';
 import { useAllFilter } from '../all/useAllFilter.ts';
 import { PhotoBrowser } from '../viewer/PhotoBrowser.tsx';
@@ -21,15 +22,12 @@ export function ZoneScreen() {
   const zone = params.get('b');
   // From an album's map: that album and its sub-albums only.
   const albumId = params.get('album');
+  const album = useAlbumPhotos(albumId);
   const items = useMemo(() => {
     const bounds = parseBounds(zone);
     if (!index || !bounds) return [];
-    const shown =
-      albumId && index.folders.has(albumId)
-        ? withinFolder(index, albumId)
-        : withoutFolders(index, excluded);
-    return itemsInBounds(shown, bounds);
-  }, [index, excluded, zone, albumId]);
+    return itemsInBounds(album ? album.items : withoutFolders(index, excluded), bounds);
+  }, [index, excluded, zone, album]);
 
   return (
     <>

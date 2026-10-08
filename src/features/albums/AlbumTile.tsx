@@ -22,7 +22,7 @@ export function AlbumTile({
 }: {
   album: Album;
   href?: string;
-  /** Where the tile is, for its menu (long press, right click); null: no menu (Favoris). */
+  /** Where the tile is, for its menu (long press, right click); null: no menu. */
   menu?: AlbumPlace | null;
 }) {
   const period =
