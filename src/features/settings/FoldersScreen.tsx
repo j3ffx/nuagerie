@@ -10,6 +10,7 @@ import {
   writeRootPaths,
 } from '../../data/roots.ts';
 import type { DriveFolder } from '../../data/source.ts';
+import { useSync } from '../../data/sync/syncContext.ts';
 import { formatBytes, formatCount, formatItemCount } from '../../lib/format.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
@@ -50,6 +51,7 @@ export function FoldersScreen() {
   const listFolders = useMemo(() => source.listFolders?.bind(source), [source]);
 
   const confirm = useConfirm();
+  const { enabled: synced } = useSync();
 
   const save = async () => {
     const answer = await confirm({
@@ -57,7 +59,9 @@ export function FoldersScreen() {
       message:
         mode === 'demo'
           ? 'Les photos de la démo seront rechargées.'
-          : 'Nuagerie va réindexer les photos, ce qui prend environ une minute.',
+          : `Nuagerie va réindexer les photos, ce qui prend environ une minute.${
+              synced ? ' Tes autres appareils synchronisés suivront.' : ''
+            }`,
       confirmLabel: 'Enregistrer',
     });
     if (!answer) return;

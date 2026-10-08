@@ -7,7 +7,9 @@ import {
   usePersistentState,
   writePersistent,
 } from '../../lib/persistent.ts';
+import { useData } from '../dataContext.ts';
 import { createGraphClient } from '../graph/client.ts';
+import { readRootPaths } from '../roots.ts';
 import type { DataMode } from '../source.ts';
 import { createAppFolder, syncWith } from './appFolder.ts';
 import { whenPermissionMissing } from './permission.ts';
@@ -61,6 +63,7 @@ export function SyncProvider({
   signedIn: boolean;
   children: ReactNode;
 }) {
+  const { resetIndex } = useData();
   const stateKey = syncStateKey(mode);
   const [stored] = usePersistentState<unknown>(stateKey, null);
   const state = useMemo(() => parseState(stored), [stored]);
@@ -129,6 +132,7 @@ export function SyncProvider({
           }
         }
         const merged = await syncWith(folder, local);
+        const rootsBefore = readRootPaths().join('\n');
         // Changes made on this device while the sync ran are kept, the next run sends them.
         const latest = current();
         const kept = mergeStates(merged, latest);
@@ -144,6 +148,8 @@ export function SyncProvider({
         } finally {
           applying.current = false;
         }
+        // Other root folders chosen on another device: this one indexes them too.
+        if (readRootPaths().join('\n') !== rootsBefore) void resetIndex();
         writePersistent(LAST_SYNC_KEY, Date.now());
         writePersistent(SYNC_GRANTED_KEY, true);
         writePersistent(ASKING_KEY, false);
@@ -174,7 +180,7 @@ export function SyncProvider({
     },
     // `current` reads storage; it needs no dependency.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [folder, save],
+    [folder, save, resetIndex],
   );
 
   // On start, after a change (a short pause first), when back online or in the foreground,

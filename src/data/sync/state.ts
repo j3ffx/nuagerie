@@ -22,8 +22,12 @@ export interface SyncedState {
 
 export const EMPTY_STATE: SyncedState = { schema: 1, favorites: {}, preferences: {} };
 
-/** Preferences about the photos themselves; theme, cache size or root folders stay per device. */
+/**
+ * Preferences about the photos themselves, root folders included (another
+ * device then indexes the same ones); theme and cache size stay per device.
+ */
 export const SYNCED_PREFERENCES = [
+  'rootPaths',
   'albums.selection.onedrive',
   'albums.sort',
   'albums.subSort',
