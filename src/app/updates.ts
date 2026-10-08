@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { registerSW } from 'virtual:pwa-register';
+import { fetchDeployed, type Deployed } from './latestVersion.ts';
 
 /**
  * App updates. A new version is downloaded by the service worker but only
@@ -20,14 +21,14 @@ export type UpdateStatus =
 
 export interface UpdateState {
   status: UpdateStatus;
-  /** Commit of the deployed version, when known. */
-  latestCommit: string | null;
+  /** Version and commit of the deployed app, when known. */
+  latest: Deployed | null;
   checkedAt: number | null;
 }
 
 const FOREGROUND_CHECK_INTERVAL_MS = 60_000;
 
-let state: UpdateState = { status: 'idle', latestCommit: null, checkedAt: null };
+let state: UpdateState = { status: 'idle', latest: null, checkedAt: null };
 const listeners = new Set<() => void>();
 let registration: ServiceWorkerRegistration | undefined;
 let updateSW: (reloadPage?: boolean) => Promise<void> = async () => window.location.reload();
@@ -42,14 +43,21 @@ function setState(patch: Partial<UpdateState>) {
 
 // Development only (removed from production builds): show the banner without a deploy.
 if (import.meta.env.DEV) {
-  (window as unknown as { simulateUpdate: () => void }).simulateUpdate = () =>
-    setState({ status: 'ready' });
+  (window as unknown as { simulateUpdate: (version?: string) => void }).simulateUpdate = (
+    version = '9.9.9',
+  ) => setState({ status: 'ready', latest: { version, commit: '0000000' } });
 }
 
 export function initUpdates(): void {
   updateSW = registerSW({
     immediate: true,
-    onNeedRefresh: () => setState({ status: 'ready' }),
+    onNeedRefresh: () => {
+      setState({ status: 'ready' });
+      // Found by the service worker on its own: learn which version it is, to name it.
+      void fetchDeployed().then((latest) => {
+        if (latest) setState({ latest });
+      });
+    },
     onRegisteredSW: (_url, reg) => {
       registration = reg;
     },
@@ -66,16 +74,18 @@ export async function checkForUpdate({ quiet = false } = {}): Promise<void> {
   if (state.status === 'ready' || state.status === 'checking') return;
   if (!quiet) setState({ status: 'checking' });
   try {
-    const response = await fetch('/version.json', { cache: 'no-store' });
-    const latest = response.ok ? ((await response.json()) as { commit?: string }).commit : null;
+    const latest = await fetchDeployed();
     await registration?.update();
     // The new version may have finished downloading meanwhile (onNeedRefresh).
-    if (currentStatus() === 'ready') return;
-    const newer = Boolean(latest && latest !== __APP_COMMIT__);
+    if (currentStatus() === 'ready') {
+      if (latest) setState({ latest });
+      return;
+    }
+    const newer = Boolean(latest && latest.commit !== __APP_COMMIT__);
     const pending = Boolean(registration?.installing || registration?.waiting);
     setState({
       status: registration?.waiting ? 'ready' : newer || pending ? 'downloading' : 'up-to-date',
-      latestCommit: latest ?? null,
+      latest,
       checkedAt: Date.now(),
     });
   } catch {

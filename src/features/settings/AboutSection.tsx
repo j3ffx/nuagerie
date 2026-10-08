@@ -5,6 +5,7 @@ import {
   type UpdateStatus,
 } from '../../app/updates.ts';
 import { Link } from 'wouter';
+import { latestLabel } from '../../app/latestVersion.ts';
 import { useData } from '../../data/dataContext.ts';
 import { issueUrl, REPOSITORY_URL } from '../../lib/report.ts';
 import common from '../../ui/common.module.css';
@@ -20,7 +21,8 @@ const STATUS_LABELS: Record<UpdateStatus, string> = {
 
 /** Version of the app, what is new, manual update check, and where to report a problem. */
 export function AboutSection() {
-  const { status, latestCommit } = useUpdateState();
+  const { status, latest } = useUpdateState();
+  const label = latestLabel(latest, { version: __APP_VERSION__, commit: __APP_COMMIT__ });
   const { mode } = useData();
   const busy = status === 'checking' || status === 'downloading';
   const report = () =>
@@ -49,9 +51,7 @@ export function AboutSection() {
           <dd>
             <span role="status">
               {STATUS_LABELS[status]}
-              {latestCommit && latestCommit !== __APP_COMMIT__ && status !== 'up-to-date'
-                ? ` (${latestCommit})`
-                : ''}
+              {label && status !== 'up-to-date' ? ` · ${label}` : ''}
             </span>
           </dd>
         </dl>
