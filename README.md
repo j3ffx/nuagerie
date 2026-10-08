@@ -35,8 +35,9 @@ agréable aussi sur PC.
 - **Favoris.** Un cœur dans la visionneuse, et un album « Favoris » en tête de l’accueil.
 - **Synchronisation.** Optionnelle : les favoris, les préférences (albums affichés, tris,
   filtre) et les dossiers parcourus se rangent dans un dossier à part de OneDrive
-  (`Applis/Nuagerie`), pour ne jamais être perdus et suivre d’un appareil à l’autre. Activée
-  sur un appareil, elle s’active toute seule sur les autres. Les favoris en ont besoin.
+  (`Applis/Nuagerie`), pour ne jamais être perdus et suivre d’un appareil à l’autre, avec une
+  copie de l’index pour qu’un nouvel appareil s’ouvre en quelques secondes. Activée sur un
+  appareil, elle s’active toute seule sur les autres. Les favoris en ont besoin.
 - **Réglages.** Les dossiers OneDrive parcourus (`/Pictures` par défaut, d’autres à
   ajouter), le choix des albums, la synchronisation, le thème clair ou sombre, la taille du cache des
   miniatures, et les permissions accordées à l’application.
@@ -47,10 +48,12 @@ agréable aussi sur PC.
   carte d’[OpenStreetMap](https://www.openstreetmap.org/copyright).
 - Les noms de lieux sont calculés sur l’appareil : les coordonnées des photos ne sont
   envoyées nulle part.
-- L’index et les miniatures sont gardés dans le navigateur (IndexedDB, Cache Storage), sur
-  l’appareil uniquement, et effacés à la déconnexion.
-- La synchronisation, une fois activée, est le seul contenu écrit dans OneDrive : un fichier,
-  `Applis/Nuagerie/nuagerie.json`, dans le OneDrive de la personne connectée.
+- L’index et les miniatures sont gardés dans le navigateur (IndexedDB, Cache Storage), et
+  effacés à la déconnexion.
+- La synchronisation, une fois activée, est le seul contenu écrit dans OneDrive, dans le
+  OneDrive de la personne connectée : `Applis/Nuagerie/nuagerie.json` (favoris, préférences,
+  dossiers) et `Applis/Nuagerie/index.json.gz`, une copie de l’index (noms, dates et lieux des
+  fichiers, sans les photos) qui permet à un autre appareil de s’ouvrir en quelques secondes.
 
 ## Essayer
 

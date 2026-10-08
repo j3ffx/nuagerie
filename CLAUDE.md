@@ -64,7 +64,9 @@ commit metadata.
   then is `Files.ReadWrite.AppFolder` requested (incremental consent), which reaches `Apps/Nuagerie`
   (`special/approot`) and nothing else. Microsoft grants it to the account, so another device follows
   on its own when a silent token and the app folder's copy are both there, unless the user turned the
-  sync off on that device.
+  sync off on that device. A gzipped copy of the index (`index.json.gz`, at most once a day) lets a
+  new device start without listing the drive (`src/data/sync/indexSnapshot.ts`), then catch up by
+  delta; it is used only for the same account and root folders.
   The one write is `putAppFile` in `src/data/graph/client.ts`, which builds its path itself; without
   the sync, there are no favourites in OneDrive mode (on the device only, they would be lost with the
   app; the demo keeps them locally). Réglages → Permissions shows the scopes the tokens actually carry,
