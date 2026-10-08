@@ -257,3 +257,36 @@ test('shows what is known of the photo from its date; back closes that panel onl
   await expect(viewer(page)).toBeHidden();
   expect(new URL(page.url()).searchParams.get('photo')).toBeNull();
 });
+
+test('the info panel opened twice still closes at once', async ({ page }) => {
+  await cells(page).nth(2).click();
+  const caption = viewer(page).getByRole('button', { name: /voir les infos$/ });
+  const panel = viewer(page).getByRole('region', { name: 'Infos' });
+  await caption.click();
+  await expect(panel).toBeVisible();
+  // A second tap on the date closes it (it toggles), and never stacks a second one.
+  await caption.click();
+  await expect(panel).toBeHidden();
+  await caption.click();
+  await viewer(page).getByRole('button', { name: 'Fermer les infos' }).click();
+  await expect(panel).toBeHidden();
+  expect(new URL(page.url()).searchParams.get('infos')).toBeNull();
+  await page.goBack();
+  await expect(viewer(page)).toBeHidden();
+});
+
+test('on a phone, the info panel leaves the whole photo above it', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 780 });
+  await cells(page).nth(2).click();
+  await viewer(page)
+    .getByRole('button', { name: /voir les infos$/ })
+    .click();
+  const panel = viewer(page).getByRole('region', { name: 'Infos' });
+  await expect(panel).toBeVisible();
+  await page.waitForTimeout(400); // the panel's rise
+  const photo = await viewer(page).locator('[data-active] img').last().boundingBox();
+  const sheet = await panel.boundingBox();
+  if (!photo || !sheet) throw new Error('nothing to measure');
+  expect(photo.y + photo.height).toBeLessThanOrEqual(sheet.y + 1);
+  expect(photo.height).toBeGreaterThan(150);
+});

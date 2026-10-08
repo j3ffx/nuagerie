@@ -18,6 +18,10 @@
   right: var(--info-width);
 }
 
+.viewer[data-info-below] .stage {
+  bottom: 50%;
+}
+
 .viewer[data-info-beside] .stepNext {
   right: calc(var(--info-width) + var(--space-3));
 }

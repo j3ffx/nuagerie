@@ -67,16 +67,16 @@ export function useViewer() {
     else setParams(withPhoto(null), { replace: true });
   }, [setParams]);
 
-  const openInfo = useCallback(
-    () =>
-      setParams(withInfo(true), {
-        state: {
-          info: true,
-          viewerBelow: isViewerEntry(window.history.state),
-        } satisfies InfoState,
-      }),
-    [setParams],
-  );
+  const openInfo = useCallback(() => {
+    // Already open: a second entry would leave the panel open after one close.
+    if (new URLSearchParams(window.location.search).get(INFO_PARAM) === '1') return;
+    setParams(withInfo(true), {
+      state: {
+        info: true,
+        viewerBelow: isViewerEntry(window.history.state),
+      } satisfies InfoState,
+    });
+  }, [setParams]);
 
   const closeInfo = useCallback(() => {
     if (infoEntry(window.history.state)) window.history.back();

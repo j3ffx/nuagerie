@@ -106,9 +106,11 @@ function transition(element: HTMLElement, apply: () => void, done: () => void) {
 
 /** Width of the information panel beside the photo on a wide screen (--info-width in CSS). */
 const INFO_WIDTH = 360;
+/** Share of the screen the panel takes under the photo on a phone (height: 50% in CSS). */
+const INFO_HEIGHT_RATIO = 0.5;
 
 /** The space the photos have: the window, minus the information panel when it is beside them. */
-function useViewSize(reserved: number): Size {
+function useViewSize(reserved: { width: number; heightRatio: number }): Size {
   const read = () => ({ width: window.innerWidth, height: window.innerHeight });
   const [view, setView] = useState(read);
   useEffect(() => {
@@ -117,8 +119,11 @@ function useViewSize(reserved: number): Size {
     return () => window.removeEventListener('resize', onResize);
   }, []);
   return useMemo(
-    () => ({ width: Math.max(0, view.width - reserved), height: view.height }),
-    [view, reserved],
+    () => ({
+      width: Math.max(0, view.width - reserved.width),
+      height: Math.round(view.height * (1 - reserved.heightRatio)),
+    }),
+    [view, reserved.width, reserved.heightRatio],
   );
 }
 
@@ -140,8 +145,15 @@ export function Viewer({
   onClose: () => void;
 }) {
   const { infoOpen, openInfo, closeInfo } = useViewer();
-  const infoBeside = useMediaQuery('(min-width: 900px)') && infoOpen;
-  const view = useViewSize(infoBeside ? INFO_WIDTH : 0);
+  // The information panel takes the right side of a wide screen, the lower half of a phone's:
+  // the photo keeps the rest, whole.
+  const wide = useMediaQuery('(min-width: 900px)');
+  const infoBeside = infoOpen && wide;
+  const infoBelow = infoOpen && !wide;
+  const view = useViewSize({
+    width: infoBeside ? INFO_WIDTH : 0,
+    heightRatio: infoBelow ? INFO_HEIGHT_RATIO : 0,
+  });
   const item = items[index];
   const previous = items[index - 1];
   const next = items[index + 1];
@@ -451,6 +463,7 @@ export function Viewer({
       aria-label="Visionneuse"
       data-chrome={chrome || undefined}
       data-info-beside={infoBeside || undefined}
+      data-info-below={infoBelow || undefined}
     >
       <div
         ref={stageRef}
@@ -477,7 +490,7 @@ export function Viewer({
         </div>
       </div>
 
-      <ViewerBar item={item} onClose={onClose} onInfo={openInfo} />
+      <ViewerBar item={item} onClose={onClose} onInfo={infoOpen ? closeInfo : openInfo} />
       {infoOpen && <InfoPanel item={item} onClose={closeInfo} />}
 
       {previous && (
