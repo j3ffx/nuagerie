@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { GraphDriveItem } from './graph/types.ts';
-import { buildIndex, type DateResolver } from './normalize.ts';
+import { buildIndex, cameraName, type DateResolver } from './normalize.ts';
 
 const folder = (id: string, name: string, parentId: string): GraphDriveItem => ({
   id,
@@ -77,5 +77,19 @@ describe('buildIndex', () => {
     expect(new Date(a?.takenAt ?? 0).toISOString()).toBe('2026-10-06T08:47:59.000Z');
     expect(a?.dateSource).toBe('exif');
     expect(a?.kind).toBe('image');
+  });
+});
+
+describe('cameraName', () => {
+  it('joins the make and the model, without saying the make twice', () => {
+    expect(cameraName('samsung', 'Galaxy S23')).toBe('samsung Galaxy S23');
+    expect(cameraName('Canon', 'Canon EOS R6')).toBe('Canon EOS R6');
+    expect(cameraName(' Apple ', 'iPhone 12 ')).toBe('Apple iPhone 12');
+  });
+
+  it('keeps what there is, and nothing when the file says nothing', () => {
+    expect(cameraName(undefined, 'Pixel 7')).toBe('Pixel 7');
+    expect(cameraName('Google', '')).toBe('Google');
+    expect(cameraName(undefined, undefined)).toBeNull();
   });
 });

@@ -120,3 +120,24 @@ export function formatBytes(bytes: number): string {
 export function formatItemCount(count: number): string {
   return `${formatCount(count)} ${count > 1 ? 'éléments' : 'élément'}`;
 }
+
+/** A video's length: "42 s", "3 min 05 s", "1 h 02 min". */
+export function formatDuration(ms: number): string {
+  const total = Math.max(1, Math.round(ms / 1000));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  const two = (n: number) => String(n).padStart(2, '0');
+  if (hours > 0) return `${hours} h ${two(minutes)} min`;
+  if (minutes > 0) return `${minutes} min ${two(seconds)} s`;
+  return `${seconds} s`;
+}
+
+/** "4 000 × 3 000 · 12 Mpx" (megapixels only from 1 up, rounded as cameras say it). */
+export function formatDimensions(width: number, height: number): string {
+  const megapixels = (width * height) / 1_000_000;
+  const size = `${formatCount(width)} × ${formatCount(height)}`;
+  return megapixels >= 1
+    ? `${size} · ${decimalFormat.format(Math.round(megapixels * 10) / 10)} Mpx`
+    : size;
+}

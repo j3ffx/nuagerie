@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildAlbums,
   defaultChecked,
+  folderTrail,
   folderTree,
   orderItems,
   sortAlbums,
@@ -228,5 +229,13 @@ describe('withoutFolders', () => {
     );
     // Files of technical folders belong to their album: hiding Camera Roll hides them.
     expect(itemIds(withoutFolders(index, new Set(['cam'])))).not.toContain('c3');
+  });
+});
+
+describe('folderTrail', () => {
+  it('names the folders from the root of the perimeter down to the file', () => {
+    expect(folderTrail(index.folders, 'cam-m')).toEqual(['Pictures', 'Camera Roll', '2026', '10']);
+    expect(folderTrail(index.folders, 'pics')).toEqual(['Pictures']);
+    expect(folderTrail(index.folders, 'unknown')).toEqual([]);
   });
 });

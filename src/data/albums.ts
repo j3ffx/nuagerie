@@ -240,3 +240,16 @@ export function withoutFolders(
   };
   return index.items.filter((item) => !isHidden(item.albumId));
 }
+
+/** Folder names from the root of the perimeter down to `folderId`: ["Pictures", "Camera Roll", "2026", "10"]. */
+export function folderTrail(folders: ReadonlyMap<string, Folder>, folderId: string): string[] {
+  const names: string[] = [];
+  const seen = new Set<string>();
+  let current = folders.get(folderId);
+  while (current && !seen.has(current.id)) {
+    seen.add(current.id);
+    names.unshift(current.name);
+    current = current.parentId === null ? undefined : folders.get(current.parentId);
+  }
+  return names;
+}

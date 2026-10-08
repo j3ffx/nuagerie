@@ -121,6 +121,7 @@ export function buildIndex(
       width: file.image?.width ?? file.video?.width ?? null,
       height: file.image?.height ?? file.video?.height ?? null,
       durationMs: file.video?.duration ?? null,
+      camera: cameraName(file.photo?.cameraMake, file.photo?.cameraModel),
       latitude: file.location?.latitude ?? null,
       longitude: file.location?.longitude ?? null,
     });
@@ -128,4 +129,16 @@ export function buildIndex(
 
   items.sort(compareByDateDesc);
   return { folders, items, rootFolderIds: [...rootFolderIds] };
+}
+
+/**
+ * "samsung" + "Galaxy S23" → "samsung Galaxy S23"; the make is dropped when
+ * the model already starts with it ("Canon" + "Canon EOS R6" → "Canon EOS R6").
+ */
+export function cameraName(make: string | undefined, model: string | undefined): string | null {
+  const brand = make?.trim() ?? '';
+  const name = model?.trim() ?? '';
+  if (!name) return brand || null;
+  if (!brand || name.toLowerCase().startsWith(brand.toLowerCase())) return name;
+  return `${brand} ${name}`;
 }

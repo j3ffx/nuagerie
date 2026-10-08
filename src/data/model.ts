@@ -30,6 +30,8 @@ export interface MediaItem {
   width: number | null;
   height: number | null;
   durationMs: number | null;
+  /** "Samsung Galaxy S23", from the EXIF data; null when the file does not say. */
+  camera: string | null;
   latitude: number | null;
   longitude: number | null;
 }
