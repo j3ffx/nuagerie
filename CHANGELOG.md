@@ -4,6 +4,19 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## 0.1.2 — 2026-10-08
+
+### Nouveautés
+
+- Les confirmations (réindexer, se déconnecter, enregistrer les dossiers, revenir au choix d’albums
+  par défaut) s’affichent dans une fenêtre de l’application, plus lisible que celle du navigateur.
+- Un appui long n’ouvre plus le menu du navigateur (copier le lien, télécharger l’image) et ne
+  sélectionne plus le texte.
+
+### Corrections
+
+- Carte : une photo pile sur le bord du bas ne fait plus clignoter la carte.
+
 ## 0.1.1 — 2026-10-08
 
 Petites améliorations du quotidien.
