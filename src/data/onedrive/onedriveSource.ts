@@ -307,6 +307,7 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
   }
 
   const signedIn = options.accountId !== null;
+  const webUrls = new Map<string, string | null>();
   /** Off after a reindex asked for: the drive is listed again, the copy is not trusted. */
   let useSharedCopy = true;
 
@@ -446,10 +447,15 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
     getOriginalUrl: originalUrls,
 
     async getWebUrl(id) {
+      // One request per file or folder: an item's page on OneDrive keeps its address.
+      const known = webUrls.get(id);
+      if (known !== undefined) return known;
       const found = await client.getJson<{ webUrl?: string }>(
         `/me/drive/items/${encodeURIComponent(id)}?$select=webUrl`,
       );
-      return found.webUrl ?? null;
+      const url = found.webUrl ?? null;
+      webUrls.set(id, url);
+      return url;
     },
   };
 }

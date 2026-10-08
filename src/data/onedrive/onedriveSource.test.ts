@@ -224,6 +224,21 @@ describe('createOneDriveSource', () => {
     });
   });
 
+  it('asks for the page of an item on OneDrive once', async () => {
+    const calls: string[] = [];
+    const client: GraphClient = {
+      batch: () => Promise.reject(new Error('unexpected batch')),
+      async getJson<T>(url: string): Promise<T> {
+        calls.push(url);
+        return { webUrl: 'https://onedrive.live.com/?id=p1' } as T;
+      },
+    };
+    const s = source(client);
+    expect(await s.getWebUrl?.('p1')).toBe('https://onedrive.live.com/?id=p1');
+    expect(await s.getWebUrl?.('p1')).toBe('https://onedrive.live.com/?id=p1');
+    expect(calls).toEqual(['/me/drive/items/p1?$select=webUrl']);
+  });
+
   it('lists the subfolders of a drive folder, page by page, by name', async () => {
     const calls: string[] = [];
     const client: GraphClient = {
