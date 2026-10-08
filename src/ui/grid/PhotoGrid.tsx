@@ -119,7 +119,8 @@ export function PhotoGrid({
   // row's number: the rows may move meanwhile (the index updated, a month added on top).
   const pinnedId = useRef<string | null>(null);
   const latestLayout = useRef(layout);
-  useEffect(() => {
+  // Before the virtualizer reads it on screen, not after.
+  useLayoutEffect(() => {
     latestLayout.current = layout;
   }, [layout]);
   const pinnedRow = useRef<{ id: string; layout: GridLayout; row: number } | null>(null);

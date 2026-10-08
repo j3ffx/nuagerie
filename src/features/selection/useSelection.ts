@@ -45,11 +45,33 @@ export function useSelection(items: readonly MediaItem[]) {
   const pushed = useRef(false);
 
   // Started: one history entry, so that back ends the selection instead of leaving the screen.
+  // Chrome's back button skips entries added without a user gesture, and a long press is not
+  // one until the finger lifts: the entry then waits for that lift (or a tap, a key).
   useEffect(() => {
-    if (active && !pushed.current) {
+    if (!active || pushed.current) return;
+    const push = () => {
+      if (pushed.current) return;
       window.history.pushState({ selection: true } satisfies SelectionState, '');
       pushed.current = true;
+    };
+    if (!navigator.userActivation || navigator.userActivation.isActive) {
+      push();
+      return;
     }
+    const gestures = ['pointerup', 'touchend', 'keydown', 'click'] as const;
+    const stop = () =>
+      gestures.forEach((name) => window.removeEventListener(name, onGesture, true));
+    let timer = 0;
+    // Once that event has granted the gesture, not while it is being handed out.
+    const onGesture = () => {
+      stop();
+      timer = window.setTimeout(push, 0);
+    };
+    gestures.forEach((name) => window.addEventListener(name, onGesture, true));
+    return () => {
+      stop();
+      window.clearTimeout(timer);
+    };
   }, [active]);
 
   useEffect(() => {
@@ -88,10 +110,10 @@ export function useSelection(items: readonly MediaItem[]) {
     return () => window.removeEventListener('keydown', onKey);
   }, [active, clear]);
 
-  // Emptied by taps: the entry goes too.
+  // Emptied (by taps, or its photos left the list): the entry goes too, and the popstate that
+  // follows clears what is left, so that photos coming back do not bring the selection back.
   useEffect(() => {
     if (!active && pushed.current && isSelectionEntry(window.history.state)) {
-      pushed.current = false;
       window.history.back();
     }
   }, [active]);
