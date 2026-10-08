@@ -39,6 +39,9 @@ function folderStats(dataset: DemoDataset): Map<string, { childCount: number; si
 }
 
 /** Demo data: synthetic OneDrive generated locally, no account, no network. */
+/** How long a demo "original" stays readable once handed out. */
+const ORIGINAL_URL_LIFETIME_MS = 60_000;
+
 export function createDemoSource(): DataSource {
   const drawThumbnail = createDemoThumbnailDrawer();
   let generated: {
@@ -112,7 +115,10 @@ export function createDemoSource(): DataSource {
     async getOriginalUrl(item) {
       // No real file: a large drawing stands for a photo; demo videos cannot play.
       if (item.kind === 'video') return null;
-      return URL.createObjectURL(await drawThumbnail(item, 'large'));
+      const url = URL.createObjectURL(await drawThumbnail(item, 'large'));
+      // Used at once (download, share): freed a minute later, so 30 at a time do not pile up.
+      setTimeout(() => URL.revokeObjectURL(url), ORIGINAL_URL_LIFETIME_MS);
+      return url;
     },
 
     async fetchThumbnail(item, size, signal) {
