@@ -10,6 +10,7 @@ Petites retouches déjà en ligne, sans nouveau numéro : elles rejoindront la p
 
 - Quand une nouvelle version est prête, son numéro s’affiche dans le bandeau et dans Réglages → À
   propos.
+- La flèche des listes déroulantes (tri des albums, taille du cache) n’apparaît plus coupée en deux.
 
 ## 0.1.2 — 2026-10-08
 
