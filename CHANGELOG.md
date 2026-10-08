@@ -4,12 +4,30 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
-## Depuis la dernière version
+## 0.2.0 — 2026-10-08
 
-Petites retouches déjà en ligne, sans nouveau numéro : elles rejoindront la prochaine version.
+Favoris, et synchronisation entre tes appareils.
 
+### Nouveautés
+
+- Favoris : un cœur dans la visionneuse, et un album « Favoris » en tête de l’accueil.
+- Synchronisation (Réglages → Synchronisation), à activer toi-même : tes favoris, tes préférences
+  (albums affichés, tris, ordre et filtre de « Tout ») et tes dossiers se rangent dans ton OneDrive,
+  dans un dossier à part (Applis/Nuagerie). Rien ne se perd, et une fois activée sur un appareil,
+  elle s’active toute seule sur les autres, qui suivent tes changements en une minute environ.
+  Nuagerie demande à Microsoft le droit d’écrire dans ce seul dossier : tes photos restent en
+  lecture seule.
+- Réglages → Permissions montre ce que Microsoft autorise vraiment à Nuagerie, avec un lien pour
+  le retirer.
+- En thème clair, la visionneuse est claire tant que ses barres sont affichées ; un toucher les
+  masque et passe le fond en noir pour regarder la photo.
+- Un nom d’album trop long se lit en entier : touche la date et l’album dans la visionneuse, ou
+  fais un appui long sur la tuile d’un album.
 - Quand une nouvelle version est prête, son numéro s’affiche dans le bandeau et dans Réglages → À
   propos.
+
+### Corrections
+
 - La flèche des listes déroulantes (tri des albums, taille du cache) n’apparaît plus coupée en deux.
 
 ## 0.1.2 — 2026-10-08
