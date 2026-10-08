@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { Redirect, Route, Router, Switch } from 'wouter';
 import { getAccessToken, getMsal } from '../auth/msal.ts';
 import { DataProvider } from '../data/DataProvider.tsx';
+import { SyncProvider } from '../data/sync/SyncProvider.tsx';
 import { createDemoSource } from '../data/demo/demoSource.ts';
 import { createOneDriveSource } from '../data/onedrive/onedriveSource.ts';
 import type { DataMode, DataSource } from '../data/source.ts';
@@ -20,6 +21,7 @@ import { DiagnosticScreen } from '../features/diagnostic/DiagnosticScreen.tsx';
 import { MapScreen } from '../features/map/MapScreen.tsx';
 import { ZoneScreen } from '../features/map/ZoneScreen.tsx';
 import { FoldersScreen } from '../features/settings/FoldersScreen.tsx';
+import { FavoritesScreen } from '../features/favorites/FavoritesScreen.tsx';
 import { SettingsScreen } from '../features/settings/SettingsScreen.tsx';
 import { WhatsNewScreen } from '../features/settings/WhatsNewScreen.tsx';
 import { SignInScreen } from '../features/welcome/SignInScreen.tsx';
@@ -81,9 +83,11 @@ function Data({
   const [source] = useState(create);
   return (
     <DataProvider mode={mode} signedIn={signedIn} source={source}>
-      <Router aroundNav={scrollToTopOnNewScreen}>
-        <Shell />
-      </Router>
+      <SyncProvider mode={mode} signedIn={signedIn}>
+        <Router aroundNav={scrollToTopOnNewScreen}>
+          <Shell />
+        </Router>
+      </SyncProvider>
     </DataProvider>
   );
 }
@@ -113,6 +117,7 @@ function ShellContent() {
           <Route path="/" component={AlbumsScreen} />
           <Route path="/albums/choisir" component={ChooseAlbumsScreen} />
           <Route path="/album/:id" component={AlbumScreen} />
+          <Route path="/favoris" component={FavoritesScreen} />
           <Route path="/tout" component={AllScreen} />
           <Route path="/tout/filtre" component={AllFilterScreen} />
           <Route path="/carte" component={MapScreen} />

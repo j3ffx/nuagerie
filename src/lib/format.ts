@@ -53,24 +53,19 @@ export function formatLongDate(takenAt: number): string {
   return longDateFormat.format(takenAt);
 }
 
-const takenDateTimeFormat = new Intl.DateTimeFormat('fr-FR', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
+const timeFormat = new Intl.DateTimeFormat('fr-FR', {
   hour: '2-digit',
   minute: '2-digit',
   timeZone: 'UTC',
 });
 
-/**
- * Capture date and time: "6 octobre 2026 à 14:32". A date read from a file
- * name without a time (WhatsApp) shows no time rather than a false midnight.
- */
-export function formatTakenDateTime(item: { takenAt: number; dateSource: string | null }): string {
+/** The time of a capture, "14:32"; null for a date read from a file name without a time. */
+export function formatTakenTime(item: {
+  takenAt: number;
+  dateSource: string | null;
+}): string | null {
   const midnight = item.takenAt % 86_400_000 === 0;
-  return item.dateSource === 'filename' && midnight
-    ? formatLongDate(item.takenAt)
-    : takenDateTimeFormat.format(item.takenAt);
+  return item.dateSource === 'filename' && midnight ? null : timeFormat.format(item.takenAt);
 }
 
 const countryNames = new Intl.DisplayNames(['fr'], { type: 'region' });

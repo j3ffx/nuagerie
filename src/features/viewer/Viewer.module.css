@@ -121,6 +121,8 @@
 
 .top {
   top: 0;
+  /* Up to four 44 px buttons beside the date on a phone: their own padding spaces them. */
+  gap: 0;
   padding: calc(env(safe-area-inset-top) + var(--space-2)) var(--space-2) var(--space-6);
   background: linear-gradient(rgb(0 0 0 / 0.75), rgb(0 0 0 / 0.45) 60%, transparent);
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.6);
@@ -138,6 +140,7 @@
 .caption {
   flex: 1;
   min-width: 0;
+  padding: 0 var(--space-1);
 }
 
 /* The place opens the map, centred on the photo. */
@@ -297,4 +300,9 @@
 
 .step:active {
   background: rgb(0 0 0 / 0.7);
+}
+
+/* A favourite: the heart filled, in a warm pink that reads on any photo. */
+.icon[data-favorite] {
+  color: #ff8fab;
 }

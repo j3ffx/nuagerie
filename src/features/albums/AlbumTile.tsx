@@ -12,13 +12,13 @@ function albumCountLabel(album: Album): string {
   return formatItemCount(album.items.length);
 }
 
-export function AlbumTile({ album }: { album: Album }) {
+export function AlbumTile({ album, href }: { album: Album; href?: string }) {
   const period =
     album.first !== null && album.last !== null ? formatYearRange(album.first, album.last) : null;
   const label = [album.name, albumCountLabel(album), period].filter(Boolean).join(', ');
   return (
     <Link
-      href={`/album/${encodeURIComponent(album.id)}`}
+      href={href ?? `/album/${encodeURIComponent(album.id)}`}
       className={styles.tile}
       aria-label={label}
     >

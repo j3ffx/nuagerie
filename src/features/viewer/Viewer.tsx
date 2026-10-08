@@ -12,9 +12,11 @@ import { Link } from 'wouter';
 import { useData, useMediaIndex } from '../../data/dataContext.ts';
 import { lookupPlace } from '../../data/places/places.ts';
 import type { MediaItem } from '../../data/model.ts';
-import { formatPlace, formatTakenDateTime } from '../../lib/format.ts';
+import { formatLongDate, formatPlace, formatTakenTime } from '../../lib/format.ts';
+import { useSync } from '../../data/sync/syncContext.ts';
+import { useConfirm } from '../../ui/confirmContext.ts';
 import { useOnline } from '../../lib/online.ts';
-import { BackIcon, ChevronIcon, DownloadIcon, MapIcon } from '../../ui/icons.tsx';
+import { BackIcon, ChevronIcon, DownloadIcon, HeartIcon, MapIcon } from '../../ui/icons.tsx';
 import {
   clampZoom,
   closesOnDrag,
@@ -485,6 +487,28 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
   const place = usePlaceName(item);
   // Sharing and saving need the original file: crossed out while offline.
   const offline = !useOnline();
+  const sync = useSync();
+  const confirm = useConfirm();
+  const favorite = sync.favorites.has(item.id);
+
+  /** Favourites live in OneDrive: before the first one, the sync is turned on (once). */
+  const onHeart = async () => {
+    if (sync.favoritesOn) {
+      sync.toggleFavorite(item.id);
+      return;
+    }
+    const answer = await confirm({
+      title: 'Activer les favoris ?',
+      message:
+        'Les favoris se rangent dans ton OneDrive, dans un dossier à part (Applis/Nuagerie), pour ne jamais être perdus. Nuagerie va demander à Microsoft le droit d’écrire dans ce seul dossier : tes photos restent en lecture seule.',
+      confirmLabel: 'Activer',
+    });
+    if (answer) await sync.enable(item.id);
+  };
+  const time =
+    item.takenAt === null
+      ? null
+      : formatTakenTime({ takenAt: item.takenAt, dateSource: item.dateSource });
 
   /** The original file, saved by the browser (OneDrive serves it as an attachment). */
   const download = async () => {
@@ -516,14 +540,29 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
         >
           <BackIcon />
         </button>
+        {/* The day on top, then the time and the album: the bar has four buttons on a phone. */}
         <div className={styles.caption}>
           <p className={styles.date}>
-            {item.takenAt === null
-              ? 'Sans date'
-              : formatTakenDateTime({ takenAt: item.takenAt, dateSource: item.dateSource })}
+            {item.takenAt === null ? 'Sans date' : formatLongDate(item.takenAt)}
           </p>
-          {album && <p className={styles.album}>{album}</p>}
+          {(time || album) && (
+            <p className={styles.album}>{[time, album].filter(Boolean).join(' · ')}</p>
+          )}
         </div>
+        {(sync.favoritesOn || sync.available) && (
+          <button
+            type="button"
+            className={styles.icon}
+            onClick={() => void onHeart()}
+            disabled={!sync.favoritesOn && offline}
+            aria-pressed={favorite}
+            aria-label={favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            title={favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            data-favorite={favorite || undefined}
+          >
+            <HeartIcon filled={favorite} />
+          </button>
+        )}
         {!(item.kind === 'video' && source.mode === 'demo') && (
           <ShareButton key={item.id} item={item} offline={offline} />
         )}

@@ -72,6 +72,16 @@ const SCREENS: { name: string; path: string; ready: (page: Page) => Promise<void
     },
   },
   {
+    name: 'favourites',
+    path: '/tout',
+    ready: async (page) => {
+      await page.getByRole('main').locator('a[data-item-id]').first().click();
+      await page.getByRole('button', { name: 'Ajouter aux favoris' }).click();
+      await page.goto('/favoris');
+      await expect(page.getByRole('main').locator('a[data-item-id] img').first()).toBeVisible();
+    },
+  },
+  {
     name: 'news',
     path: '/nouveautes',
     ready: (page) => expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible(),
