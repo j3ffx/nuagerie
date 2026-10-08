@@ -115,6 +115,12 @@ export function formatMegabytes(megabytes: number): string {
   return `${decimalFormat.format(megabytes >= 10 ? Math.round(megabytes) : megabytes)} Mo`;
 }
 
+/** A size in bytes: "820 Ko", "3,2 Mo", "12 Go" (decimal units, as OneDrive shows them). */
+export function formatBytes(bytes: number): string {
+  if (bytes < 1_000_000) return `${formatCount(Math.max(1, Math.round(bytes / 1000)))} Ko`;
+  return formatMegabytes(bytes / 1_000_000);
+}
+
 /** "1 élément", "12 éléments" */
 export function formatItemCount(count: number): string {
   return `${formatCount(count)} ${count > 1 ? 'éléments' : 'élément'}`;

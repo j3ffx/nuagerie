@@ -139,11 +139,11 @@ describe('createOneDriveSource', () => {
       async getJson<T>(url: string): Promise<T> {
         calls.push(url);
         if (url === 'https://graph/next') {
-          return { value: [{ name: 'Bureau', folder: { childCount: 0 } }] } as T;
+          return { value: [{ name: 'Bureau', folder: { childCount: 0 }, size: 0 }] } as T;
         }
         return {
           value: [
-            { name: 'Scans', folder: { childCount: 3 } },
+            { name: 'Scans', folder: { childCount: 3 }, size: 3_200_000 },
             { name: 'notes.txt' },
             { name: 'Années 2000', folder: { childCount: 1 } },
           ],
@@ -154,13 +154,15 @@ describe('createOneDriveSource', () => {
 
     const folders = await source(client).listFolders?.('/Mes documents');
 
-    expect(calls[0]).toBe('/me/drive/root:/Mes%20documents:/children?$select=name,folder&$top=999');
+    expect(calls[0]).toBe(
+      '/me/drive/root:/Mes%20documents:/children?$select=name,folder,size&$top=999',
+    );
     expect(folders).toEqual([
-      { name: 'Années 2000', path: '/Mes documents/Années 2000', hasChildren: true },
-      { name: 'Bureau', path: '/Mes documents/Bureau', hasChildren: false },
-      { name: 'Scans', path: '/Mes documents/Scans', hasChildren: true },
+      { name: 'Années 2000', path: '/Mes documents/Années 2000', childCount: 1, size: null },
+      { name: 'Bureau', path: '/Mes documents/Bureau', childCount: 0, size: 0 },
+      { name: 'Scans', path: '/Mes documents/Scans', childCount: 3, size: 3_200_000 },
     ]);
     await source(client).listFolders?.('/');
-    expect(calls.at(-2)).toBe('/me/drive/root/children?$select=name,folder&$top=999');
+    expect(calls.at(-2)).toBe('/me/drive/root/children?$select=name,folder,size&$top=999');
   });
 });

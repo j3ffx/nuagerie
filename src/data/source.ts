@@ -46,6 +46,8 @@ export interface DriveFolder {
   name: string;
   /** From the drive root, e.g. "/Documents/Scans". */
   path: string;
-  /** Whether it holds anything (files or folders). */
-  hasChildren: boolean;
+  /** Files and folders right inside it (not counting what its subfolders hold). */
+  childCount: number;
+  /** Total size in bytes, subfolders included, when known. */
+  size: number | null;
 }

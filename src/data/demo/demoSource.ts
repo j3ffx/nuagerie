@@ -20,10 +20,32 @@ function folderPaths(dataset: DemoDataset): Map<string, string> {
   return paths;
 }
 
+/** Items right inside each folder, and the bytes below it (subfolders included). */
+function folderStats(dataset: DemoDataset): Map<string, { childCount: number; size: number }> {
+  const stats = new Map<string, { childCount: number; size: number }>();
+  const parentOf = new Map(dataset.items.map((item) => [item.id, item.parentReference?.id]));
+  const statsOf = (id: string) => {
+    let entry = stats.get(id);
+    if (!entry) stats.set(id, (entry = { childCount: 0, size: 0 }));
+    return entry;
+  };
+  for (const item of dataset.items) {
+    const parentId = item.parentReference?.id;
+    if (parentId) statsOf(parentId).childCount++;
+    if (item.folder) continue;
+    for (let id = parentId; id; id = parentOf.get(id)) statsOf(id).size += item.size ?? 0;
+  }
+  return stats;
+}
+
 /** Demo data: synthetic OneDrive generated locally, no account, no network. */
 export function createDemoSource(): DataSource {
   const drawThumbnail = createDemoThumbnailDrawer();
-  let generated: { dataset: DemoDataset; paths: Map<string, string> } | null = null;
+  let generated: {
+    dataset: DemoDataset;
+    paths: Map<string, string>;
+    stats: ReturnType<typeof folderStats>;
+  } | null = null;
   const generate = () => {
     if (!generated) {
       const context = currentDateContext();
@@ -31,7 +53,7 @@ export function createDemoSource(): DataSource {
         nowWallClock: context.nowWallClock,
         timeZone: context.timeZone,
       });
-      generated = { dataset, paths: folderPaths(dataset) };
+      generated = { dataset, paths: folderPaths(dataset), stats: folderStats(dataset) };
     }
     return generated;
   };
@@ -74,15 +96,15 @@ export function createDemoSource(): DataSource {
     },
 
     async listFolders(path) {
-      const { dataset, paths } = generate();
+      const { dataset, paths, stats } = generate();
       const parentId = paths.get(path.toLocaleLowerCase('en'));
-      const parents = new Set(dataset.items.map((item) => item.parentReference?.id));
       return dataset.items
         .filter((item) => item.folder && item.parentReference?.id === parentId)
         .map((item): DriveFolder => ({
           name: item.name ?? '',
           path: childPath(path, item.name ?? ''),
-          hasChildren: parents.has(item.id),
+          childCount: stats.get(item.id)?.childCount ?? 0,
+          size: stats.get(item.id)?.size ?? 0,
         }))
         .sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base', numeric: true }));
     },

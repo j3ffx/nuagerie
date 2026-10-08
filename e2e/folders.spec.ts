@@ -15,7 +15,9 @@ test('adds a folder outside Pictures, then removes it', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Retirer Pictures' })).toBeHidden();
   await expect(page.getByRole('button', { name: 'Ajouter Pictures' })).toBeHidden();
 
-  await page.getByRole('button', { name: 'Ouvrir Documents' }).click();
+  // Each folder says what it holds: 40 scans and one subfolder here.
+  await page.getByRole('button', { name: /^Ouvrir Documents, 2 éléments · [\d,]+ Mo$/ }).click();
+  await expect(page.getByRole('button', { name: /^Ouvrir Scans, 41 éléments · / })).toBeVisible();
   await page.getByRole('button', { name: 'Ajouter Scans' }).click();
   await expect(page.getByText('/Documents/Scans')).toBeVisible();
 

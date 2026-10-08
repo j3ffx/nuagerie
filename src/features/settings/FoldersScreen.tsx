@@ -10,12 +10,20 @@ import {
   writeRootPaths,
 } from '../../data/roots.ts';
 import type { DriveFolder } from '../../data/source.ts';
+import { formatBytes, formatItemCount } from '../../lib/format.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
 import { BackIcon, ChevronIcon } from '../../ui/icons.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import albumStyles from '../albums/AlbumScreen.module.css';
 import styles from './FoldersScreen.module.css';
+
+/** "41 éléments · 3,2 Go": what is right inside, and the weight of it all. */
+function folderContent(folder: DriveFolder): string {
+  if (folder.childCount === 0) return 'vide';
+  const count = formatItemCount(folder.childCount);
+  return folder.size ? `${count} · ${formatBytes(folder.size)}` : count;
+}
 
 /** Parent of a folder path ("/" for a first-level folder). */
 const parentOf = (path: string) => path.slice(0, path.lastIndexOf('/')) || '/';
@@ -198,26 +206,28 @@ function FolderBrowser({
           <ul aria-label={`Dossiers de ${folderName(path)}`}>
             {listing.folders.map((folder) => {
               const covering = rootCovering(roots, folder.path);
+              const opens = folder.childCount > 0;
+              const details = [
+                covering &&
+                  (covering === folder.path ? 'parcouru' : `inclus dans ${folderName(covering)}`),
+                folderContent(folder),
+              ]
+                .filter(Boolean)
+                .join(' · ');
               return (
                 <li key={folder.path} className={styles.row}>
                   <button
                     type="button"
                     className={styles.open}
                     onClick={() => setPath(folder.path)}
-                    disabled={!folder.hasChildren}
-                    aria-label={folder.hasChildren ? `Ouvrir ${folder.name}` : undefined}
+                    disabled={!opens}
+                    aria-label={opens ? `Ouvrir ${folder.name}, ${details}` : undefined}
                   >
                     <span className={styles.text}>
                       <span className={styles.name}>{folder.name}</span>
-                      {covering && (
-                        <span className={styles.meta}>
-                          {covering === folder.path
-                            ? 'parcouru'
-                            : `inclus dans ${folderName(covering)}`}
-                        </span>
-                      )}
+                      <span className={styles.meta}>{details}</span>
                     </span>
-                    {folder.hasChildren && <ChevronIcon className={styles.chevron} />}
+                    {opens && <ChevronIcon className={styles.chevron} />}
                   </button>
                   {!covering && (
                     <button

@@ -167,7 +167,7 @@ async function checkThumbnails(
 }
 
 interface FolderPage {
-  value: Pick<GraphDriveItem, 'name' | 'folder'>[];
+  value: Pick<GraphDriveItem, 'name' | 'folder' | 'size'>[];
   '@odata.nextLink'?: string;
 }
 
@@ -358,7 +358,7 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
       const encoded = path.split('/').filter(Boolean).map(encodeURIComponent).join('/');
       let url: string | null =
         `${encoded ? `/me/drive/root:/${encoded}:` : '/me/drive/root'}/children` +
-        '?$select=name,folder&$top=999';
+        '?$select=name,folder,size&$top=999';
       const folders: DriveFolder[] = [];
       while (url) {
         const page: FolderPage = await client.getJson<FolderPage>(url);
@@ -367,7 +367,8 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
           folders.push({
             name: item.name,
             path: childPath(path, item.name),
-            hasChildren: (item.folder.childCount ?? 0) > 0,
+            childCount: item.folder.childCount ?? 0,
+            size: item.size ?? null,
           });
         }
         url = page['@odata.nextLink'] ?? null;
