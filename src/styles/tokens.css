@@ -30,6 +30,16 @@
   --icon-select: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231b2a41' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   /* Pressed buttons with no background of their own (back, close, icons). */
   --color-press: rgb(27 42 65 / 0.1);
+  /* The viewer while its bars are shown (hidden, it turns black: Viewer.module.css). */
+  --viewer-bg: #f5f9ff;
+  --viewer-text: #1b2a41;
+  --viewer-text-muted: #3d4f69;
+  /* Channels of the bars' fade over the photo, used as rgb(var(--viewer-bar) / alpha). */
+  --viewer-bar: 245 249 255;
+  --viewer-text-shadow: rgb(245 249 255 / 0.8);
+  --viewer-press: rgb(27 42 65 / 0.1);
+  --viewer-focus: #2667b3;
+  --viewer-heart: #c2185b;
 
   --font-sans:
     'Nunito Variable', ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', Roboto,
@@ -79,6 +89,14 @@
     --press-filter: brightness(1.25);
     --icon-select: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e6eefb' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     --color-press: rgb(255 255 255 / 0.12);
+    --viewer-bg: #000000;
+    --viewer-text: #f2f6fc;
+    --viewer-text-muted: #dbe5f3;
+    --viewer-bar: 0 0 0;
+    --viewer-text-shadow: rgb(0 0 0 / 0.6);
+    --viewer-press: rgb(255 255 255 / 0.16);
+    --viewer-focus: #9fcbff;
+    --viewer-heart: #ff8fab;
   }
 }
 
@@ -104,6 +122,14 @@
   --press-filter: brightness(1.25);
   --icon-select: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e6eefb' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   --color-press: rgb(255 255 255 / 0.12);
+  --viewer-bg: #000000;
+  --viewer-text: #f2f6fc;
+  --viewer-text-muted: #dbe5f3;
+  --viewer-bar: 0 0 0;
+  --viewer-text-shadow: rgb(0 0 0 / 0.6);
+  --viewer-press: rgb(255 255 255 / 0.16);
+  --viewer-focus: #9fcbff;
+  --viewer-heart: #ff8fab;
 }
 
 @media (prefers-reduced-motion: reduce) {

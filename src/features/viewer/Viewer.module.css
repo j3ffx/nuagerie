@@ -1,10 +1,17 @@
-/* Always dark, whatever the theme: photos read best on black. */
+/*
+ * With its bars shown, the viewer takes the theme's colours (--viewer-* in
+ * tokens.css: light, or black in the dark theme). A tap hides the bars and
+ * turns it black, whatever the theme: photos read best on black.
+ */
 .viewer {
   position: fixed;
   z-index: 50;
   inset: 0;
-  color: #f2f6fc;
-  color-scheme: dark;
+  color: var(--viewer-text);
+}
+
+.viewer:not([data-chrome]) {
+  --viewer-bg: #000000;
 }
 
 .stage {
@@ -12,10 +19,28 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: rgb(0 0 0 / var(--backdrop));
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* What is drawn on the stage (spinner, messages, video controls) stays light on black. */
+.viewer:not([data-chrome]) .stage {
+  color: #f2f6fc;
+  color-scheme: dark;
+}
+
+/*
+ * The background, on a layer of its own: its colour eases in and out with the
+ * bars, while --backdrop follows the finger at once when swiping to close.
+ */
+.stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--viewer-bg);
+  opacity: var(--backdrop);
+  transition: background-color var(--duration) var(--ease);
 }
 
 .track,
@@ -81,8 +106,8 @@
 .spinner {
   width: 44px;
   height: 44px;
-  border: 4px solid rgb(255 255 255 / 0.35);
-  border-top-color: #fff;
+  border: 4px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-top-color: currentColor;
   border-radius: 50%;
   animation: spin 900ms linear infinite;
 }
@@ -97,6 +122,7 @@
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-pill);
   background: rgb(0 0 0 / 0.65);
+  color: #f2f6fc;
   font-weight: 700;
 }
 
@@ -124,15 +150,23 @@
   /* Up to four 44 px buttons beside the date on a phone: their own padding spaces them. */
   gap: 0;
   padding: calc(env(safe-area-inset-top) + var(--space-2)) var(--space-2) var(--space-6);
-  background: linear-gradient(rgb(0 0 0 / 0.75), rgb(0 0 0 / 0.45) 60%, transparent);
-  text-shadow: 0 1px 3px rgb(0 0 0 / 0.6);
+  background: linear-gradient(
+    rgb(var(--viewer-bar) / 0.92),
+    rgb(var(--viewer-bar) / 0.8) 60%,
+    transparent
+  );
+  text-shadow: 0 1px 3px var(--viewer-text-shadow);
 }
 
 .bottom {
   bottom: 0;
   padding: var(--space-6) var(--space-4) calc(env(safe-area-inset-bottom) + var(--space-4));
-  background: linear-gradient(transparent, rgb(0 0 0 / 0.45) 40%, rgb(0 0 0 / 0.75));
-  text-shadow: 0 1px 3px rgb(0 0 0 / 0.6);
+  background: linear-gradient(
+    transparent,
+    rgb(var(--viewer-bar) / 0.8) 40%,
+    rgb(var(--viewer-bar) / 0.92)
+  );
+  text-shadow: 0 1px 3px var(--viewer-text-shadow);
   font-size: 14px;
   font-weight: 700;
 }
@@ -160,7 +194,7 @@
 .place span {
   overflow: hidden;
   text-decoration: underline;
-  text-decoration-color: rgb(255 255 255 / 0.5);
+  text-decoration-color: color-mix(in srgb, currentColor 50%, transparent);
   text-underline-offset: 3px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -171,7 +205,7 @@
 }
 
 .place:focus-visible {
-  outline-color: #9fcbff;
+  outline-color: var(--viewer-focus);
 }
 
 .date,
@@ -186,7 +220,7 @@
 }
 
 .album {
-  color: #dbe5f3;
+  color: var(--viewer-text-muted);
   font-size: 14px;
 }
 
@@ -220,7 +254,7 @@
   margin: auto;
   border-radius: 1px;
   background: currentColor;
-  box-shadow: 0 0 0 1.5px rgb(0 0 0 / 0.55);
+  box-shadow: 0 0 0 1.5px rgb(var(--viewer-bar) / 0.7);
   transform: rotate(-45deg);
 }
 
@@ -233,6 +267,7 @@
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-pill);
   background: rgb(0 0 0 / 0.8);
+  color: #f2f6fc;
   font-size: 14px;
   font-weight: 700;
   text-align: center;
@@ -248,13 +283,16 @@
 .smallSpinner {
   width: 20px;
   height: 20px;
-  border: 3px solid rgb(255 255 255 / 0.35);
-  border-top-color: #fff;
+  border: 3px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-top-color: currentColor;
   border-radius: 50%;
   animation: spin 900ms linear infinite;
 }
 
-.icon:focus-visible,
+.icon:focus-visible {
+  outline-color: var(--viewer-focus);
+}
+
 .step:focus-visible {
   outline-color: #9fcbff;
 }
@@ -295,14 +333,14 @@
 
 /* Pressed: a soft light disc behind the icons, a deeper one behind the arrows. */
 .icon:active:not(:disabled) {
-  background: rgb(255 255 255 / 0.16);
+  background: var(--viewer-press);
 }
 
 .step:active {
   background: rgb(0 0 0 / 0.7);
 }
 
-/* A favourite: the heart filled, in a warm pink that reads on any photo. */
+/* A favourite: the heart filled, in a warm pink. */
 .icon[data-favorite] {
-  color: #ff8fab;
+  color: var(--viewer-heart);
 }
