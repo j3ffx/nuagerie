@@ -1,6 +1,8 @@
 import { useAccount } from '@azure/msal-react';
 import { signIn, signOut } from '../../auth/msal.ts';
 import { useData } from '../../data/dataContext.ts';
+import { SYNC_ENABLED_KEY, syncStateKey } from '../../data/sync/syncContext.ts';
+import { removePersistent } from '../../lib/persistent.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
 import { useConfirm } from '../../ui/confirmContext.ts';
@@ -17,13 +19,16 @@ export function AccountSection() {
     const answer = await confirm({
       title: 'Se déconnecter ?',
       message:
-        'Les photos gardées sur cet appareil (index et miniatures) seront effacées. Rien ne change dans OneDrive.',
+        'Les photos gardées sur cet appareil (index et miniatures) seront effacées, avec les favoris s’ils ne sont pas synchronisés. Rien ne change dans OneDrive.',
       confirmLabel: 'Se déconnecter',
       danger: true,
     });
     if (!answer) return;
     await Promise.all([source.reset?.(), thumbnails.disk.clear()]);
     thumbnails.store.clearMemory();
+    // Favourites and preferences of this account; a synced copy stays in OneDrive.
+    removePersistent(syncStateKey('onedrive'));
+    removePersistent(SYNC_ENABLED_KEY);
     await signOut();
   };
 

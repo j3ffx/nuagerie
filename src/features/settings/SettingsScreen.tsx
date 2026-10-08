@@ -11,6 +11,8 @@ import { useConfirm } from '../../ui/confirmContext.ts';
 import { checkForUpdate } from '../../app/updates.ts';
 import { AboutSection } from './AboutSection.tsx';
 import { AccountSection } from './AccountSection.tsx';
+import { PermissionsSection } from './PermissionsSection.tsx';
+import { SyncSection } from './SyncSection.tsx';
 import { ThumbnailCacheSection } from './ThumbnailCacheSection.tsx';
 
 const THEMES: { value: ThemePreference; label: string }[] = [
@@ -65,6 +67,7 @@ export function SettingsScreen() {
         </section>
 
         {mode === 'onedrive' && <AccountSection />}
+        {mode === 'onedrive' && signedIn && <PermissionsSection />}
 
         <section className={common.section} aria-labelledby="settings-photos">
           <h2 id="settings-photos" className={common.sectionTitle}>
@@ -83,6 +86,8 @@ export function SettingsScreen() {
             </Link>
           </div>
         </section>
+
+        <SyncSection />
 
         <section className={common.section} aria-labelledby="settings-data">
           <h2 id="settings-data" className={common.sectionTitle}>
