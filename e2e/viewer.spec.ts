@@ -204,21 +204,10 @@ test('says when sharing failed, and lets the user try again', async ({ page }) =
     .toBe(1);
 });
 
-test('shows a cut album name in full on a tap; light theme until the bars are hidden', async ({
-  page,
-}) => {
+test('light theme until the bars are hidden', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
-  await page.goto('/');
-  await page.getByRole('link', { name: /^Événements/ }).click();
-  await page.getByRole('link', { name: /^2026-07 - Vacances à la mer/ }).click();
   await cells(page).first().click();
   await expect(viewer(page)).toBeVisible();
-
-  const bubble = page.locator('[data-bubble]');
-  await viewer(page)
-    .getByRole('button', { name: /Vacances à la mer/ })
-    .click();
-  await expect(bubble).toHaveText('2026-07 - Vacances à la mer');
 
   // The theme's background with the bars, black without them (a tap on the photo).
   const background = () =>
@@ -230,7 +219,41 @@ test('shows a cut album name in full on a tap; light theme until the bars are hi
   const box = await viewer(page).boundingBox();
   if (!box) throw new Error('no viewer');
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-  await expect(bubble).toBeHidden();
   await expect(viewer(page)).not.toHaveAttribute('data-chrome');
   await expect.poll(background).toBe('rgb(0, 0, 0)');
+});
+
+test('shows what is known of the photo from its date; back closes that panel only', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: /^Événements/ }).click();
+  await page.getByRole('link', { name: /^2026-07 - Vacances à la mer/ }).click();
+  await cells(page).first().click();
+  await expect(viewer(page)).toBeVisible();
+
+  await viewer(page)
+    .getByRole('button', { name: /voir les infos$/ })
+    .click();
+  const panel = viewer(page).getByRole('region', { name: 'Infos' });
+  await expect(panel).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('infos')).toBe('1');
+  // The album's full name, however long, and where the file is.
+  await expect(panel.getByRole('link', { name: '2026-07 - Vacances à la mer' })).toBeVisible();
+  await expect(panel).toContainText('Pictures › Événements › 2026-07 - Vacances à la mer');
+  await expect(panel).toContainText(/\d+(,\d)? Mo|\d+ Ko/);
+
+  // Still open on the next photo; back closes the panel, not the viewer.
+  await page.keyboard.press('ArrowRight');
+  await expect(panel).toBeVisible();
+  await page.goBack();
+  await expect(panel).toBeHidden();
+  await expect(viewer(page)).toBeVisible();
+
+  // Closing the viewer with the panel open leaves both.
+  await page.keyboard.press('i');
+  await expect(panel).toBeVisible();
+  await viewer(page).getByRole('button', { name: 'Fermer', exact: true }).click();
+  await expect(viewer(page)).toBeHidden();
+  expect(new URL(page.url()).searchParams.get('photo')).toBeNull();
 });

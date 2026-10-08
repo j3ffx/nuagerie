@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -10,14 +11,20 @@ import {
 import { createPortal } from 'react-dom';
 import { Link } from 'wouter';
 import { useData, useMediaIndex } from '../../data/dataContext.ts';
-import { lookupPlace } from '../../data/places/places.ts';
 import type { MediaItem } from '../../data/model.ts';
-import { formatLongDate, formatPlace, formatTakenTime } from '../../lib/format.ts';
+import { formatLongDate, formatTakenTime } from '../../lib/format.ts';
 import { useSync } from '../../data/sync/syncContext.ts';
-import { useBubble } from '../../ui/useBubble.tsx';
 import { useConfirm } from '../../ui/confirmContext.ts';
 import { useOnline } from '../../lib/online.ts';
-import { BackIcon, ChevronIcon, DownloadIcon, HeartIcon, MapIcon } from '../../ui/icons.tsx';
+import {
+  BackIcon,
+  ChevronIcon,
+  DownloadIcon,
+  HeartIcon,
+  InfoIcon,
+  MapIcon,
+} from '../../ui/icons.tsx';
+import { useMediaQuery } from '../../lib/useMediaQuery.ts';
 import {
   clampZoom,
   closesOnDrag,
@@ -30,7 +37,10 @@ import {
   type Size,
   type Zoom,
 } from './gestures.ts';
+import { InfoPanel } from './InfoPanel.tsx';
 import { ShareButton } from './ShareButton.tsx';
+import { useViewer } from './useViewer.ts';
+import { usePlaceName } from './usePlaceName.ts';
 import { ViewerSlide } from './ViewerSlide.tsx';
 import styles from './Viewer.module.css';
 
@@ -94,7 +104,11 @@ function transition(element: HTMLElement, apply: () => void, done: () => void) {
   window.setTimeout(finish, duration + 80);
 }
 
-function useViewSize(): Size {
+/** Width of the information panel beside the photo on a wide screen (--info-width in CSS). */
+const INFO_WIDTH = 360;
+
+/** The space the photos have: the window, minus the information panel when it is beside them. */
+function useViewSize(reserved: number): Size {
   const read = () => ({ width: window.innerWidth, height: window.innerHeight });
   const [view, setView] = useState(read);
   useEffect(() => {
@@ -102,7 +116,10 @@ function useViewSize(): Size {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
-  return view;
+  return useMemo(
+    () => ({ width: Math.max(0, view.width - reserved), height: view.height }),
+    [view, reserved],
+  );
 }
 
 /**
@@ -122,7 +139,9 @@ export function Viewer({
   onShow: (id: string) => void;
   onClose: () => void;
 }) {
-  const view = useViewSize();
+  const { infoOpen, openInfo, closeInfo } = useViewer();
+  const infoBeside = useMediaQuery('(min-width: 900px)') && infoOpen;
+  const view = useViewSize(infoBeside ? INFO_WIDTH : 0);
   const item = items[index];
   const previous = items[index - 1];
   const next = items[index + 1];
@@ -207,13 +226,18 @@ export function Viewer({
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'ArrowRight') go(1);
       else if (event.key === 'ArrowLeft') go(-1);
-      else if (event.key === 'Escape') onClose();
-      else return;
+      else if (event.key === 'Escape') {
+        if (infoOpen) closeInfo();
+        else onClose();
+      } else if (event.key === 'i') {
+        if (infoOpen) closeInfo();
+        else openInfo();
+      } else return;
       event.preventDefault();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [go, onClose]);
+  }, [go, onClose, infoOpen, openInfo, closeInfo]);
 
   useEffect(() => () => window.clearTimeout(tapTimer.current), []);
 
@@ -426,6 +450,7 @@ export function Viewer({
       aria-modal="true"
       aria-label="Visionneuse"
       data-chrome={chrome || undefined}
+      data-info-beside={infoBeside || undefined}
     >
       <div
         ref={stageRef}
@@ -452,7 +477,8 @@ export function Viewer({
         </div>
       </div>
 
-      <ViewerBar item={item} onClose={onClose} />
+      <ViewerBar item={item} onClose={onClose} onInfo={openInfo} />
+      {infoOpen && <InfoPanel item={item} onClose={closeInfo} />}
 
       {previous && (
         <button
@@ -480,7 +506,15 @@ export function Viewer({
 }
 
 /** Date, album and place of the picture; close, share and download buttons. */
-function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) {
+function ViewerBar({
+  item,
+  onClose,
+  onInfo,
+}: {
+  item: MediaItem;
+  onClose: () => void;
+  onInfo: () => void;
+}) {
   const { source } = useData();
   const index = useMediaIndex();
   const album = index?.folders.get(item.albumId)?.name ?? null;
@@ -510,11 +544,13 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
     item.takenAt === null
       ? null
       : formatTakenTime({ takenAt: item.takenAt, dateSource: item.dateSource });
-  const { show: showBubble, bubble } = useBubble();
+  const day = item.takenAt === null ? 'Sans date' : formatLongDate(item.takenAt);
+  const captionText = [day, time, album].filter(Boolean).join(', ');
   const caption = (
     <>
-      <span className={styles.date}>
-        {item.takenAt === null ? 'Sans date' : formatLongDate(item.takenAt)}
+      <span className={styles.dateLine}>
+        <span className={styles.date}>{day}</span>
+        <InfoIcon width={18} height={18} className={styles.infoIcon} />
       </span>
       {(time || album) && (
         <span className={styles.album}>{[time, album].filter(Boolean).join(' · ')}</span>
@@ -553,19 +589,15 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
           <BackIcon />
         </button>
         {/* The day on top, then the time and the album: the bar has four buttons on a phone.
-            A long album name is cut: a tap shows it in full. */}
-        {album ? (
-          <button
-            type="button"
-            className={styles.caption}
-            onClick={(event) => showBubble(album, event.currentTarget)}
-          >
-            {caption}
-          </button>
-        ) : (
-          <div className={styles.caption}>{caption}</div>
-        )}
-        {bubble}
+            A tap opens the information panel, where a long album name reads in full. */}
+        <button
+          type="button"
+          className={styles.caption}
+          onClick={onInfo}
+          aria-label={`${captionText}, voir les infos`}
+        >
+          {caption}
+        </button>
         {(sync.favoritesOn || sync.available) && (
           <button
             type="button"
@@ -611,24 +643,4 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
       )}
     </>
   );
-}
-
-/** "Annecy, France" for a geotagged photo, once the place list is loaded; null otherwise. */
-function usePlaceName(item: MediaItem): string | null {
-  const [found, setFound] = useState<{ id: string; name: string | null } | null>(null);
-  const { latitude, longitude } = item;
-  useEffect(() => {
-    if (latitude === null || longitude === null) return;
-    let cancelled = false;
-    lookupPlace(latitude, longitude).then(
-      (place) => {
-        if (!cancelled) setFound({ id: item.id, name: place ? formatPlace(place) : null });
-      },
-      () => undefined, // no place list (offline before it was ever loaded): no name
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [item.id, latitude, longitude]);
-  return found?.id === item.id ? found.name : null;
 }

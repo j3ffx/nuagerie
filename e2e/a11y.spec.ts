@@ -48,6 +48,15 @@ const SCREENS: { name: string; path: string; ready: (page: Page) => Promise<void
     },
   },
   {
+    name: 'viewer infos',
+    path: '/tout',
+    ready: async (page) => {
+      await page.getByRole('main').locator('a[data-item-id]').nth(2).click();
+      await page.getByRole('button', { name: /voir les infos$/ }).click();
+      await expect(page.getByRole('region', { name: 'Infos' })).toBeVisible();
+    },
+  },
+  {
     name: 'map',
     path: '/carte',
     ready: (page) => expect(page.getByText(/dans cette zone/)).toBeVisible(),

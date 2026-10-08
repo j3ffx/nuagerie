@@ -1,0 +1,109 @@
+/* Under the photo on a phone (a sheet from the bottom), beside it on a wide screen. */
+.panel {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  max-height: min(70%, 560px);
+  overflow-y: auto;
+  padding: 0 var(--space-4) calc(env(safe-area-inset-bottom) + var(--space-4));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--color-surface);
+  box-shadow: 0 -4px 24px rgb(0 0 0 / 0.25);
+  color: var(--color-text);
+  color-scheme: inherit;
+  overscroll-behavior: contain;
+  animation: rise var(--duration) var(--ease);
+}
+
+@media (min-width: 900px) {
+  .panel {
+    top: 0;
+    left: auto;
+    width: var(--info-width);
+    max-height: none;
+    padding-top: env(safe-area-inset-top);
+    border-radius: 0;
+    box-shadow: -4px 0 24px rgb(0 0 0 / 0.25);
+    animation: none;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+.header {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--header-height);
+  margin: 0 calc(-1 * var(--space-4));
+  padding: 0 var(--space-2) 0 var(--space-4);
+  background: var(--color-surface);
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+}
+
+.close:active {
+  background: var(--color-press);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-4);
+}
+
+.list dt {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.note {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.link {
+  color: var(--color-primary);
+  text-underline-offset: 3px;
+}
+
+.action {
+  composes: buttonSoft from '../../ui/common.module.css';
+  width: 100%;
+}
+
+.action[data-disabled] {
+  opacity: 0.55;
+}

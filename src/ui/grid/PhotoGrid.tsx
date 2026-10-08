@@ -12,6 +12,7 @@ import {
 import { groupByMonth } from '../../data/grouping.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { describeItem } from '../../lib/format.ts';
+import { useMediaQuery } from '../../lib/useMediaQuery.ts';
 import { Thumbnail } from '../Thumbnail.tsx';
 import { DateScrubber } from './DateScrubber.tsx';
 import { buildGridLayout, rowIndexOfItem, type GridLayout, type GridRow } from './layout.ts';
@@ -180,16 +181,4 @@ function useGridPlacement(ref: React.RefObject<HTMLDivElement | null>) {
   }, [ref]);
 
   return placement;
-}
-
-function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
-  useLayoutEffect(() => {
-    const list = window.matchMedia(query);
-    const update = () => setMatches(list.matches);
-    update();
-    list.addEventListener('change', update);
-    return () => list.removeEventListener('change', update);
-  }, [query]);
-  return matches;
 }

@@ -444,5 +444,12 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
     fetchThumbnail: thumbnails,
 
     getOriginalUrl: originalUrls,
+
+    async getWebUrl(item) {
+      const found = await client.getJson<{ webUrl?: string }>(
+        `/me/drive/items/${encodeURIComponent(item.id)}?$select=webUrl`,
+      );
+      return found.webUrl ?? null;
+    },
   };
 }

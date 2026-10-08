@@ -39,6 +39,8 @@ export interface DataSource {
    * null when there is none to give (demo videos).
    */
   getOriginalUrl(item: MediaItem): Promise<string | null>;
+  /** The file's page on OneDrive's website (none in the demo). */
+  getWebUrl?(item: MediaItem): Promise<string | null>;
 }
 
 /** Image bytes to keep in the cache, or (when they cannot be read) a URL to show as is. */

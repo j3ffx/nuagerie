@@ -4,10 +4,22 @@
  * turns it black, whatever the theme: photos read best on black.
  */
 .viewer {
+  --info-width: 360px;
   position: fixed;
   z-index: 50;
   inset: 0;
   color: var(--viewer-text);
+}
+
+/* On a wide screen, the information panel takes the right side: the photo and its bars move over. */
+.viewer[data-info-beside] .stage,
+.viewer[data-info-beside] .top,
+.viewer[data-info-beside] .bottom {
+  right: var(--info-width);
+}
+
+.viewer[data-info-beside] .stepNext {
+  right: calc(var(--info-width) + var(--space-3));
 }
 
 .viewer:not([data-chrome]) {
@@ -177,7 +189,7 @@
   padding: 0 var(--space-1);
 }
 
-/* With an album: a tap shows its full name. */
+/* A tap opens the information panel (its icon says so). */
 button.caption {
   min-height: var(--tap-min);
   border: none;
@@ -225,6 +237,18 @@ button.caption:focus-visible {
 
 .place:focus-visible {
   outline-color: var(--viewer-focus);
+}
+
+.dateLine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.infoIcon {
+  flex: none;
+  opacity: 0.8;
 }
 
 .date,
