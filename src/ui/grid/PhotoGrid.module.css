@@ -80,3 +80,53 @@
     padding: 0 var(--space-4);
   }
 }
+
+/* Picking photos: a circle on each, filled and the photo inset when it is picked. */
+.cell {
+  position: relative;
+  overflow: hidden;
+}
+
+.cell > :first-child {
+  transition: transform var(--duration) var(--ease);
+}
+
+.cell[data-selected] > :first-child {
+  transform: scale(0.84);
+  border-radius: var(--radius-sm);
+}
+
+.cell[data-selected] {
+  background: var(--color-primary-soft);
+}
+
+.check {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.25);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.4);
+  color: var(--color-on-primary);
+}
+
+.cell[data-selected] .check {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.titleButton {
+  min-height: var(--tap-min);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}

@@ -13,6 +13,7 @@ import { groupByMonth } from '../../data/grouping.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { describeItem } from '../../lib/format.ts';
 import { useMediaQuery } from '../../lib/useMediaQuery.ts';
+import { CheckIcon } from '../icons.tsx';
 import { Thumbnail } from '../Thumbnail.tsx';
 import { DateScrubber } from './DateScrubber.tsx';
 import {
@@ -23,11 +24,27 @@ import {
   usePinchSteps,
 } from './columns.ts';
 import { buildGridLayout, rowIndexOfItem, type GridLayout, type GridRow } from './layout.ts';
+import { usePressDrag } from './pressDrag.ts';
 import { stickyHeaderHeight } from './page.ts';
 import { StickyMonth } from './StickyMonth.tsx';
 import styles from './PhotoGrid.module.css';
 
 const HEADER_SIZE = 44;
+
+/** Photos picked in the grid, and what touching them does (src/features/selection/). */
+export interface GridSelection {
+  active: boolean;
+  selected: ReadonlySet<string>;
+  onLongPress: (item: MediaItem) => void;
+  onDrag: (item: MediaItem) => void;
+  onToggle: (item: MediaItem) => void;
+  /** Shift + click: from the last photo touched to this one. */
+  onExtend: (item: MediaItem) => void;
+  /** A month's title touched while selecting. */
+  onMonth: (items: readonly MediaItem[]) => void;
+}
+
+type CellClick = (item: MediaItem, event: MouseEvent) => void;
 const NARROW = { minCell: 96, gap: 2 };
 const WIDE = { minCell: 150, gap: 4 };
 const WIDE_QUERY = '(min-width: 900px)';
@@ -44,6 +61,7 @@ export function PhotoGrid({
   href,
   onOpen,
   reveal,
+  selection = null,
 }: {
   items: readonly MediaItem[];
   label: string;
@@ -51,6 +69,8 @@ export function PhotoGrid({
   onOpen: (item: MediaItem) => void;
   /** Brings this item into view and focuses it (new object = new request). */
   reveal?: { id: string } | null;
+  /** Lets photos be picked (long press, Ctrl / Shift + click); null: a tap only opens. */
+  selection?: GridSelection | null;
 }) {
   const sections = useMemo(() => groupByMonth(items), [items]);
   const rowsRef = useRef<HTMLDivElement>(null);
@@ -91,6 +111,45 @@ export function PhotoGrid({
     [maxColumns, setChosen],
   );
   usePinchSteps(sectionRef, onPinch);
+
+  // Long press then drag (finger), clicks with Ctrl or Shift: picking photos.
+  const byId = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
+  const pressHandlers = useMemo(
+    () => ({
+      onLongPress: (id: string) => {
+        const item = byId.get(id);
+        if (item) selection?.onLongPress(item);
+      },
+      onDrag: (id: string) => {
+        const item = byId.get(id);
+        if (item) selection?.onDrag(item);
+      },
+    }),
+    [byId, selection],
+  );
+  const swallowClick = usePressDrag(sectionRef, pressHandlers);
+  const onCell = useCallback<CellClick>(
+    (item, event) => {
+      if (event.button !== 0) return;
+      // The finger that long-pressed is lifted: that is not a tap.
+      if (swallowClick(item.id)) {
+        event.preventDefault();
+        return;
+      }
+      const modified = event.metaKey || event.ctrlKey || event.shiftKey;
+      if (selection && (selection.active || modified)) {
+        event.preventDefault();
+        if (event.shiftKey) selection.onExtend(item);
+        else selection.onToggle(item);
+        return;
+      }
+      // New tab, new window: let the browser do it.
+      if (modified) return;
+      event.preventDefault();
+      onOpen(item);
+    },
+    [selection, onOpen, swallowClick],
+  );
   useLayoutEffect(() => {
     const kept = anchor.current;
     if (!kept) return;
@@ -141,7 +200,10 @@ export function PhotoGrid({
               layout={layout}
               top={virtualRow.start - virtualizer.options.scrollMargin}
               href={href}
-              onOpen={onOpen}
+              onCell={onCell}
+              selecting={selection?.active ?? false}
+              selected={selection?.selected ?? null}
+              onMonth={selection?.onMonth ?? null}
             />
           ) : null;
         })}
@@ -156,13 +218,19 @@ const Row = memo(function Row({
   layout,
   top,
   href,
-  onOpen,
+  onCell,
+  selecting,
+  selected,
+  onMonth,
 }: {
   row: GridRow;
   layout: GridLayout;
   top: number;
   href: (item: MediaItem) => string;
-  onOpen: (item: MediaItem) => void;
+  onCell: CellClick;
+  selecting: boolean;
+  selected: ReadonlySet<string> | null;
+  onMonth: ((items: readonly MediaItem[]) => void) | null;
 }) {
   const section = layout.sections[row.section];
   if (!section) return null;
@@ -170,7 +238,18 @@ const Row = memo(function Row({
   if (row.kind === 'header') {
     return (
       <h2 className={`${styles.row} ${styles.title}`} style={style}>
-        {section.title}
+        {selecting && onMonth ? (
+          <button
+            type="button"
+            className={styles.titleButton}
+            onClick={() => onMonth(section.items)}
+            aria-label={`${section.title} : tout sélectionner ou désélectionner`}
+          >
+            {section.title}
+          </button>
+        ) : (
+          section.title
+        )}
       </h2>
     );
   }
@@ -179,23 +258,28 @@ const Row = memo(function Row({
       className={`${styles.row} ${styles.cells}`}
       style={{ ...style, gridTemplateColumns: `repeat(${layout.columns}, 1fr)` }}
     >
-      {section.items.slice(row.from, row.to).map((item) => (
-        <a
-          key={item.id}
-          href={href(item)}
-          className={styles.cell}
-          data-item-id={item.id}
-          aria-label={describeItem(item)}
-          onClick={(event: MouseEvent) => {
-            // New tab, new window: let the browser do it.
-            if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
-            event.preventDefault();
-            onOpen(item);
-          }}
-        >
-          <Thumbnail item={item} decorative />
-        </a>
-      ))}
+      {section.items.slice(row.from, row.to).map((item) => {
+        const picked = selected?.has(item.id) ?? false;
+        return (
+          <a
+            key={item.id}
+            href={href(item)}
+            className={styles.cell}
+            data-item-id={item.id}
+            data-selected={picked || undefined}
+            aria-label={describeItem(item)}
+            {...(selecting ? { role: 'checkbox', 'aria-checked': picked } : {})}
+            onClick={(event: MouseEvent) => onCell(item, event)}
+          >
+            <Thumbnail item={item} decorative />
+            {selecting && (
+              <span className={styles.check} aria-hidden="true">
+                {picked && <CheckIcon width={16} height={16} />}
+              </span>
+            )}
+          </a>
+        );
+      })}
     </div>
   );
 });

@@ -1,0 +1,125 @@
+import { expect, test, type Locator, type Page } from '@playwright/test';
+
+const cells = (page: Page) => page.getByRole('main').locator('a[data-item-id]');
+const bar = (page: Page) => page.getByRole('toolbar', { name: 'Sélection' });
+
+/** A finger held on an element, then moved over another one if given (DevTools protocol). */
+async function longPress(page: Page, on: Locator, dragTo?: Locator) {
+  const from = await on.boundingBox();
+  if (!from) throw new Error('nothing to press');
+  const point = (box: { x: number; y: number; width: number; height: number }) => ({
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2,
+    id: 0,
+  });
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(from)] });
+  await page.waitForTimeout(700);
+  if (dragTo) {
+    const to = await dragTo.boundingBox();
+    if (!to) throw new Error('nowhere to drag');
+    const a = point(from);
+    const b = point(to);
+    for (let i = 1; i <= 8; i++) {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: a.x + ((b.x - a.x) * i) / 8, y: a.y + ((b.y - a.y) * i) / 8, id: 0 }],
+      });
+    }
+  }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+}
+
+test.beforeEach(async ({ page }) => {
+  await page.goto('/?demo=1');
+  await page.goto('/tout');
+  await expect(cells(page).first().locator('img')).toBeVisible();
+});
+
+test('a long press starts picking photos; taps add them; back ends it', async ({ page }) => {
+  await longPress(page, cells(page).nth(1));
+  await expect(bar(page)).toBeVisible();
+  await expect(bar(page)).toContainText('1 sélectionné');
+  await expect(cells(page).nth(1)).toHaveAttribute('aria-checked', 'true');
+  // The viewer did not open.
+  expect(new URL(page.url()).searchParams.get('photo')).toBeNull();
+
+  await cells(page).nth(3).click();
+  await expect(bar(page)).toContainText('2 sélectionnés');
+  await cells(page).nth(3).click();
+  await expect(bar(page)).toContainText('1 sélectionné');
+
+  // A month's title takes the whole month.
+  await page
+    .getByRole('main')
+    .getByRole('button', { name: /tout sélectionner/ })
+    .first()
+    .click();
+  await expect(bar(page)).toContainText(/\d{2,} sélectionnés/);
+
+  await page.goBack();
+  await expect(bar(page)).toBeHidden();
+  await expect(page).toHaveURL(/\/tout$/);
+  // Taps open photos again.
+  await cells(page).nth(1).click();
+  await expect(page.getByRole('dialog', { name: 'Visionneuse' })).toBeVisible();
+});
+
+test('dragging after a long press picks every photo on the way', async ({ page }) => {
+  await longPress(page, cells(page).nth(0), cells(page).nth(9));
+  await expect(bar(page)).toContainText('10 sélectionnés');
+  await bar(page).getByRole('button', { name: 'Annuler la sélection' }).click();
+  await expect(bar(page)).toBeHidden();
+});
+
+test('adds the picked photos to the favourites at once', async ({ page }) => {
+  const ids = await Promise.all(
+    [0, 1, 2].map((i) => cells(page).nth(i).getAttribute('data-item-id')),
+  );
+  await longPress(page, cells(page).nth(0));
+  await cells(page).nth(1).click();
+  await cells(page).nth(2).click();
+  await bar(page).getByRole('button', { name: 'Ajouter aux favoris' }).click();
+  await expect(bar(page)).toBeHidden();
+
+  await page.goto('/favoris');
+  for (const id of ids) await expect(page.locator(`main a[data-item-id="${id}"]`)).toBeVisible();
+});
+
+test('asks before sharing many photos, and can share them anyway', async ({ page }) => {
+  await page.addInitScript(() => {
+    const shared: number[] = [];
+    Object.assign(window, { shared });
+    Object.defineProperty(navigator, 'canShare', { value: () => true });
+    Object.defineProperty(navigator, 'share', {
+      value: async ({ files }: { files: File[] }) => {
+        shared.push(files.length);
+      },
+    });
+  });
+  await page.reload();
+  await expect(cells(page).first().locator('img')).toBeVisible();
+  await longPress(page, cells(page).nth(0));
+  await page
+    .getByRole('main')
+    .getByRole('button', { name: /tout sélectionner/ })
+    .first()
+    .click();
+  const count = Number((await bar(page).getByRole('status').textContent())?.match(/\d+/)?.[0]);
+  test.skip(count <= 30, 'the first month of the demo has 30 photos or fewer');
+
+  await bar(page).getByRole('button', { name: 'Partager' }).click();
+  const dialog = page.getByRole('dialog', { name: /^Partager \d+ éléments/ });
+  await expect(dialog).toContainText('ça peut être très long, ou échouer');
+  await dialog.getByRole('button', { name: 'Annuler' }).click();
+  await expect(bar(page)).toBeVisible();
+
+  await bar(page).getByRole('button', { name: 'Partager' }).click();
+  await dialog.getByRole('button', { name: 'Partager quand même' }).click();
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { shared: number[] }).shared), {
+      timeout: 30_000,
+    })
+    .toEqual([expect.any(Number)]);
+  await expect(bar(page)).toBeHidden();
+});
