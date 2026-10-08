@@ -98,8 +98,16 @@ test('chooses albums, hides a sub-album, and resets the choice', async ({ page }
   // The choice survives a reload, and can be reset.
   await page.goto('/albums/choisir');
   await expect(page.getByRole('checkbox', { name: /^Screenshots/ })).not.toBeChecked();
-  page.once('dialog', (dialog) => void dialog.accept());
-  await page.getByRole('button', { name: 'Revenir à la sélection par défaut' }).click();
+  // The app's own confirmation: cancelling (Escape) keeps the choice.
+  const reset = page.getByRole('button', { name: 'Revenir à la sélection par défaut' });
+  const dialog = page.getByRole('dialog', { name: 'Revenir à la sélection par défaut ?' });
+  await reset.click();
+  await expect(dialog.getByRole('button', { name: 'Annuler' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole('checkbox', { name: /^Screenshots/ })).not.toBeChecked();
+  await reset.click();
+  await dialog.getByRole('button', { name: 'Revenir au défaut' }).click();
   await expect(page.getByRole('checkbox', { name: /^Screenshots/ })).toBeChecked();
 });
 

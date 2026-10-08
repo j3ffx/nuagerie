@@ -7,6 +7,7 @@ import { useOnline } from '../../lib/online.ts';
 import { useThemePreference, type ThemePreference } from '../../lib/theme.ts';
 import common from '../../ui/common.module.css';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
+import { useConfirm } from '../../ui/confirmContext.ts';
 import { checkForUpdate } from '../../app/updates.ts';
 import { AboutSection } from './AboutSection.tsx';
 import { AccountSection } from './AccountSection.tsx';
@@ -24,11 +25,16 @@ export function SettingsScreen() {
   const online = useOnline();
   const roots = useRootPaths();
   const index = state.status === 'ready' ? state.index : null;
+  const confirm = useConfirm();
 
-  const confirmReset = () => {
-    if (window.confirm('Tout réindexer ? Le premier chargement reprendra depuis le début.')) {
-      void resetIndex();
-    }
+  const confirmReset = async () => {
+    const answer = await confirm({
+      title: 'Tout réindexer ?',
+      message:
+        'Nuagerie relit tout le contenu de OneDrive, ce qui prend environ une minute. Les miniatures déjà gardées restent.',
+      confirmLabel: 'Réindexer',
+    });
+    if (answer) void resetIndex();
   };
 
   return (
@@ -140,7 +146,7 @@ export function SettingsScreen() {
                 <button
                   type="button"
                   className={common.buttonSoft}
-                  onClick={confirmReset}
+                  onClick={() => void confirmReset()}
                   disabled={!online}
                 >
                   Relancer l’indexation complète

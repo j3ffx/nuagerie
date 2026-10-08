@@ -15,6 +15,7 @@ import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
 import { BackIcon, ChevronIcon } from '../../ui/icons.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
+import { useConfirm } from '../../ui/confirmContext.ts';
 import albumStyles from '../albums/AlbumScreen.module.css';
 import styles from './FoldersScreen.module.css';
 
@@ -48,12 +49,18 @@ export function FoldersScreen() {
   const changed = draft.join('\n') !== saved.join('\n');
   const listFolders = useMemo(() => source.listFolders?.bind(source), [source]);
 
+  const confirm = useConfirm();
+
   const save = async () => {
-    const message =
-      mode === 'demo'
-        ? 'Enregistrer ces dossiers ? Les photos de la démo seront rechargées.'
-        : 'Enregistrer ces dossiers ? Nuagerie va réindexer les photos, ce qui prend environ une minute.';
-    if (!window.confirm(message)) return;
+    const answer = await confirm({
+      title: 'Enregistrer ces dossiers ?',
+      message:
+        mode === 'demo'
+          ? 'Les photos de la démo seront rechargées.'
+          : 'Nuagerie va réindexer les photos, ce qui prend environ une minute.',
+      confirmLabel: 'Enregistrer',
+    });
+    if (!answer) return;
     writeRootPaths(draft);
     await resetIndex();
     navigate('/');

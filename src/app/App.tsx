@@ -24,6 +24,7 @@ import { SettingsScreen } from '../features/settings/SettingsScreen.tsx';
 import { WhatsNewScreen } from '../features/settings/WhatsNewScreen.tsx';
 import { SignInScreen } from '../features/welcome/SignInScreen.tsx';
 import { useApplyTheme } from '../lib/theme.ts';
+import { ConfirmProvider } from '../ui/confirm.tsx';
 import styles from './App.module.css';
 import banners from './Banner.module.css';
 import { ConnectionBanner } from './ConnectionBanner.tsx';
@@ -88,6 +89,14 @@ function Data({
 }
 
 function Shell() {
+  return (
+    <ConfirmProvider>
+      <ShellContent />
+    </ConfirmProvider>
+  );
+}
+
+function ShellContent() {
   return (
     <div className={styles.shell}>
       <a className={styles.skipLink} href="#main">

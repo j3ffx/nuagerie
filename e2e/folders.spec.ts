@@ -21,8 +21,11 @@ test('adds a folder outside Pictures, then removes it', async ({ page }) => {
   await page.getByRole('button', { name: 'Ajouter Scans' }).click();
   await expect(page.getByText('/Documents/Scans')).toBeVisible();
 
-  page.once('dialog', (dialog) => void dialog.accept());
   await page.getByRole('button', { name: 'Enregistrer' }).click();
+  await page
+    .getByRole('dialog', { name: 'Enregistrer ces dossiers ?' })
+    .getByRole('button', { name: 'Enregistrer' })
+    .click();
   await expect(page).toHaveURL('/');
   // A root with files of its own is an album; its subfolder is one too.
   await expect(homeAlbums(page).getByText('Scans', { exact: true })).toBeVisible();
@@ -37,8 +40,11 @@ test('adds a folder outside Pictures, then removes it', async ({ page }) => {
   await page.getByRole('link', { name: 'Choisir les dossiers' }).click();
   await page.getByRole('button', { name: 'Retirer Scans' }).click();
   await expect(page.getByRole('button', { name: 'Retirer Pictures' })).toBeHidden();
-  page.once('dialog', (dialog) => void dialog.accept());
   await page.getByRole('button', { name: 'Enregistrer' }).click();
+  await page
+    .getByRole('dialog', { name: 'Enregistrer ces dossiers ?' })
+    .getByRole('button', { name: 'Enregistrer' })
+    .click();
   await expect(page).toHaveURL('/');
   await expect(homeAlbums(page).getByText('Camera Roll', { exact: true })).toBeVisible();
   await expect(homeAlbums(page).getByText('Scans', { exact: true })).toBeHidden();

@@ -1,0 +1,67 @@
+/* The dialog fills the screen (it is the backdrop's tap target); the card sits in the middle. */
+.dialog {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: var(--space-4);
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+}
+
+.dialog[open] {
+  display: grid;
+  place-items: center;
+}
+
+.dialog::backdrop {
+  background: rgb(5 10 20 / 0.6);
+}
+
+.card {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 400px;
+  padding: var(--space-5) var(--space-4) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow:
+    var(--shadow-soft),
+    0 0 0 1px var(--color-border);
+  animation: appear var(--duration) var(--ease);
+}
+
+.title {
+  font-size: 20px;
+}
+
+.message {
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.actions > button {
+  flex: 1 1 auto;
+}
+
+.danger {
+  background: var(--color-danger);
+  color: var(--color-on-danger);
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}

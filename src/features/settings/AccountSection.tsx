@@ -3,22 +3,25 @@ import { signIn, signOut } from '../../auth/msal.ts';
 import { useData } from '../../data/dataContext.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
+import { useConfirm } from '../../ui/confirmContext.ts';
 
 /** The signed-in Microsoft account (OneDrive mode only). */
 export function AccountSection() {
   const account = useAccount();
   const { signedIn, source, thumbnails } = useData();
   const online = useOnline();
+  const confirm = useConfirm();
 
   /** Signing out leaves nothing of the drive on the device: index and thumbnails go too. */
   const signOutAndForget = async () => {
-    if (
-      !window.confirm(
-        'Se déconnecter ? Les photos gardées sur cet appareil (index et miniatures) seront effacées.',
-      )
-    ) {
-      return;
-    }
+    const answer = await confirm({
+      title: 'Se déconnecter ?',
+      message:
+        'Les photos gardées sur cet appareil (index et miniatures) seront effacées. Rien ne change dans OneDrive.',
+      confirmLabel: 'Se déconnecter',
+      danger: true,
+    });
+    if (!answer) return;
     await Promise.all([source.reset?.(), thumbnails.disk.clear()]);
     thumbnails.store.clearMemory();
     await signOut();

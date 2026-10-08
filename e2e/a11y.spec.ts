@@ -63,6 +63,15 @@ const SCREENS: { name: string; path: string; ready: (page: Page) => Promise<void
     ready: (page) => expect(page.getByRole('button', { name: 'Ajouter Documents' })).toBeVisible(),
   },
   {
+    name: 'confirm dialog',
+    path: '/reglages/dossiers',
+    ready: async (page) => {
+      await page.getByRole('button', { name: 'Ajouter Musique' }).click();
+      await page.getByRole('button', { name: 'Enregistrer' }).click();
+      await expect(page.getByRole('dialog', { name: 'Enregistrer ces dossiers ?' })).toBeVisible();
+    },
+  },
+  {
     name: 'news',
     path: '/nouveautes',
     ready: (page) => expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible(),

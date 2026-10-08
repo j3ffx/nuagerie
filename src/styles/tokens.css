@@ -20,6 +20,9 @@
   --color-thumb-placeholder: #dde9f7;
   --color-warning-bg: #fff4d6;
   --color-warning-text: #6b4a00;
+  /* Actions that erase something (signing out erases the photos kept on the device). */
+  --color-danger: #b42318;
+  --color-on-danger: #ffffff;
   --shadow-soft: 0 1px 2px rgb(27 42 65 / 0.06), 0 4px 16px rgb(27 42 65 / 0.06);
   /* While pressed, whatever reacts to a tap dims a little (lightens in the dark theme). */
   --press-filter: brightness(0.9);
@@ -68,6 +71,8 @@
     --color-thumb-placeholder: #1d2c48;
     --color-warning-bg: #3a2f12;
     --color-warning-text: #ffe2a3;
+    --color-danger: #ffb4ab;
+    --color-on-danger: #5c0a05;
     --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
     --press-filter: brightness(1.25);
     --color-press: rgb(255 255 255 / 0.12);
@@ -90,6 +95,8 @@
   --color-thumb-placeholder: #1d2c48;
   --color-warning-bg: #3a2f12;
   --color-warning-text: #ffe2a3;
+  --color-danger: #ffb4ab;
+  --color-on-danger: #5c0a05;
   --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
   --press-filter: brightness(1.25);
   --color-press: rgb(255 255 255 / 0.12);

@@ -7,6 +7,7 @@ import common from '../../ui/common.module.css';
 import { BackIcon, ChevronIcon } from '../../ui/icons.tsx';
 import { IndexStatus } from '../../ui/IndexStatus.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
+import { useConfirm } from '../../ui/confirmContext.ts';
 import albumStyles from './AlbumScreen.module.css';
 import styles from './ChooseAlbumsScreen.module.css';
 import { useAlbumSelection } from './useAlbums.ts';
@@ -35,6 +36,7 @@ export function ChooseAlbumsScreen() {
   // Also opened from the settings: go back there.
   const [params] = useSearchParams();
   const fromSettings = params.get('retour') === 'reglages';
+  const confirm = useConfirm();
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 
@@ -158,13 +160,14 @@ export function ChooseAlbumsScreen() {
               <button
                 type="button"
                 className={`${common.buttonSoft} ${styles.reset}`}
-                onClick={() => {
-                  if (
-                    window.confirm('Revenir aux dossiers de premier niveau, sans rien masquer ?')
-                  ) {
-                    reset();
-                  }
-                }}
+                onClick={() =>
+                  void confirm({
+                    title: 'Revenir à la sélection par défaut ?',
+                    message:
+                      'Les dossiers de premier niveau redeviennent les albums de l’accueil, et plus aucun sous-album n’est masqué.',
+                    confirmLabel: 'Revenir au défaut',
+                  }).then((answer) => answer && reset())
+                }
               >
                 Revenir à la sélection par défaut
               </button>
