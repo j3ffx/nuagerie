@@ -156,6 +156,19 @@ describe('putAppFile', () => {
     expect(calls[1]?.init?.headers).toMatchObject({ 'If-Match': '"e2"' });
   });
 
+  it('replaces a whole file, of any type, when asked to overwrite', async () => {
+    const { client, calls } = setup([json({ eTag: '"e1"' })]);
+    const blob = new Blob([new Uint8Array([1, 2, 3])]);
+    await client.putAppFile('index.json.gz', blob, {
+      overwrite: true,
+      contentType: 'application/gzip',
+    });
+    expect(calls[0]?.init?.body).toBe(blob);
+    expect(calls[0]?.init?.headers).toMatchObject({ 'Content-Type': 'application/gzip' });
+    expect(calls[0]?.init?.headers).not.toHaveProperty('If-Match');
+    expect(calls[0]?.init?.headers).not.toHaveProperty('If-None-Match');
+  });
+
   it('refuses any name that could lead out of the app folder', async () => {
     const { client, calls } = setup([]);
     for (const name of ['../photo.jpg', 'a/b.json', '', '.hidden', 'x:y']) {

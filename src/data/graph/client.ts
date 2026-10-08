@@ -36,7 +36,7 @@ export interface GraphClientOptions {
 interface Request {
   method: 'GET' | 'POST' | 'PUT';
   headers?: Record<string, string>;
-  body?: string;
+  body?: string | Blob;
 }
 
 /** A plain file name: no path, so no way out of the app's folder. */
@@ -50,10 +50,16 @@ const APP_FILE_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 export interface AppFolderWriter {
   putAppFile(
     name: string,
-    content: string,
-    options: { ifMatch: string | null },
+    content: string | Blob,
+    options: AppFileWrite & { contentType?: string },
   ): Promise<{ eTag: string }>;
 }
+
+/**
+ * Over the copy with that eTag only (null: only if there is none yet), or
+ * over whatever is there, for a file any device may replace whole.
+ */
+export type AppFileWrite = { ifMatch: string | null } | { overwrite: true };
 
 export interface GraphClient {
   getJson<T>(pathOrUrl: string): Promise<T>;
@@ -165,16 +171,19 @@ export function createGraphClient(options: GraphClientOptions): GraphClient & Ap
       return result.responses ?? [];
     },
 
-    async putAppFile(name, content, { ifMatch }) {
+    async putAppFile(name, content, options) {
       // The path is built here, and only ever points into the app's own folder.
       if (!APP_FILE_NAME.test(name)) throw new Error(`Not an app folder file name: ${name}`);
+      const condition: Record<string, string> =
+        'overwrite' in options
+          ? {}
+          : // Never overwrite a newer copy: a changed eTag answers 412, the caller merges again.
+            options.ifMatch
+            ? { 'If-Match': options.ifMatch }
+            : { 'If-None-Match': '*' };
       const response = await send(`/me/drive/special/approot:/${name}:/content`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          // Never overwrite a newer copy: a changed eTag answers 412, the caller merges again.
-          ...(ifMatch ? { 'If-Match': ifMatch } : { 'If-None-Match': '*' }),
-        },
+        headers: { 'Content-Type': options.contentType ?? 'application/json', ...condition },
         body: content,
       });
       const item = (await response.json()) as { eTag?: string };
