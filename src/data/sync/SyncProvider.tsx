@@ -35,7 +35,7 @@ const PENDING_FAVORITE_KEY = 'sync.pendingFavorite';
 const ASKING_KEY = 'sync.asking';
 
 const DECLINED_NOTICE =
-  'Microsoft n’a pas donné la permission : sans elle, Nuagerie ne peut pas ranger tes favoris dans ton OneDrive. Tu peux réessayer quand tu veux.';
+  'Microsoft n’a pas donné la permission : sans elle, Nuagerie ne peut rien ranger dans ton OneDrive, ni tes favoris ni tes préférences. Tu peux réessayer quand tu veux.';
 const failedNotice = (detail: string) =>
   `La synchronisation n’a pas pu démarrer (${detail}). Réessaie dans un moment.`;
 /** A change goes out after this pause, so a few taps make one write. */

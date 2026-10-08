@@ -6,18 +6,18 @@ import common from '../../ui/common.module.css';
 import { useConfirm } from '../../ui/confirmContext.ts';
 
 const STATUS_LABELS = {
-  off: 'désactivés',
-  syncing: 'synchronisation…',
-  ok: 'synchronisés',
+  off: 'désactivée',
+  syncing: 'en cours…',
+  ok: 'à jour',
   offline: 'en attente du réseau',
   'needs-permission': 'permission à accorder',
   error: 'échec',
 } as const;
 
 /**
- * Favourites and preferences: kept on the device, and, if the user turns
- * it on, in OneDrive's app folder too (they then survive a reinstall and
- * follow the user to other devices).
+ * The sync: favourites, preferences and root folders kept on the device and,
+ * if the user turns it on, in OneDrive's app folder too (they then survive a
+ * reinstall and follow the user to other devices). Favourites need it.
  */
 export function SyncSection() {
   const sync = useSync();
@@ -27,7 +27,7 @@ export function SyncSection() {
 
   const turnOn = async () => {
     const answer = await confirm({
-      title: 'Activer les favoris ?',
+      title: 'Activer la synchronisation ?',
       message:
         'Nuagerie va demander à Microsoft le droit d’écrire dans un seul dossier, Applis/Nuagerie, pour y ranger tes favoris et tes préférences. Tes photos restent en lecture seule, et tu pourras arrêter à tout moment.',
       confirmLabel: 'Activer',
@@ -37,9 +37,9 @@ export function SyncSection() {
 
   const turnOff = async () => {
     const answer = await confirm({
-      title: 'Désactiver les favoris ?',
+      title: 'Désactiver la synchronisation ?',
       message:
-        'Tes favoris et préférences restent dans ton OneDrive et reviendront si tu les réactives. Pour retirer aussi la permission donnée à Nuagerie, passe par « Permissions ».',
+        'Sur cet appareil, tes favoris ne s’affichent plus. Ce qui est rangé dans ton OneDrive y reste et revient si tu la réactives. Pour retirer aussi la permission donnée à Nuagerie, passe par « Permissions ».',
       confirmLabel: 'Désactiver',
     });
     if (answer) sync.disable();
@@ -48,13 +48,13 @@ export function SyncSection() {
   return (
     <section className={common.section} aria-labelledby="settings-sync">
       <h2 id="settings-sync" className={common.sectionTitle}>
-        Favoris et préférences
+        Synchronisation
       </h2>
       <div className={`${common.card} ${common.stack}`}>
         <dl className={common.definitionList}>
           <dt>Favoris</dt>
           <dd>{formatCount(sync.favorites.size)}</dd>
-          <dt>{mode === 'demo' ? 'Gardés' : 'Synchronisation'}</dt>
+          <dt>{mode === 'demo' ? 'Gardés' : 'État'}</dt>
           <dd>
             <span role="status">
               {mode === 'demo' ? 'sur cet appareil' : STATUS_LABELS[sync.status]}
@@ -68,14 +68,15 @@ export function SyncSection() {
         {!sync.available ? (
           <p className={common.muted}>
             {mode === 'demo'
-              ? 'En démo, les favoris restent sur cet appareil.'
-              : 'Connecte-toi pour synchroniser tes favoris dans OneDrive.'}
+              ? 'En démo, les favoris et les préférences restent sur cet appareil.'
+              : 'Connecte-toi pour synchroniser tes favoris et tes préférences.'}
           </p>
         ) : !sync.enabled ? (
           <>
             <p className={common.muted}>
-              Les favoris et tes préférences se rangent dans ton OneDrive, dans un dossier à part
-              (Applis/Nuagerie) : ils ne se perdent jamais et te suivent sur tes autres appareils.
+              Tes favoris, tes préférences (albums affichés, tris, filtre de « Tout ») et tes
+              dossiers se rangent dans ton OneDrive, dans un dossier à part (Applis/Nuagerie) : rien
+              ne se perd, et tes autres appareils suivent. Les favoris en ont besoin.
             </p>
             <button
               type="button"
@@ -83,12 +84,15 @@ export function SyncSection() {
               onClick={() => void turnOn()}
               disabled={!online}
             >
-              Activer les favoris
+              Activer la synchronisation
             </button>
           </>
         ) : (
           <>
-            <p className={common.muted}>Rangés dans le dossier Applis/Nuagerie de ton OneDrive.</p>
+            <p className={common.muted}>
+              Favoris, préférences et dossiers rangés dans Applis/Nuagerie, dans ton OneDrive. Tes
+              autres appareils connectés à ce compte suivent tout seuls.
+            </p>
             {/* Not granted yet, or withdrawn at Microsoft: the page is the way on. */}
             {!sync.favoritesOn && sync.status !== 'syncing' ? (
               <button
@@ -110,7 +114,7 @@ export function SyncSection() {
               </button>
             )}
             <button type="button" className={common.buttonSoft} onClick={() => void turnOff()}>
-              Désactiver les favoris
+              Désactiver la synchronisation
             </button>
           </>
         )}

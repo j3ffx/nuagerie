@@ -15,7 +15,7 @@ export function SyncNotice() {
     if (!notice) return;
     let active = true;
     void confirm({
-      title: 'Favoris non activés',
+      title: 'Synchronisation non activée',
       message: notice,
       confirmLabel: 'Réessayer',
       cancelLabel: 'Fermer',

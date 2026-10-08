@@ -19,7 +19,7 @@ export function AccountSection() {
     const answer = await confirm({
       title: 'Se déconnecter ?',
       message:
-        'Ce que Nuagerie garde sur cet appareil (index, miniatures, copie des favoris) sera effacé. Rien ne change dans OneDrive : tes favoris y restent et reviennent quand tu les réactives.',
+        'Ce que Nuagerie garde sur cet appareil (index, miniatures, copie des favoris et des préférences) sera effacé. Rien ne change dans OneDrive : ce qui est synchronisé y reste et revient quand tu te reconnectes.',
       confirmLabel: 'Se déconnecter',
       danger: true,
     });

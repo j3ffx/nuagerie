@@ -46,7 +46,9 @@ test('marks a photo as a favourite, gathered in a Favoris album first on the hom
 
 test('says in the settings where the favourites are kept', async ({ page }) => {
   await page.goto('/reglages');
-  const section = page.getByRole('region', { name: 'Favoris et préférences' });
+  const section = page.getByRole('region', { name: 'Synchronisation' });
   await expect(section).toContainText('sur cet appareil');
-  await expect(section).toContainText('En démo, les favoris restent sur cet appareil.');
+  await expect(section).toContainText(
+    'En démo, les favoris et les préférences restent sur cet appareil.',
+  );
 });

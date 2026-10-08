@@ -499,9 +499,9 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
       return;
     }
     const answer = await confirm({
-      title: 'Activer les favoris ?',
+      title: 'Activer la synchronisation ?',
       message:
-        'Les favoris se rangent dans ton OneDrive, dans un dossier à part (Applis/Nuagerie), pour ne jamais être perdus. Nuagerie va demander à Microsoft le droit d’écrire dans ce seul dossier : tes photos restent en lecture seule.',
+        'Les favoris se rangent dans ton OneDrive, avec tes préférences, dans un dossier à part (Applis/Nuagerie) : ils ne se perdent jamais et te suivent sur tes autres appareils. Nuagerie va demander à Microsoft le droit d’écrire dans ce seul dossier : tes photos restent en lecture seule.',
       confirmLabel: 'Activer',
     });
     if (answer) await sync.enable(item.id);
