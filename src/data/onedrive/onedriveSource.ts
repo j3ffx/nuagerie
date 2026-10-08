@@ -307,13 +307,15 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
   }
 
   const signedIn = options.accountId !== null;
+  /** Off after a reindex asked for: the drive is listed again, the copy is not trusted. */
+  let useSharedCopy = true;
 
   /**
    * A new device starts from the copy another one left, when it covers the
    * same account and folders: shown at once, then brought up to date by delta.
    */
   async function restoreSnapshot(store: IndexStore, meta: IndexMeta): Promise<IndexMeta | null> {
-    if (!options.snapshots || options.accountId === null) return null;
+    if (!options.snapshots || options.accountId === null || !useSharedCopy) return null;
     const snapshot = await options.snapshots.load();
     if (!usableSnapshot(snapshot, options.accountId, meta.rootFolders)) return null;
     await store.applyChanges(snapshot.items, []);
@@ -330,10 +332,13 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
 
   /** Leaves a copy of a complete index for the other devices, at most once a day; never blocks. */
   let saving = false;
+  /** Bumped by each reset: a copy made before it no longer describes the index. */
+  let generation = 0;
   async function saveSnapshot(store: IndexStore, meta: IndexMeta): Promise<void> {
     if (!options.snapshots || options.accountId === null || saving) return;
     if (!snapshotDue(meta.snapshot)) return;
     saving = true;
+    const started = generation;
     try {
       const savedAt = Date.now();
       const saved = await options.snapshots.save({
@@ -345,7 +350,9 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
         items: await store.loadItems(),
       });
       const latest = await store.getMeta();
-      if (saved && latest) await store.setMeta({ ...latest, snapshot: { savedAt, stale: false } });
+      if (saved && latest && generation === started) {
+        await store.setMeta({ ...latest, snapshot: { savedAt, stale: false } });
+      }
     } catch {
       // Tried again after the next change.
     } finally {
@@ -379,7 +386,9 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
         return result.changes > 0 ? buildFromStore(store, result.meta) : null;
       },
 
-      async reset() {
+      async reset(resetOptions?: { useSharedCopy?: boolean }) {
+        useSharedCopy = resetOptions?.useSharedCopy ?? false;
+        generation++;
         const store = await getStore();
         await store.clear();
       },

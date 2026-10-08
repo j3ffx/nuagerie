@@ -193,6 +193,24 @@ describe('createOneDriveSource', () => {
       expect(graph.calls).toContain('https://graph/delta?token=1');
     });
 
+    it('lists the drive again after a reindex asked for, unless told to use the copy', async () => {
+      const graph = fakeOneDrive();
+      const first = shared(null);
+      await withCopy(graph.client, first.snapshots).loadIndex();
+      await vi.waitFor(async () => expect((await store.getMeta())?.snapshot).toBeTruthy());
+
+      const s = withCopy(graph.client, shared(first.saved[0] ?? null).snapshots);
+      await s.reset?.();
+      graph.calls.length = 0;
+      await s.loadIndex();
+      expect(graph.calls.some(listsTheDrive)).toBe(true);
+
+      await s.reset?.({ useSharedCopy: true });
+      graph.calls.length = 0;
+      await s.loadIndex();
+      expect(graph.calls.some(listsTheDrive)).toBe(false);
+    });
+
     it('lists the drive itself when the copy is another account’s', async () => {
       const graph = fakeOneDrive();
       const { snapshots, saved } = shared(null);

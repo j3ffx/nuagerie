@@ -83,12 +83,15 @@ export function DataProvider({
     };
   }, [refresh]);
 
-  const resetIndex = useCallback(async () => {
-    await source.reset?.();
-    setSync(IDLE);
-    setState({ status: 'loading', progress: null });
-    setGeneration((g) => g + 1);
-  }, [source]);
+  const resetIndex = useCallback(
+    async (options?: { useSharedCopy?: boolean }) => {
+      await source.reset?.(options);
+      setSync(IDLE);
+      setState({ status: 'loading', progress: null });
+      setGeneration((g) => g + 1);
+    },
+    [source],
+  );
 
   return (
     <DataContext.Provider

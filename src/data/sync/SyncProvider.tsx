@@ -148,8 +148,9 @@ export function SyncProvider({
         } finally {
           applying.current = false;
         }
-        // Other root folders chosen on another device: this one indexes them too.
-        if (readRootPaths().join('\n') !== rootsBefore) void resetIndex();
+        // Other root folders chosen on another device: this one indexes them too, from the
+        // copy that device shared once there is one.
+        if (readRootPaths().join('\n') !== rootsBefore) void resetIndex({ useSharedCopy: true });
         writePersistent(LAST_SYNC_KEY, Date.now());
         writePersistent(SYNC_GRANTED_KEY, true);
         writePersistent(ASKING_KEY, false);

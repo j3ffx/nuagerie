@@ -16,8 +16,11 @@ export interface DataSource {
   loadIndex(onProgress?: (progress: IndexProgress) => void): Promise<MediaIndex>;
   /** Fetches the changes since the last sync; a new index when something changed, else null. */
   refresh?(onProgress?: (progress: IndexProgress) => void): Promise<MediaIndex | null>;
-  /** Forgets the local copy, so the next load enumerates everything again. */
-  reset?(): Promise<void>;
+  /**
+   * Forgets the local copy, so the next load enumerates everything again,
+   * or starts from the copy another device shared when `useSharedCopy`.
+   */
+  reset?(options?: { useSharedCopy?: boolean }): Promise<void>;
   /** Subfolders of a drive folder ("/" for the drive root), by name, to choose root folders. */
   listFolders?(path: string): Promise<DriveFolder[]>;
   /** Anonymous summary of the index and checks of the Graph assumptions. */

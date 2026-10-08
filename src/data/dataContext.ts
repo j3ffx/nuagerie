@@ -26,8 +26,11 @@ export interface DataContextValue {
   sync: SyncState;
   /** Fetches the latest changes now. */
   refresh: () => void;
-  /** Forgets the local copy and enumerates everything again. */
-  resetIndex: () => Promise<void>;
+  /**
+   * Forgets the local copy and enumerates everything again (or starts from the
+   * copy another device shared, when `useSharedCopy`).
+   */
+  resetIndex: (options?: { useSharedCopy?: boolean }) => Promise<void>;
 }
 
 export const DataContext = createContext<DataContextValue | null>(null);
