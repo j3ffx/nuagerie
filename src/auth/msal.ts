@@ -2,6 +2,7 @@ import {
   InteractionRequiredAuthError,
   PublicClientApplication,
   type AccountInfo,
+  type AuthenticationResult,
 } from '@azure/msal-browser';
 import { isOnline } from '../lib/online.ts';
 import { readPersistent, removePersistent, writePersistent } from '../lib/persistent.ts';
@@ -12,6 +13,13 @@ import { readPersistent, removePersistent, writePersistent } from '../lib/persis
  * write scope here.
  */
 export const GRAPH_SCOPES = ['Files.Read', 'User.Read'];
+
+/**
+ * Opt-in, asked for only when the user turns on the sync of favourites
+ * (Réglages): write access to the app's own folder, Apps/Nuagerie, and
+ * nowhere else. Never requested at sign-in.
+ */
+export const SYNC_SCOPE = 'Files.ReadWrite.AppFolder';
 
 /** Route of the redirect bridge page required by MSAL v5 (see main.tsx). */
 export const REDIRECT_PATH = '/redirect';
@@ -54,7 +62,14 @@ export function getMsal(): PublicClientApplication {
 export async function initAuth(): Promise<AccountInfo | null> {
   const msal = getMsal();
   await msal.initialize();
-  const result = await msal.handleRedirectPromise();
+  let result: AuthenticationResult | null = null;
+  try {
+    result = await msal.handleRedirectPromise();
+  } catch (error) {
+    // Back from Microsoft's page without what was asked (e.g. the sync
+    // permission declined): still signed in when an account is known.
+    if (!msal.getActiveAccount() && msal.getAllAccounts().length === 0) throw error;
+  }
   const cached = result?.account ?? msal.getActiveAccount() ?? msal.getAllAccounts()[0] ?? null;
   if (!cached && !isOnline()) return null;
   const account = cached ?? (await signInSilently(msal));
@@ -152,3 +167,51 @@ export async function getAccessToken(): Promise<string> {
     throw error;
   }
 }
+
+/** The user has not (or no longer) granted the sync permission: asking is theirs to do. */
+export class SyncPermissionMissing extends Error {
+  constructor() {
+    super('The sync permission is not granted');
+    this.name = 'SyncPermissionMissing';
+  }
+}
+
+/** A token allowing the sync, without ever sending the user to Microsoft's page. */
+export async function getSyncToken(): Promise<string> {
+  const msal = getMsal();
+  const account = msal.getActiveAccount();
+  if (!account) throw new NotSignedInError();
+  try {
+    return (await msal.acquireTokenSilent({ scopes: [SYNC_SCOPE], account })).accessToken;
+  } catch (error) {
+    if (error instanceof InteractionRequiredAuthError) throw new SyncPermissionMissing();
+    throw error;
+  }
+}
+
+/** Asks Microsoft for the sync permission (the page shows what it allows); comes back to `returnTo`. */
+export function requestSyncPermission(): Promise<void> {
+  const msal = getMsal();
+  const account = msal.getActiveAccount() ?? undefined;
+  return msal.acquireTokenRedirect({
+    scopes: [...GRAPH_SCOPES, SYNC_SCOPE],
+    ...(account ? { account } : {}),
+  });
+}
+
+/** The permissions Microsoft has granted the app, as its tokens state them. */
+export async function grantedScopes(): Promise<string[]> {
+  const msal = getMsal();
+  const account = msal.getActiveAccount();
+  if (!account) return [];
+  // Fresh from Microsoft when online: a cached token may predate a grant or a withdrawal.
+  const result = await msal.acquireTokenSilent({
+    scopes: GRAPH_SCOPES,
+    account,
+    forceRefresh: isOnline(),
+  });
+  return result.scopes;
+}
+
+/** Where the user can see and withdraw what they granted the app, on Microsoft's side. */
+export const MANAGE_CONSENT_URL = 'https://account.live.com/consent/Manage';

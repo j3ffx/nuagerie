@@ -8,6 +8,13 @@ import { useCallback, useSyncExternalStore } from 'react';
 
 const PREFIX = 'nuagerie.';
 const listeners = new Set<() => void>();
+const writeListeners = new Set<(key: string, value: unknown) => void>();
+
+/** Told of every value written on this device (the sync records the ones it carries). */
+export function onPersistentWrite(listener: (key: string, value: unknown) => void): () => void {
+  writeListeners.add(listener);
+  return () => writeListeners.delete(listener);
+}
 const cache = new Map<string, { raw: string | null; value: unknown }>();
 
 function readRaw(key: string): string | null {
@@ -43,6 +50,7 @@ export function writePersistent<T>(key: string, value: T): void {
     cache.set(key, { raw: null, value });
   }
   listeners.forEach((notify) => notify());
+  writeListeners.forEach((listener) => listener(key, value));
 }
 
 export function removePersistent(key: string): void {
