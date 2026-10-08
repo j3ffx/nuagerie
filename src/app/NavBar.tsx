@@ -30,7 +30,7 @@ const ENTRIES: NavEntry[] = [
 export function NavBar() {
   const [path] = useLocation();
   return (
-    <nav className={styles.nav} aria-label="Navigation principale">
+    <nav className={styles.nav} aria-label="Navigation principale" data-bottom-bar>
       <ul className={styles.list}>
         {ENTRIES.map(({ href, label, icon: IconComponent, isActive }) => {
           const active = isActive(path);

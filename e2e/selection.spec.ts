@@ -123,3 +123,51 @@ test('asks before sharing many photos, and can share them anyway', async ({ page
     .toEqual([expect.any(Number)]);
   await expect(bar(page)).toBeHidden();
 });
+
+test('dragging onto the bottom bar scrolls on and keeps picking; back up, it stops', async ({
+  page,
+}) => {
+  const cdp = await page.context().newCDPSession(page);
+  const first = await cells(page).nth(4).boundingBox();
+  if (!first) throw new Error('no cell');
+  const touch = (type: 'touchStart' | 'touchMove', x: number, y: number) =>
+    cdp.send('Input.dispatchTouchEvent', { type, touchPoints: [{ x, y, id: 0 }] });
+  const x = first.x + first.width / 2;
+  await touch('touchStart', x, first.y + first.height / 2);
+  await page.waitForTimeout(700);
+  await expect(bar(page)).toContainText('1 sélectionné');
+
+  // Down onto the navigation bar, and held there.
+  const height = await page.evaluate(() => window.innerHeight);
+  for (let y = first.y + first.height / 2; y < height - 15; y += 40) await touch('touchMove', x, y);
+  await touch('touchMove', x, height - 15);
+  const count = async () =>
+    Number((await bar(page).getByRole('status').textContent())?.match(/\d+/)?.[0] ?? 0);
+  const scrolled = () => page.evaluate(() => window.scrollY);
+  await expect.poll(scrolled).toBeGreaterThan(300);
+  const before = await count();
+  await expect.poll(count).toBeGreaterThan(before);
+
+  // Back to the middle of the screen: the page stops.
+  await touch('touchMove', x, height / 2);
+  await page.waitForTimeout(200);
+  const stopped = await scrolled();
+  await page.waitForTimeout(400);
+  expect(await scrolled()).toBe(stopped);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await expect(bar(page)).toBeVisible();
+});
+
+test('a long press works in the Favoris album too', async ({ page }) => {
+  for (const i of [0, 1]) {
+    await cells(page).nth(i).click();
+    await page.getByRole('button', { name: 'Ajouter aux favoris' }).click();
+    await page.keyboard.press('Escape');
+  }
+  await page.goto('/favoris');
+  await expect(cells(page)).toHaveCount(2);
+  await longPress(page, cells(page).first());
+  await expect(bar(page)).toContainText('1 sélectionné');
+  await cells(page).nth(1).click();
+  await expect(bar(page)).toContainText('2 sélectionnés');
+});

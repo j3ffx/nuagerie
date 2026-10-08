@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, type RefObject } from 'react';
+import { bottomBarTop, stickyHeaderHeight } from './page.ts';
 
 /** As long as Android's own long press. */
 const LONG_PRESS_MS = 500;
 /** A finger that moves further before that is scrolling. */
 const SLOP_PX = 10;
-/** Near the top or bottom of the screen, a drag scrolls the page. */
+/** Near the top or bottom of the visible grid, a drag scrolls the page; faster beyond it. */
 const EDGE_PX = 72;
 const EDGE_SPEED = 14;
 /** A click this soon after the long-pressing finger lifts, on the same photo, is that finger's. */
@@ -17,8 +18,42 @@ export interface PressDragHandlers {
   onDrag: (id: string) => void;
 }
 
-const idAt = (x: number, y: number) =>
-  document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-item-id]')?.dataset.itemId ?? null;
+/** The part of the screen where the grid's photos show: below the header, above the bottom bar. */
+export interface VisibleArea {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+}
+
+/**
+ * Where a dragging finger points in the grid, kept inside the visible area
+ * (a finger over the bottom bar points at the last row on screen), and how
+ * much to scroll: near an edge, and twice as fast past it.
+ */
+export function dragPoint(
+  finger: { x: number; y: number },
+  area: VisibleArea,
+): { x: number; y: number; scroll: number } {
+  const clamp = (value: number, min: number, max: number) =>
+    Math.min(Math.max(value, min), Math.max(min, max));
+  const x = clamp(finger.x, area.left + 1, area.right - 1);
+  const y = clamp(finger.y, area.top + 1, area.bottom - 1);
+  let scroll = 0;
+  if (finger.y < area.top + EDGE_PX) scroll = finger.y < area.top ? -2 * EDGE_SPEED : -EDGE_SPEED;
+  else if (finger.y > area.bottom - EDGE_PX)
+    scroll = finger.y > area.bottom ? 2 * EDGE_SPEED : EDGE_SPEED;
+  return { x, y, scroll };
+}
+
+/** The photo at a point of the grid, even under what floats over it (bars, date scrubber). */
+const idAt = (grid: HTMLElement, x: number, y: number): string | null => {
+  for (const element of document.elementsFromPoint(x, y)) {
+    const cell = element.closest<HTMLElement>('[data-item-id]');
+    if (cell && grid.contains(cell)) return cell.dataset.itemId ?? null;
+  }
+  return null;
+};
 
 /**
  * Long press on a photo of the grid, then drag across others (one finger):
@@ -57,8 +92,19 @@ export function usePressDrag(
       lastId = null;
     };
 
+    const area = (): VisibleArea => {
+      const box = element.getBoundingClientRect();
+      return {
+        top: stickyHeaderHeight(),
+        bottom: bottomBarTop(),
+        left: box.left,
+        right: box.right,
+      };
+    };
+
     const over = () => {
-      const id = idAt(finger.x, finger.y);
+      const point = dragPoint(finger, area());
+      const id = idAt(element, point.x, point.y);
       if (id && id !== lastId) {
         lastId = id;
         latest.current.onDrag(id);
@@ -67,10 +113,9 @@ export function usePressDrag(
 
     const edgeScroll = () => {
       if (!dragging) return;
-      const { y } = finger;
-      const step = y < EDGE_PX ? -EDGE_SPEED : y > window.innerHeight - EDGE_PX ? EDGE_SPEED : 0;
-      if (step) {
-        window.scrollBy(0, step);
+      const { scroll } = dragPoint(finger, area());
+      if (scroll) {
+        window.scrollBy(0, scroll);
         over();
       }
       frame = window.requestAnimationFrame(edgeScroll);
@@ -82,7 +127,10 @@ export function usePressDrag(
         stop();
         return;
       }
-      const id = idAt(touch.clientX, touch.clientY);
+      // Only a photo of this grid, not a bar over it.
+      const target = event.target instanceof Element ? event.target : null;
+      const cell = target?.closest<HTMLElement>('[data-item-id]');
+      const id = cell && element.contains(cell) ? (cell.dataset.itemId ?? null) : null;
       if (!id) return;
       start = { x: touch.clientX, y: touch.clientY };
       finger = { ...start };
