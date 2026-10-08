@@ -177,6 +177,25 @@
   padding: 0 var(--space-1);
 }
 
+/* With an album: a tap shows its full name. */
+button.caption {
+  min-height: var(--tap-min);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.caption:active {
+  background: var(--viewer-press);
+}
+
+button.caption:focus-visible {
+  outline-color: var(--viewer-focus);
+}
+
 /* The place opens the map, centred on the photo. */
 .place {
   display: inline-flex;
@@ -210,6 +229,7 @@
 
 .date,
 .album {
+  display: block;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;

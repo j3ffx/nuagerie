@@ -14,6 +14,7 @@ import { lookupPlace } from '../../data/places/places.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { formatLongDate, formatPlace, formatTakenTime } from '../../lib/format.ts';
 import { useSync } from '../../data/sync/syncContext.ts';
+import { useBubble } from '../../ui/useBubble.tsx';
 import { useConfirm } from '../../ui/confirmContext.ts';
 import { useOnline } from '../../lib/online.ts';
 import { BackIcon, ChevronIcon, DownloadIcon, HeartIcon, MapIcon } from '../../ui/icons.tsx';
@@ -509,6 +510,17 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
     item.takenAt === null
       ? null
       : formatTakenTime({ takenAt: item.takenAt, dateSource: item.dateSource });
+  const { show: showBubble, bubble } = useBubble();
+  const caption = (
+    <>
+      <span className={styles.date}>
+        {item.takenAt === null ? 'Sans date' : formatLongDate(item.takenAt)}
+      </span>
+      {(time || album) && (
+        <span className={styles.album}>{[time, album].filter(Boolean).join(' · ')}</span>
+      )}
+    </>
+  );
 
   /** The original file, saved by the browser (OneDrive serves it as an attachment). */
   const download = async () => {
@@ -540,15 +552,20 @@ function ViewerBar({ item, onClose }: { item: MediaItem; onClose: () => void }) 
         >
           <BackIcon />
         </button>
-        {/* The day on top, then the time and the album: the bar has four buttons on a phone. */}
-        <div className={styles.caption}>
-          <p className={styles.date}>
-            {item.takenAt === null ? 'Sans date' : formatLongDate(item.takenAt)}
-          </p>
-          {(time || album) && (
-            <p className={styles.album}>{[time, album].filter(Boolean).join(' · ')}</p>
-          )}
-        </div>
+        {/* The day on top, then the time and the album: the bar has four buttons on a phone.
+            A long album name is cut: a tap shows it in full. */}
+        {album ? (
+          <button
+            type="button"
+            className={styles.caption}
+            onClick={(event) => showBubble(album, event.currentTarget)}
+          >
+            {caption}
+          </button>
+        ) : (
+          <div className={styles.caption}>{caption}</div>
+        )}
+        {bubble}
         {(sync.favoritesOn || sync.available) && (
           <button
             type="button"

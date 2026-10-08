@@ -203,3 +203,34 @@ test('says when sharing failed, and lets the user try again', async ({ page }) =
     .poll(() => page.evaluate(() => (window as unknown as { shared: string[] }).shared.length))
     .toBe(1);
 });
+
+test('shows a cut album name in full on a tap; light theme until the bars are hidden', async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/');
+  await page.getByRole('link', { name: /^Événements/ }).click();
+  await page.getByRole('link', { name: /^2026-07 - Vacances à la mer/ }).click();
+  await cells(page).first().click();
+  await expect(viewer(page)).toBeVisible();
+
+  const bubble = page.locator('[data-bubble]');
+  await viewer(page)
+    .getByRole('button', { name: /Vacances à la mer/ })
+    .click();
+  await expect(bubble).toHaveText('2026-07 - Vacances à la mer');
+
+  // The theme's background with the bars, black without them (a tap on the photo).
+  const background = () =>
+    page.evaluate(() => {
+      const stage = document.querySelector('[role="dialog"] > div');
+      return stage ? getComputedStyle(stage, '::before').backgroundColor : '';
+    });
+  await expect.poll(background).toBe('rgb(245, 249, 255)');
+  const box = await viewer(page).boundingBox();
+  if (!box) throw new Error('no viewer');
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await expect(bubble).toBeHidden();
+  await expect(viewer(page)).not.toHaveAttribute('data-chrome');
+  await expect.poll(background).toBe('rgb(0, 0, 0)');
+});
