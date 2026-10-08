@@ -19,14 +19,14 @@ export function AccountSection() {
     const answer = await confirm({
       title: 'Se déconnecter ?',
       message:
-        'Les photos gardées sur cet appareil (index et miniatures) seront effacées, avec les favoris s’ils ne sont pas synchronisés. Rien ne change dans OneDrive.',
+        'Ce que Nuagerie garde sur cet appareil (index, miniatures, copie des favoris) sera effacé. Rien ne change dans OneDrive : tes favoris y restent et reviennent quand tu les réactives.',
       confirmLabel: 'Se déconnecter',
       danger: true,
     });
     if (!answer) return;
     await Promise.all([source.reset?.(), thumbnails.disk.clear()]);
     thumbnails.store.clearMemory();
-    // Favourites and preferences of this account; a synced copy stays in OneDrive.
+    // This device's copy of the favourites and preferences; OneDrive's copy stays.
     removePersistent(syncStateKey('onedrive'));
     removePersistent(SYNC_ENABLED_KEY);
     await signOut();
