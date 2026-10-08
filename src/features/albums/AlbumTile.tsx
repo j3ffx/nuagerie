@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'wouter';
 import type { Album } from '../../data/albums.ts';
 import { formatCount, formatItemCount, formatYearRange } from '../../lib/format.ts';
@@ -29,9 +29,17 @@ export function AlbumTile({
     album.first !== null && album.last !== null ? formatYearRange(album.first, album.last) : null;
   const label = [album.name, albumCountLabel(album), period].filter(Boolean).join(', ');
   // A long press (a right click with a mouse) opens its menu, titled with its full name.
-  const [menuOpen, setMenuOpen] = useState(false);
-  const longPress = useLongPress(() => {
-    if (menu) setMenuOpen(true);
+  // Closed, the menu gives the focus back to its tile (keyboard, screen readers).
+  const [menuFor, setMenuFor] = useState<HTMLElement | null>(null);
+  const returnTo = useRef<HTMLElement | null>(null);
+  // Once the modal menu is gone: while it is open, the rest of the page cannot take the focus.
+  useEffect(() => {
+    if (menuFor || !returnTo.current) return;
+    returnTo.current.focus({ preventScroll: true });
+    returnTo.current = null;
+  }, [menuFor]);
+  const longPress = useLongPress((tile) => {
+    if (menu) setMenuFor(tile);
   });
   return (
     <>
@@ -45,7 +53,7 @@ export function AlbumTile({
         onContextMenu={(event) => {
           if (!menu) return;
           event.preventDefault();
-          setMenuOpen(true);
+          setMenuFor(event.currentTarget);
         }}
       >
         {album.cover ? (
@@ -61,8 +69,15 @@ export function AlbumTile({
           {period && <span className={styles.meta}>{period}</span>}
         </span>
       </Link>
-      {menuOpen && menu && (
-        <AlbumMenu album={album} place={menu} onClose={() => setMenuOpen(false)} />
+      {menuFor && menu && (
+        <AlbumMenu
+          album={album}
+          place={menu}
+          onClose={() => {
+            returnTo.current = menuFor;
+            setMenuFor(null);
+          }}
+        />
       )}
     </>
   );
