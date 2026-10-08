@@ -4,6 +4,17 @@ const homeAlbums = (page: Page) => page.getByRole('list', { name: 'Albums' });
 const albumNames = async (page: Page) =>
   (await homeAlbums(page).locator('li').allInnerTexts()).map((text) => text.split('\n')[0]);
 
+/** A finger held on the element, through the DevTools protocol (real touch events). */
+async function longPress(page: Page, name: RegExp) {
+  const box = await page.getByRole('link', { name }).boundingBox();
+  if (!box) throw new Error(`no link ${String(name)}`);
+  const point = { x: box.x + box.width / 2, y: box.y + box.height / 3, id: 0 };
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
+  await page.waitForTimeout(800);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto('/?demo=1');
   await expect(homeAlbums(page)).toBeVisible();
@@ -139,4 +150,23 @@ test('sorts the sub-albums from a button, remembered apart from the home sort', 
   // The home screen keeps its own sort.
   await page.getByRole('link', { name: 'Retour aux albums' }).click();
   await expect(page.getByLabel('Trier les albums par')).toHaveValue('last');
+});
+
+test('shows the full name of an album on a long press, without opening it', async ({ page }) => {
+  await homeAlbums(page)
+    .getByRole('link', { name: /^Événements/ })
+    .click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Événements' })).toBeVisible();
+
+  const bubble = page.locator('[data-bubble]');
+  await longPress(page, /^2026-07 - Vacances à la mer/);
+  await expect(bubble).toHaveText('2026-07 - Vacances à la mer');
+  await expect(page.getByRole('heading', { level: 1, name: 'Événements' })).toBeVisible();
+
+  // A tap then opens the album, as usual.
+  await page.getByRole('link', { name: /^2026-07 - Vacances à la mer/ }).click();
+  await expect(bubble).toBeHidden();
+  await expect(
+    page.getByRole('heading', { level: 1, name: '2026-07 - Vacances à la mer' }),
+  ).toBeVisible();
 });
