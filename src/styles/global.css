@@ -54,6 +54,23 @@ a {
 }
 
 /*
+ * A long press on a control selects nothing: no text highlighted under the
+ * finger (the context menu itself is cancelled in src/app/touch.ts). Text
+ * outside controls stays selectable.
+ */
+a,
+button,
+label,
+summary,
+select,
+img,
+[role='button'] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/*
  * Touch feedback. The browser's own tap highlight is off (a grey box), so
  * whatever reacts to a tap dims a little while pressed: buttons, links,
  * album tiles, grid cells, check boxes, the navigation.
