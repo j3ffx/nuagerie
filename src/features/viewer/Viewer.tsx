@@ -391,8 +391,12 @@ export function Viewer({
           () => setTrack(0),
         );
     } else if (mode === 'dismiss') {
-      if (closesOnDrag(dy, g.velocityY, view.height)) onClose();
-      else
+      // With the info panel open, a swipe down closes the panel, not the viewer; measured
+      // against the whole screen, as the photo only has its upper half then.
+      const closes = closesOnDrag(dy, g.velocityY, infoOpen ? window.innerHeight : view.height);
+      if (closes && !infoOpen) onClose();
+      else {
+        if (closes) closeInfo();
         transition(
           track,
           () => {
@@ -401,6 +405,7 @@ export function Viewer({
           },
           () => setTrack(0),
         );
+      }
     } else if (mode === 'pending' && !g.onVideo) {
       onTap(event.clientX, event.clientY, event.timeStamp);
     }
@@ -490,7 +495,12 @@ export function Viewer({
         </div>
       </div>
 
-      <ViewerBar item={item} onClose={onClose} onInfo={infoOpen ? closeInfo : openInfo} />
+      <ViewerBar
+        item={item}
+        onClose={onClose}
+        infoOpen={infoOpen}
+        onInfo={infoOpen ? closeInfo : openInfo}
+      />
       {infoOpen && <InfoPanel item={item} onClose={closeInfo} />}
 
       {previous && (
@@ -522,10 +532,12 @@ export function Viewer({
 function ViewerBar({
   item,
   onClose,
+  infoOpen,
   onInfo,
 }: {
   item: MediaItem;
   onClose: () => void;
+  infoOpen: boolean;
   onInfo: () => void;
 }) {
   const { source } = useData();
@@ -607,7 +619,8 @@ function ViewerBar({
           type="button"
           className={styles.caption}
           onClick={onInfo}
-          aria-label={`${captionText}, voir les infos`}
+          aria-label={`${captionText}, ${infoOpen ? 'masquer' : 'voir'} les infos`}
+          aria-expanded={infoOpen}
         >
           {caption}
         </button>
