@@ -260,7 +260,7 @@ test('shows what is known of the photo from its date; back closes that panel onl
 
 test('the info panel opened twice still closes at once', async ({ page }) => {
   await cells(page).nth(2).click();
-  const caption = viewer(page).getByRole('button', { name: /voir les infos$/ });
+  const caption = viewer(page).getByRole('button', { name: /(voir|masquer) les infos$/ });
   const panel = viewer(page).getByRole('region', { name: 'Infos' });
   await caption.click();
   await expect(panel).toBeVisible();
@@ -289,4 +289,26 @@ test('on a phone, the info panel leaves the whole photo above it', async ({ page
   if (!photo || !sheet) throw new Error('nothing to measure');
   expect(photo.y + photo.height).toBeLessThanOrEqual(sheet.y + 1);
   expect(photo.height).toBeGreaterThan(150);
+});
+
+test('with the info panel open on a phone, a swipe down closes the panel only', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 780 });
+  await cells(page).nth(2).click();
+  await viewer(page)
+    .getByRole('button', { name: /voir les infos$/ })
+    .click();
+  const panel = viewer(page).getByRole('region', { name: 'Infos' });
+  await expect(panel).toBeVisible();
+  // Down from the photo, by a third of the screen.
+  await touch(page, [
+    [{ x: 180, y: 150 }],
+    [{ x: 180, y: 220 }],
+    [{ x: 180, y: 300 }],
+    [{ x: 180, y: 410 }],
+  ]);
+  await expect(panel).toBeHidden();
+  await expect(viewer(page)).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('photo')).not.toBeNull();
 });

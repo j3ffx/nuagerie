@@ -297,9 +297,19 @@ test('cancelling while preparing a share shares nothing', async ({ page }) => {
   await stubShare(page);
   await page.reload();
   await expect(cells(page).first().locator('img')).toBeVisible();
-  await longPress(page, cells(page).nth(0), cells(page).nth(5));
+  // A whole month: preparing it lasts long enough to cancel midway.
+  await longPress(page, cells(page).nth(0));
+  await page
+    .getByRole('main')
+    .getByRole('checkbox', { name: /^Tout le mois/ })
+    .first()
+    .click();
   await bar(page).getByRole('button', { name: 'Partager' }).click();
+  const dialog = page.getByRole('dialog', { name: /^Partager \d+ éléments/ });
+  await dialog.getByRole('button', { name: 'Partager quand même' }).click();
+  await expect(bar(page).getByRole('status')).toContainText('/');
   await bar(page).getByRole('button', { name: 'Annuler la sélection' }).click();
+  await expect(bar(page)).toBeHidden();
   await page.waitForTimeout(2500);
   expect(await shared(page)).toEqual([]);
 });
@@ -339,10 +349,12 @@ test('the selection bar fits a 360 px phone, progress included', async ({ page }
       .getByRole('status')
       .evaluate((element) => element.scrollWidth <= element.clientWidth);
   expect(await fits()).toBe(true);
-  page.on('dialog', (dialog) => void dialog.accept());
   await bar(page).getByRole('button', { name: 'Télécharger' }).click();
-  const confirm = page.getByRole('button', { name: 'Télécharger', exact: true }).last();
-  if (await confirm.isVisible()) await confirm.click();
+  // A whole month is over 30: the app's own dialog asks first.
+  await page
+    .getByRole('dialog', { name: /^Télécharger \d+ fichiers/ })
+    .getByRole('button', { name: 'Télécharger' })
+    .click();
   await expect(bar(page).getByRole('status')).toContainText('/');
   expect(await fits()).toBe(true);
 });
@@ -367,9 +379,7 @@ test('dragging up under the header scrolls back and keeps picking', async ({ pag
   // The photo in the middle of the screen (rows above it are rendered too, off screen).
   const id = await page.evaluate(() => {
     for (let y = window.innerHeight / 2; y < window.innerHeight; y += 20) {
-      const cell = document
-        .elementFromPoint(60, y)
-        ?.closest<HTMLElement>('[data-item-id]');
+      const cell = document.elementFromPoint(60, y)?.closest<HTMLElement>('[data-item-id]');
       if (cell) return cell.dataset.itemId;
     }
     return undefined;
@@ -431,4 +441,19 @@ test('offline, what needs the network is greyed out in the selection bar', async
   ).toBeDisabled();
   await expect(bar(page).getByRole('button', { name: 'Ajouter aux favoris' })).toBeEnabled();
   await context.setOffline(false);
+});
+
+test('picking another photo during a download frees the bar', async ({ page }) => {
+  await page.addInitScript(() => {
+    HTMLAnchorElement.prototype.click = () => undefined;
+  });
+  await page.reload();
+  await expect(cells(page).first().locator('img')).toBeVisible();
+  await longPress(page, cells(page).nth(0), cells(page).nth(5));
+  await expect(bar(page)).toContainText('6 sélectionnés');
+  await bar(page).getByRole('button', { name: 'Télécharger' }).click();
+  await expect(bar(page).getByRole('status')).toContainText('/');
+  await cells(page).nth(6).click();
+  await expect(bar(page)).toContainText('7 sélectionnés');
+  await expect(bar(page).getByRole('button', { name: 'Télécharger' })).toBeEnabled();
 });
