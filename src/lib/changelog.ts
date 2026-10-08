@@ -80,3 +80,22 @@ export function releasesSince(releases: readonly Release[], seen: string, curren
       compareVersions(release.version, seen) > 0 && compareVersions(release.version, current) <= 0,
   );
 }
+
+/** Heading of the small changes already live, which the next release will take in. */
+export const UPCOMING_HEADING = '## Depuis la dernière version';
+
+/** The items of "Depuis la dernière version", if any: live already, with no number of their own. */
+export function parseUpcoming(markdown: string): string[] {
+  const lines = markdown.replace(/\r\n/g, '\n').split('\n');
+  const start = lines.indexOf(UPCOMING_HEADING);
+  if (start === -1) return [];
+  const items: string[] = [];
+  for (const line of lines.slice(start + 1)) {
+    if (line.startsWith('## ')) break;
+    if (line.startsWith('- ')) items.push(plain(line.slice(2)));
+    else if (/^\s+\S/.test(line) && items.length > 0) {
+      items[items.length - 1] = `${items[items.length - 1] ?? ''} ${plain(line)}`;
+    }
+  }
+  return items;
+}

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useSearchParams } from 'wouter';
-import { RELEASES, useWhatsNew } from '../../app/whatsNew.ts';
+import { RELEASES, UPCOMING, useWhatsNew } from '../../app/whatsNew.ts';
 import { formatLongDate } from '../../lib/format.ts';
 import common from '../../ui/common.module.css';
 import { BackIcon } from '../../ui/icons.tsx';
@@ -39,6 +39,21 @@ export function WhatsNewScreen() {
         }
       />
       <div className={common.page}>
+        {UPCOMING.length > 0 && (
+          <section className={common.section} aria-labelledby="release-upcoming">
+            <h2 id="release-upcoming" className={styles.version}>
+              Depuis la version {RELEASES[0]?.version}
+            </h2>
+            <div className={`${common.card} ${common.stack}`}>
+              <p className={common.muted}>Petites retouches déjà en ligne, sans nouveau numéro.</p>
+              <ul className={styles.items}>
+                {UPCOMING.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
         {RELEASES.map((release) => (
           <section
             key={release.version}

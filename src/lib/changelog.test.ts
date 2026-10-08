@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import changelog from '../../CHANGELOG.md?raw';
 import packageJson from '../../package.json?raw';
-import { compareVersions, parseChangelog, releasesSince } from './changelog.ts';
+import { compareVersions, parseChangelog, parseUpcoming, releasesSince } from './changelog.ts';
 
 const SAMPLE = `# Nouveautés
 
@@ -58,6 +58,27 @@ describe('parseChangelog', () => {
     expect(releasesSince(releases, '0.1.0', '0.2.0').map((r) => r.version)).toEqual(['0.2.0']);
     expect(releasesSince(releases, '0.0.0', '0.1.0').map((r) => r.version)).toEqual(['0.1.0']);
     expect(releasesSince(releases, '0.2.0', '0.2.0')).toEqual([]);
+  });
+});
+
+describe('parseUpcoming', () => {
+  const withUpcoming = SAMPLE.replace(
+    '## 0.2.0',
+    `## Depuis la dernière version
+
+Live already.
+
+- A small fix, on
+  two lines.
+- Another.
+
+## 0.2.0`,
+  );
+
+  it('reads the small changes live since the last release, apart from the releases', () => {
+    expect(parseUpcoming(withUpcoming)).toEqual(['A small fix, on two lines.', 'Another.']);
+    expect(parseChangelog(withUpcoming)).toEqual(parseChangelog(SAMPLE));
+    expect(parseUpcoming(SAMPLE)).toEqual([]);
   });
 });
 

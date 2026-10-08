@@ -112,14 +112,17 @@ change with `npx npm@10 ci` in a clean clone. `overrides` in `package.json` forc
 
 ## Releases
 
-Semantic versioning: `0.x.0` for a milestone of features, `0.x.y` for fixes and small improvements
-between milestones (released as they come, so the version on the phone names what it runs), `1.0.0`
-once the app is considered complete. `CHANGELOG.md` (in French, for users) says what each version brings: the app
+Semantic versioning: `0.x.0` for a milestone of features, `0.x.y` for a batch of improvements or a
+fix that matters between milestones, `1.0.0` once the app is considered complete. Small fixes and
+touches get no version of their own: they go live as a new build of the current version (the app then
+shows "0.x.y (commit)") and are listed under `## Depuis la dernière version` at the top of
+`CHANGELOG.md`, which the app's news screen shows first. A published version's entry never changes. `CHANGELOG.md` (in French, for users) says what each version brings: the app
 shows it after an update ("Nouveautés"), and a unit test requires an entry for the version in
 `package.json`.
 
 1. Write the version's entry at the top of `CHANGELOG.md` (`## x.y.z — YYYY-MM-DD`, then
-   `### Nouveautés` / `### Corrections` lists).
+   `### Nouveautés` / `### Corrections` lists), taking in the items of `## Depuis la dernière version`
+   and removing that section.
 2. `npm version x.y.z --no-git-tag-version`, then commit `package.json`, `package-lock.json` and
    `CHANGELOG.md` as `chore(release): x.y.z`.
 3. `git tag vx.y.z`: a lightweight tag, as an annotated one would record the time (see Privacy).

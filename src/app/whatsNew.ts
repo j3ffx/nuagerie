@@ -1,9 +1,12 @@
 import changelog from '../../CHANGELOG.md?raw';
-import { parseChangelog, releasesSince, type Release } from '../lib/changelog.ts';
+import { parseChangelog, parseUpcoming, releasesSince, type Release } from '../lib/changelog.ts';
 import { readPersistent, usePersistentState, writePersistent } from '../lib/persistent.ts';
 
 /** Every version's notes, most recent first (CHANGELOG.md, bundled at build time). */
 export const RELEASES: readonly Release[] = parseChangelog(changelog);
+
+/** Small changes live since the last release, with no number of their own (no banner for them). */
+export const UPCOMING: readonly string[] = parseUpcoming(changelog);
 
 /** Last version whose news the user has seen (or that was installed first). */
 const SEEN_KEY = 'seenVersion';

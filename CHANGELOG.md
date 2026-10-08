@@ -4,6 +4,13 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## Depuis la dernière version
+
+Petites retouches déjà en ligne, sans nouveau numéro : elles rejoindront la prochaine version.
+
+- Quand une nouvelle version est prête, son numéro s’affiche dans le bandeau et dans Réglages → À
+  propos.
+
 ## 0.1.2 — 2026-10-08
 
 ### Nouveautés
