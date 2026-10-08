@@ -251,3 +251,98 @@ test('Escape ends a selection on a computer; Ctrl + click starts one', async ({ 
   await expect(bar(page)).toBeHidden();
   await expect(page).toHaveURL(/\/tout$/);
 });
+
+/** Headless Chromium has no share sheet: record what would be shared (and refuse once if asked). */
+const stubShare = (page: Page, refuseFirst = false) =>
+  page.addInitScript((refuse) => {
+    const shared: number[] = [];
+    let calls = 0;
+    Object.assign(window, { shared });
+    Object.defineProperty(navigator, 'canShare', { value: () => true });
+    Object.defineProperty(navigator, 'share', {
+      value: async ({ files }: { files: File[] }) => {
+        if (refuse && calls++ === 0) throw new DOMException('Too late', 'NotAllowedError');
+        shared.push(files.length);
+      },
+    });
+  }, refuseFirst);
+const shared = (page: Page) =>
+  page.evaluate(() => (window as unknown as { shared: number[] }).shared);
+
+test('cancelling stops the downloads under way', async ({ page }) => {
+  await page.addInitScript(() => {
+    let clicks = 0;
+    Object.assign(window, { clicks: () => clicks });
+    // Count the downloads started, without saving anything.
+    HTMLAnchorElement.prototype.click = function () {
+      if (this.download) clicks++;
+    };
+  });
+  await page.reload();
+  await expect(cells(page).first().locator('img')).toBeVisible();
+  await longPress(page, cells(page).nth(0), cells(page).nth(5));
+  await expect(bar(page)).toContainText('6 sélectionnés');
+  await bar(page).getByRole('button', { name: 'Télécharger' }).click();
+  await bar(page).getByRole('button', { name: 'Annuler la sélection' }).click();
+  await expect(bar(page)).toBeHidden();
+  const clicks = () =>
+    page.evaluate(() => (window as unknown as { clicks: () => number }).clicks());
+  const atCancel = await clicks();
+  await page.waitForTimeout(2500);
+  expect(await clicks()).toBe(atCancel);
+  expect(atCancel).toBeLessThan(6);
+});
+
+test('cancelling while preparing a share shares nothing', async ({ page }) => {
+  await stubShare(page);
+  await page.reload();
+  await expect(cells(page).first().locator('img')).toBeVisible();
+  await longPress(page, cells(page).nth(0), cells(page).nth(5));
+  await bar(page).getByRole('button', { name: 'Partager' }).click();
+  await bar(page).getByRole('button', { name: 'Annuler la sélection' }).click();
+  await page.waitForTimeout(2500);
+  expect(await shared(page)).toEqual([]);
+});
+
+test('a share ready from before is redone for a changed selection', async ({ page }) => {
+  await stubShare(page, true);
+  await page.reload();
+  await expect(cells(page).first().locator('img')).toBeVisible();
+  await longPress(page, cells(page).nth(0), cells(page).nth(2));
+  await bar(page).getByRole('button', { name: 'Partager' }).click();
+  // Refused once (the tap's permission ran out): ready for a second tap.
+  await expect(bar(page).getByRole('button', { name: /prêt/ })).toBeVisible();
+  await cells(page).nth(4).click();
+  await expect(bar(page)).toContainText('4 sélectionnés');
+  await expect(bar(page).getByRole('button', { name: 'Partager' })).toBeVisible();
+  await bar(page).getByRole('button', { name: 'Partager' }).click();
+  await expect.poll(() => shared(page)).toEqual([4]);
+});
+
+test('the selection bar fits a 360 px phone, progress included', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 780 });
+  await stubShare(page);
+  await page.addInitScript(() => {
+    // Downloads that never finish, to look at the progress.
+    HTMLAnchorElement.prototype.click = () => undefined;
+  });
+  await page.reload();
+  await expect(cells(page).first().locator('img')).toBeVisible();
+  await longPress(page, cells(page).nth(0));
+  await page
+    .getByRole('main')
+    .getByRole('checkbox', { name: /^Tout le mois/ })
+    .first()
+    .click();
+  const fits = () =>
+    bar(page)
+      .getByRole('status')
+      .evaluate((element) => element.scrollWidth <= element.clientWidth);
+  expect(await fits()).toBe(true);
+  page.on('dialog', (dialog) => void dialog.accept());
+  await bar(page).getByRole('button', { name: 'Télécharger' }).click();
+  const confirm = page.getByRole('button', { name: 'Télécharger', exact: true }).last();
+  if (await confirm.isVisible()) await confirm.click();
+  await expect(bar(page).getByRole('status')).toContainText('/');
+  expect(await fits()).toBe(true);
+});

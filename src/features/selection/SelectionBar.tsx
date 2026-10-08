@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useData } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { useSync } from '../../data/sync/syncContext.ts';
@@ -10,12 +10,15 @@ import { canShareFiles, shareableFile } from '../viewer/share.ts';
 import { beyondShareLimit, SHARE_LIMIT, selectedLabel } from './selection.ts';
 import styles from './SelectionBar.module.css';
 
-type ShareState =
+type ShareState = { for: string } & (
   | { status: 'idle' }
   | { status: 'preparing'; done: number; total: number }
   /** Downloaded, but the browser wants a fresh tap to open the share sheet. */
   | { status: 'ready'; files: File[] }
-  | { status: 'failed'; message: string };
+  | { status: 'failed'; message: string }
+);
+
+const IDLE = { for: '', status: 'idle' } as const;
 
 const MESSAGE_MS = 4000;
 const DOWNLOAD_GAP_MS = 350;
@@ -36,33 +39,55 @@ export function SelectionBar({
   const sync = useSync();
   const confirm = useConfirm();
   const offline = !useOnline();
-  const [share, setShare] = useState<ShareState>({ status: 'idle' });
+  // What sharing has prepared is for these photos only: picked otherwise, it starts over.
+  const picked = useMemo(() => items.map((item) => item.id).join(' '), [items]);
+  const [stored, setShare] = useState<ShareState>(IDLE);
+  const share: ShareState = stored.for === picked ? stored : IDLE;
   const [downloading, setDownloading] = useState<{ done: number; total: number } | null>(null);
+  const busy = share.status === 'preparing' || downloading !== null;
   const allFavorites = items.length > 0 && items.every((item) => sync.favorites.has(item.id));
   const bytes = items.reduce((sum, item) => sum + item.size, 0);
 
+  // The downloads under way stop when the bar goes (cancelled, back) or the photos change.
+  const running = useRef<AbortController | null>(null);
+  const start = () => {
+    running.current?.abort();
+    running.current = new AbortController();
+    return running.current.signal;
+  };
+  useEffect(() => () => running.current?.abort(), [picked]);
+  const close = () => {
+    running.current?.abort();
+    onClose();
+  };
+
   useEffect(() => {
     if (share.status !== 'failed') return;
-    const timer = window.setTimeout(() => setShare({ status: 'idle' }), MESSAGE_MS);
+    const timer = window.setTimeout(() => setShare(IDLE), MESSAGE_MS);
     return () => window.clearTimeout(timer);
   }, [share.status]);
 
   const openShareSheet = async (files: File[]) => {
     try {
       await navigator.share({ files });
-      setShare({ status: 'idle' });
+      setShare(IDLE);
       onClose();
     } catch (error) {
       const name = error instanceof DOMException ? error.name : '';
       // Long downloads outlast the tap's permission: one more tap shares at once.
-      if (name === 'NotAllowedError') setShare({ status: 'ready', files });
-      else if (name === 'AbortError') setShare({ status: 'idle' });
-      else setShare({ status: 'failed', message: 'Partage impossible pour l’instant, réessaie.' });
+      if (name === 'NotAllowedError') setShare({ for: picked, status: 'ready', files });
+      else if (name === 'AbortError') setShare(IDLE);
+      else
+        setShare({
+          for: picked,
+          status: 'failed',
+          message: 'Partage impossible pour l’instant, réessaie.',
+        });
     }
   };
 
   const onShare = async () => {
-    if (share.status === 'preparing') return;
+    if (busy) return;
     if (share.status === 'ready') {
       await openShareSheet(share.files);
       return;
@@ -77,16 +102,26 @@ export function SelectionBar({
     ) {
       return;
     }
+    const signal = start();
     const files: File[] = [];
     for (const [done, item] of items.entries()) {
-      setShare({ status: 'preparing', done, total: items.length });
-      const file = await shareableFile(item, source, thumbnails.store, (candidate) =>
-        navigator.canShare({ files: [candidate] }),
+      setShare({ for: picked, status: 'preparing', done, total: items.length });
+      const file = await shareableFile(
+        item,
+        source,
+        thumbnails.store,
+        (candidate) => navigator.canShare({ files: [candidate] }),
+        signal,
       );
+      if (signal.aborted) return;
       if (file) files.push(file);
     }
     if (files.length === 0 || !navigator.canShare({ files })) {
-      setShare({ status: 'failed', message: 'Ces fichiers ne peuvent pas être partagés.' });
+      setShare({
+        for: picked,
+        status: 'failed',
+        message: 'Ces fichiers ne peuvent pas être partagés.',
+      });
       return;
     }
     await openShareSheet(files);
@@ -101,7 +136,8 @@ export function SelectionBar({
           'Les favoris se rangent dans ton OneDrive, avec tes préférences, dans un dossier à part (Applis/Nuagerie). Nuagerie va demander à Microsoft le droit d’écrire dans ce seul dossier : tes photos restent en lecture seule.',
         confirmLabel: 'Activer',
       });
-      if (answer) await sync.enable();
+      // These photos become favourites once it is on, even after Microsoft's page.
+      if (answer) await sync.enable(items.map((item) => item.id));
       return;
     }
     for (const item of items) {
@@ -122,10 +158,12 @@ export function SelectionBar({
     ) {
       return;
     }
+    const signal = start();
     for (const [done, item] of items.entries()) {
       setDownloading({ done, total: items.length });
       try {
         const url = await source.getOriginalUrl(item);
+        if (signal.aborted) return;
         if (url) {
           const link = document.createElement('a');
           link.href = url;
@@ -136,6 +174,7 @@ export function SelectionBar({
       } catch {
         // This one is skipped; the others go on.
       }
+      if (signal.aborted) return;
     }
     setDownloading(null);
     onClose();
@@ -148,11 +187,12 @@ export function SelectionBar({
       : 'Partager';
   const favoriteLabel = allFavorites ? 'Retirer des favoris' : 'Ajouter aux favoris';
   const downloadLabel = offline ? 'Télécharger (hors connexion)' : 'Télécharger';
+  // Short enough for 360 px beside four buttons; the full words for screen readers.
   const progress =
     share.status === 'preparing'
-      ? `Préparation ${share.done + 1} / ${share.total}…`
+      ? { label: 'Préparation du partage', done: share.done, total: share.total }
       : downloading
-        ? `Téléchargement ${downloading.done + 1} / ${downloading.total}…`
+        ? { label: 'Téléchargement', done: downloading.done, total: downloading.total }
         : null;
 
   return (
@@ -160,13 +200,20 @@ export function SelectionBar({
       <button
         type="button"
         className={styles.icon}
-        onClick={onClose}
+        onClick={close}
         aria-label="Annuler la sélection"
       >
         <CloseIcon />
       </button>
       <p className={styles.count} role="status">
-        {progress ?? selectedLabel(items.length)}
+        {progress ? (
+          <>
+            <span className="visually-hidden">{progress.label} : </span>
+            {progress.done + 1} / {progress.total}
+          </>
+        ) : (
+          selectedLabel(items.length)
+        )}
       </p>
       {canShareFiles() && (
         <button
@@ -187,7 +234,7 @@ export function SelectionBar({
           type="button"
           className={styles.icon}
           onClick={() => void onFavorite()}
-          disabled={!sync.favoritesOn && offline}
+          disabled={busy || (!sync.favoritesOn && offline)}
           aria-pressed={allFavorites}
           aria-label={favoriteLabel}
           title={favoriteLabel}

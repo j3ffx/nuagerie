@@ -20,14 +20,18 @@ export async function shareableFile(
   source: Pick<DataSource, 'getOriginalUrl'>,
   store: Pick<ThumbnailStore, 'acquire'>,
   accepts: (file: File) => boolean,
+  /** Stops the download (the user cancelled): the result is then null. */
+  cancel?: AbortSignal,
 ): Promise<File | null> {
+  const timeout = AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS);
+  // AbortSignal.any is recent (Chrome 116): without it, the timeout alone.
+  const signal =
+    cancel && typeof AbortSignal.any === 'function' ? AbortSignal.any([cancel, timeout]) : timeout;
   try {
     const url = await source.getOriginalUrl(item);
+    if (cancel?.aborted) return null;
     if (url) {
-      const response = await fetch(url, {
-        credentials: 'omit',
-        signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
-      });
+      const response = await fetch(url, { credentials: 'omit', signal });
       if (response.ok) {
         const blob = await response.blob();
         const file = new File([blob], item.name, { type: item.mimeType || blob.type });
@@ -37,7 +41,7 @@ export async function shareableFile(
   } catch {
     // Unreadable original (host, network, timeout): fall back below.
   }
-  if (item.kind !== 'image') return null;
+  if (item.kind !== 'image' || cancel?.aborted) return null;
   const handle = store.acquire(item, 'large');
   try {
     const blob = await (await fetch(await handle.promise)).blob();
