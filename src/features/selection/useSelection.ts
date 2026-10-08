@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MediaItem } from '../../data/model.ts';
 import { toggled, toggledAll, withRange, type Selection } from './selection.ts';
 
@@ -12,13 +12,31 @@ const isSelectionEntry = (state: unknown) => (state as SelectionState | null)?.s
 const EMPTY: Selection = new Set();
 
 /**
+ * On a selection's entry with no selection behind it (back from another
+ * screen, or a reload): step over it, or that back press would seem to do
+ * nothing. Its state is wiped first, so a second call finds nothing to skip.
+ */
+function skipDeadEntry(): void {
+  if (!isSelectionEntry(window.history.state)) return;
+  window.history.replaceState(null, '');
+  window.history.back();
+}
+
+/**
  * Photos picked in a grid. A long press (or Ctrl / Shift + click) starts the
  * selection; then a tap adds or removes a photo, a drag after the long press
  * takes every photo it passes, and a month's title takes the whole month.
  * The back button, the close button or an empty selection end it.
  */
 export function useSelection(items: readonly MediaItem[]) {
-  const [selected, setSelected] = useState<Selection>(EMPTY);
+  const [picked, setSelected] = useState<Selection>(EMPTY);
+  // Only the photos still in the list count (one may leave it: unfavourited, deleted).
+  const selected = useMemo<Selection>(() => {
+    if (picked.size === 0) return EMPTY;
+    const shown = new Set<string>();
+    for (const item of items) if (picked.has(item.id)) shown.add(item.id);
+    return shown.size === picked.size ? picked : shown;
+  }, [picked, items]);
   const active = selected.size > 0;
   /** Where the last long press or click was: the start of a drag or of a Shift + click. */
   const anchor = useRef<string | null>(null);
@@ -35,8 +53,13 @@ export function useSelection(items: readonly MediaItem[]) {
   }, [active]);
 
   useEffect(() => {
+    if (!pushed.current) skipDeadEntry();
     const onPop = () => {
-      if (!pushed.current || isSelectionEntry(window.history.state)) return;
+      if (!pushed.current) {
+        skipDeadEntry();
+        return;
+      }
+      if (isSelectionEntry(window.history.state)) return;
       pushed.current = false;
       setSelected(EMPTY);
     };
@@ -52,6 +75,18 @@ export function useSelection(items: readonly MediaItem[]) {
       setSelected(EMPTY);
     }
   }, []);
+
+  // Escape ends it on a computer (unless a dialog above has it).
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || document.querySelector('dialog[open]')) return;
+      event.preventDefault();
+      clear();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [active, clear]);
 
   // Emptied by taps: the entry goes too.
   useEffect(() => {

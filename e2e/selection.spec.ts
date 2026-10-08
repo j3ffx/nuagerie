@@ -198,3 +198,56 @@ test('the floating month title takes its month too', async ({ page }) => {
   await page.mouse.click(box.x + 40, box.y + box.height / 2);
   await expect(bar(page)).toContainText(/\d{2,} sélectionnés/);
 });
+
+test('a selection does not follow into a sub-album', async ({ page }) => {
+  await page.goto('/');
+  await page
+    .getByRole('list', { name: 'Albums' })
+    .getByRole('link', { name: /^Albums/ })
+    .click();
+  await page.getByRole('link', { name: /^Animaux/ }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Animaux' })).toBeVisible();
+  await longPress(page, cells(page).first());
+  await expect(bar(page)).toBeVisible();
+  await page.getByRole('link', { name: /^Chat/ }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Chat' })).toBeVisible();
+  await expect(bar(page)).toBeHidden();
+  // A tap opens the photo, as usual.
+  await cells(page).first().click();
+  await expect(page.getByRole('dialog', { name: 'Visionneuse' })).toBeVisible();
+});
+
+test('back never stops on a selection that is gone', async ({ page }) => {
+  // Left for another screen while picking, then back: one press is enough.
+  await longPress(page, cells(page).nth(1));
+  await page.getByRole('link', { name: 'Carte' }).click();
+  await expect(page).toHaveURL(/\/carte$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/tout$/);
+  await expect(bar(page)).toBeHidden();
+  await page.goBack();
+  await expect(page).not.toHaveURL(/\/tout$/);
+
+  // Reloaded while picking: the next back leaves too.
+  await page.goto('/tout');
+  await expect(cells(page).first().locator('img')).toBeVisible();
+  await longPress(page, cells(page).nth(1));
+  await page.reload();
+  await expect(cells(page).first().locator('img')).toBeVisible();
+  await page.goBack();
+  await expect(page).not.toHaveURL(/\/tout$/);
+});
+
+test('Escape ends a selection on a computer; Ctrl + click starts one', async ({ page }) => {
+  await cells(page)
+    .nth(2)
+    .click({ modifiers: ['Control'] });
+  await expect(bar(page)).toContainText('1 sélectionné');
+  await cells(page)
+    .nth(5)
+    .click({ modifiers: ['Shift'] });
+  await expect(bar(page)).toContainText('4 sélectionnés');
+  await page.keyboard.press('Escape');
+  await expect(bar(page)).toBeHidden();
+  await expect(page).toHaveURL(/\/tout$/);
+});

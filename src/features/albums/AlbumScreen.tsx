@@ -141,7 +141,9 @@ function AlbumContent({
       )}
 
       {items.length > 0 ? (
-        <PhotoBrowser items={items} label={`Photos et vidéos de ${album.name}`} />
+        // One per album: wouter keeps this screen from one album to the next, and a
+        // selection must not follow into a sub-album.
+        <PhotoBrowser key={album.id} items={items} label={`Photos et vidéos de ${album.name}`} />
       ) : (
         subAlbums.length === 0 && (
           <p className={`${common.muted} ${styles.summary}`}>Cet album est vide.</p>

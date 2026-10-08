@@ -47,7 +47,11 @@ export function ZoneScreen() {
       {index && (
         <>
           <p className={`${common.muted} ${allStyles.summary}`}>{formatItemCount(items.length)}</p>
-          <PhotoBrowser items={items} label="Photos de la zone" />
+          <PhotoBrowser
+            key={`${zone ?? ''} ${albumId ?? ''}`}
+            items={items}
+            label="Photos de la zone"
+          />
         </>
       )}
     </>
