@@ -15,6 +15,13 @@ import { describeItem } from '../../lib/format.ts';
 import { useMediaQuery } from '../../lib/useMediaQuery.ts';
 import { Thumbnail } from '../Thumbnail.tsx';
 import { DateScrubber } from './DateScrubber.tsx';
+import {
+  clampColumns,
+  MAX_COLUMNS_NARROW,
+  MAX_COLUMNS_WIDE,
+  useGridColumns,
+  usePinchSteps,
+} from './columns.ts';
 import { buildGridLayout, rowIndexOfItem, type GridLayout, type GridRow } from './layout.ts';
 import { stickyHeaderHeight } from './page.ts';
 import { StickyMonth } from './StickyMonth.tsx';
@@ -49,11 +56,48 @@ export function PhotoGrid({
   const rowsRef = useRef<HTMLDivElement>(null);
   const { width, gridTop } = useGridPlacement(rowsRef);
   const wide = useMediaQuery(WIDE_QUERY);
+  const [chosen, setChosen] = useGridColumns();
+  const maxColumns = wide ? MAX_COLUMNS_WIDE : MAX_COLUMNS_NARROW;
+  const columns = chosen === null ? null : clampColumns(chosen, maxColumns);
 
   const layout = useMemo(
-    () => buildGridLayout(sections, { width, headerSize: HEADER_SIZE, ...(wide ? WIDE : NARROW) }),
-    [sections, width, wide],
+    () =>
+      buildGridLayout(sections, {
+        width,
+        headerSize: HEADER_SIZE,
+        ...(wide ? WIDE : NARROW),
+        ...(columns === null ? {} : { columns }),
+      }),
+    [sections, width, wide, columns],
   );
+
+  // A pinch adds or removes a column; the photo under the fingers stays where it was.
+  const sectionRef = useRef<HTMLElement>(null);
+  const anchor = useRef<{ id: string; top: number } | null>(null);
+  const current = useRef(layout.columns);
+  useEffect(() => {
+    current.current = layout.columns;
+  }, [layout.columns]);
+  const onPinch = useCallback(
+    (step: -1 | 1, at: { x: number; y: number }) => {
+      const next = clampColumns(current.current + step, maxColumns);
+      if (next === current.current) return;
+      const cell = document.elementFromPoint(at.x, at.y)?.closest<HTMLElement>('[data-item-id]');
+      const id = cell?.dataset.itemId;
+      anchor.current = id && cell ? { id, top: cell.getBoundingClientRect().top } : null;
+      current.current = next;
+      setChosen(next);
+    },
+    [maxColumns, setChosen],
+  );
+  usePinchSteps(sectionRef, onPinch);
+  useLayoutEffect(() => {
+    const kept = anchor.current;
+    if (!kept) return;
+    anchor.current = null;
+    const row = layout.rows[rowIndexOfItem(layout, kept.id)];
+    if (row) window.scrollTo({ top: gridTop + row.start - kept.top, behavior: 'instant' });
+  }, [layout, gridTop]);
 
   const virtualizer = useWindowVirtualizer({
     count: layout.rows.length,
@@ -85,7 +129,7 @@ export function PhotoGrid({
   }, [reveal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <section aria-label={label} className={styles.grid}>
+    <section ref={sectionRef} aria-label={label} className={styles.grid}>
       <StickyMonth layout={layout} gridTop={gridTop} />
       <div ref={rowsRef} className={styles.rows} style={{ height: layout.totalSize }}>
         {virtualizer.getVirtualItems().map((virtualRow) => {

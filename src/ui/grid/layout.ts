@@ -14,6 +14,8 @@ export interface GridMetrics {
   minCell: number;
   gap: number;
   headerSize: number;
+  /** Columns chosen by the user, instead of as many as fit. */
+  columns?: number;
 }
 
 export type GridRow =
@@ -39,7 +41,7 @@ export function buildGridLayout(
   sections: readonly MonthSection[],
   metrics: GridMetrics,
 ): GridLayout {
-  const columns = columnCount(metrics.width, metrics.minCell, metrics.gap);
+  const columns = metrics.columns ?? columnCount(metrics.width, metrics.minCell, metrics.gap);
   const cellSize = Math.max(0, (metrics.width - (columns - 1) * metrics.gap) / columns);
   const rowSize = cellSize + metrics.gap;
   const rows: GridRow[] = [];

@@ -1,5 +1,7 @@
 .grid {
   position: relative;
+  /* Two fingers set the number of columns (columns.ts): the page itself does not zoom. */
+  touch-action: pan-y;
 }
 
 .rows {

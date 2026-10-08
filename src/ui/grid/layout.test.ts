@@ -20,6 +20,13 @@ describe('columnCount', () => {
 });
 
 describe('buildGridLayout', () => {
+  it('uses the columns chosen by the user, cells sized to fill the width', () => {
+    const layout = buildGridLayout([section('2026-10', 7)], { ...metrics, columns: 5 });
+    expect(layout.columns).toBe(5);
+    expect(layout.cellSize).toBeCloseTo((300 - 4 * 2) / 5);
+    expect(layout.rows.filter((row) => row.kind === 'cells')).toHaveLength(2);
+  });
+
   it('lays out a header then rows of cells for each month', () => {
     const layout = buildGridLayout([section('2026-10', 7), section('undated', 2)], metrics);
     expect(layout.columns).toBe(3);

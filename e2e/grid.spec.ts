@@ -75,3 +75,47 @@ test('keeps thumbnails on the device and can empty the cache', async ({ page }) 
   await expect(page.getByRole('button', { name: 'Miniatures effacées' })).toBeDisabled();
   await expect(page.getByText(/^0 Mo sur 1 Go$/)).toBeVisible();
 });
+
+/** Columns of the first row of photos on screen. */
+const columns = (page: Page) =>
+  page.evaluate(() => {
+    const row = document.querySelector<HTMLElement>('main [data-item-id]')?.parentElement;
+    return row ? getComputedStyle(row).gridTemplateColumns.split(' ').length : 0;
+  });
+
+/** Two fingers moving apart (or together) by `by` pixels each, through the DevTools protocol. */
+async function pinch(page: Page, by: number) {
+  const cdp = await page.context().newCDPSession(page);
+  const frame = (spread: number) => [
+    { x: 206 - spread, y: 450, id: 0 },
+    { x: 206 + spread, y: 450, id: 1 },
+  ];
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: frame(60) });
+  for (let i = 1; i <= 10; i++) {
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: frame(60 + (by * i) / 10),
+    });
+  }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+}
+
+test('pinching sets the number of columns, kept on the device', async ({ page }) => {
+  await expect(page.getByRole('main').locator('img').first()).toBeVisible();
+  const before = await columns(page);
+  expect(before).toBe(4);
+
+  await pinch(page, -40); // fingers closer: more, smaller photos
+  await expect.poll(() => columns(page)).toBeGreaterThan(before);
+  const more = await columns(page);
+
+  await page.reload();
+  await expect(page.getByRole('main').locator('img').first()).toBeVisible();
+  expect(await columns(page)).toBe(more);
+
+  await pinch(page, 120); // fingers apart: fewer, bigger photos, never under 3
+  await expect.poll(() => columns(page)).toBeLessThan(more);
+  expect(await columns(page)).toBeGreaterThanOrEqual(3);
+  // The page itself did not zoom.
+  expect(await page.evaluate(() => window.visualViewport?.scale ?? 1)).toBe(1);
+});
