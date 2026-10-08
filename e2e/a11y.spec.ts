@@ -57,6 +57,33 @@ const SCREENS: { name: string; path: string; ready: (page: Page) => Promise<void
     },
   },
   {
+    name: 'selection',
+    path: '/tout',
+    ready: async (page) => {
+      const cells = page.getByRole('main').locator('a[data-item-id]');
+      await cells.nth(0).click({ modifiers: ['Control'] });
+      await cells.nth(1).click();
+      await expect(page.getByRole('toolbar', { name: 'Sélection' })).toBeVisible();
+      await expect(
+        page
+          .getByRole('main')
+          .getByRole('checkbox', { name: /^Tout le mois/ })
+          .first(),
+      ).toHaveAttribute('aria-checked', 'mixed');
+    },
+  },
+  {
+    name: 'album menu',
+    path: '/',
+    ready: async (page) => {
+      await page
+        .getByRole('list', { name: 'Albums' })
+        .getByRole('link', { name: /^Camera Roll/ })
+        .click({ button: 'right' });
+      await expect(page.getByRole('dialog', { name: 'Camera Roll' })).toBeVisible();
+    },
+  },
+  {
     name: 'map',
     path: '/carte',
     ready: (page) => expect(page.getByText(/dans cette zone/)).toBeVisible(),

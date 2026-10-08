@@ -231,3 +231,17 @@ test('nothing in an album menu can be selected as text, and its rows look like b
   expect(styles.rowBackground).not.toBe(styles.sheetBackground);
   expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('');
 });
+
+test('closing an album menu gives the focus back to its tile', async ({ page }) => {
+  const tile = homeAlbums(page).getByRole('link', { name: /^Screenshots/ });
+  const menu = page.getByRole('dialog', { name: 'Screenshots' });
+  for (const close of ['Escape', 'Annuler'] as const) {
+    await tile.focus();
+    await tile.click({ button: 'right' });
+    await expect(menu).toBeVisible();
+    if (close === 'Escape') await page.keyboard.press('Escape');
+    else await menu.getByRole('button', { name: 'Annuler' }).click();
+    await expect(menu).toBeHidden();
+    await expect(tile).toBeFocused();
+  }
+});

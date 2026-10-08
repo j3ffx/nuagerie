@@ -346,3 +346,89 @@ test('the selection bar fits a 360 px phone, progress included', async ({ page }
   await expect(bar(page).getByRole('status')).toContainText('/');
   expect(await fits()).toBe(true);
 });
+
+test('Space ticks a photo while picking with a keyboard', async ({ page }) => {
+  await cells(page)
+    .nth(0)
+    .click({ modifiers: ['Control'] });
+  await cells(page).nth(3).focus();
+  await page.keyboard.press('Space');
+  await expect(cells(page).nth(3)).toHaveAttribute('aria-checked', 'true');
+  await expect(bar(page)).toContainText('2 sélectionnés');
+  const scrollY = await page.evaluate(() => window.scrollY);
+  await page.keyboard.press('Space');
+  await expect(cells(page).nth(3)).toHaveAttribute('aria-checked', 'false');
+  expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
+});
+
+test('dragging up under the header scrolls back and keeps picking', async ({ page }) => {
+  await page.mouse.wheel(0, 3000);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(2500);
+  // The photo in the middle of the screen (rows above it are rendered too, off screen).
+  const id = await page.evaluate(() => {
+    for (let y = window.innerHeight / 2; y < window.innerHeight; y += 20) {
+      const cell = document
+        .elementFromPoint(60, y)
+        ?.closest<HTMLElement>('[data-item-id]');
+      if (cell) return cell.dataset.itemId;
+    }
+    return undefined;
+  });
+  const box = await page.locator(`main a[data-item-id="${id}"]`).boundingBox();
+  if (!box) throw new Error('no cell');
+  const cdp = await page.context().newCDPSession(page);
+  const touch = (type: 'touchStart' | 'touchMove', y: number) =>
+    cdp.send('Input.dispatchTouchEvent', {
+      type,
+      touchPoints: [{ x: box.x + box.width / 2, y, id: 0 }],
+    });
+  await touch('touchStart', box.y + box.height / 2);
+  await page.waitForTimeout(700);
+  for (let y = box.y + box.height / 2; y > 30; y -= 40) await touch('touchMove', y);
+  await touch('touchMove', 20);
+  const before = await page.evaluate(() => window.scrollY);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(before - 300);
+  const count = Number((await bar(page).getByRole('status').textContent())?.match(/\d+/)?.[0]);
+  expect(count).toBeGreaterThan(12);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+});
+
+test('a second finger during a drag stops it and keeps what was picked', async ({ page }) => {
+  const cdp = await page.context().newCDPSession(page);
+  const from = await cells(page).nth(0).boundingBox();
+  const to = await cells(page).nth(4).boundingBox();
+  if (!from || !to) throw new Error('no cells');
+  const a = { x: from.x + from.width / 2, y: from.y + from.height / 2, id: 0 };
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [a] });
+  await page.waitForTimeout(700);
+  const b = { x: to.x + to.width / 2, y: to.y + to.height / 2, id: 0 };
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [b] });
+  await expect(bar(page)).toContainText('5 sélectionnés');
+  // A second finger: the drag is over.
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [b, { x: 50, y: 600, id: 1 }],
+  });
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchMove',
+    touchPoints: [
+      { ...b, y: b.y + 300 },
+      { x: 50, y: 700, id: 1 },
+    ],
+  });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await expect(bar(page)).toContainText('5 sélectionnés');
+});
+
+test('offline, what needs the network is greyed out in the selection bar', async ({
+  page,
+  context,
+}) => {
+  await longPress(page, cells(page).nth(0));
+  await context.setOffline(true);
+  await expect(
+    bar(page).getByRole('button', { name: 'Télécharger (hors connexion)' }),
+  ).toBeDisabled();
+  await expect(bar(page).getByRole('button', { name: 'Ajouter aux favoris' })).toBeEnabled();
+  await context.setOffline(false);
+});
