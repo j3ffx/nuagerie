@@ -53,6 +53,15 @@ a {
   color: var(--color-primary);
 }
 
+/*
+ * Touch feedback. The browser's own tap highlight is off (a grey box), so
+ * whatever reacts to a tap dims a little while pressed: buttons, links,
+ * album tiles, grid cells, check boxes, the navigation.
+ */
+:where(button, a, select, summary, label:has(input), [role='button']):active:not(:disabled) {
+  filter: var(--press-filter);
+}
+
 :focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;

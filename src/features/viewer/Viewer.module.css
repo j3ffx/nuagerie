@@ -289,3 +289,12 @@
     display: grid;
   }
 }
+
+/* Pressed: a soft light disc behind the icons, a deeper one behind the arrows. */
+.icon:active:not(:disabled) {
+  background: rgb(255 255 255 / 0.16);
+}
+
+.step:active {
+  background: rgb(0 0 0 / 0.7);
+}

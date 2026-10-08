@@ -129,3 +129,9 @@ ul.list {
   flex-wrap: wrap;
   gap: var(--space-2);
 }
+
+/* No background of its own: a soft one while pressed. */
+.open:not(:disabled):active,
+.up:active {
+  background: var(--color-press);
+}

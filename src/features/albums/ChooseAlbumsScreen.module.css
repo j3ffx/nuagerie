@@ -99,3 +99,8 @@
 .reset {
   margin-top: var(--space-4);
 }
+
+/* No background of its own: a soft one while pressed. */
+.expand:active {
+  background: var(--color-press);
+}

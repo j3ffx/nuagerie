@@ -108,3 +108,8 @@
     left: calc(var(--rail-width) + var(--space-3));
   }
 }
+
+/* No background of its own: a soft one while pressed. */
+.close:active {
+  background: var(--color-press);
+}

@@ -76,3 +76,10 @@
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
 }
+
+/* No background of its own: a soft one while pressed. */
+.back:active,
+.order:active,
+.sortToggle:active {
+  background: var(--color-press);
+}
