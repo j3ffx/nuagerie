@@ -159,25 +159,29 @@ export function SelectionBar({
       return;
     }
     const signal = start();
-    for (const [done, item] of items.entries()) {
-      setDownloading({ done, total: items.length });
-      try {
-        const url = await source.getOriginalUrl(item);
-        if (signal.aborted) return;
-        if (url) {
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = item.name;
-          link.click();
-          await new Promise((resolve) => setTimeout(resolve, DOWNLOAD_GAP_MS));
+    try {
+      for (const [done, item] of items.entries()) {
+        setDownloading({ done, total: items.length });
+        try {
+          const url = await source.getOriginalUrl(item);
+          if (signal.aborted) return;
+          if (url) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = item.name;
+            link.click();
+            await new Promise((resolve) => setTimeout(resolve, DOWNLOAD_GAP_MS));
+          }
+        } catch {
+          // This one is skipped; the others go on.
         }
-      } catch {
-        // This one is skipped; the others go on.
+        if (signal.aborted) return;
       }
-      if (signal.aborted) return;
+      onClose();
+    } finally {
+      // Done, or stopped (cancelled, other photos picked): the bar is free again.
+      setDownloading(null);
     }
-    setDownloading(null);
-    onClose();
   };
 
   const shareLabel = offline
