@@ -17,13 +17,18 @@ agréable aussi sur PC.
 - **Albums.** Chaque dossier est un album possible. Les dossiers techniques (années,
   mois, `Sans date`) n’en sont jamais : leurs fichiers vont à l’album au-dessus. On choisit
   les albums de l’accueil, leurs sous-albums s’affichent dans leur page, et l’accueil se
-  trie par date ou par nom.
+  trie par date ou par nom. Un appui long sur un album ouvre son menu : le masquer, voir ses
+  photos sur la carte, l’ouvrir dans OneDrive.
 - **Tout.** Toutes les photos dans une seule grille chronologique, avec une frise de dates
   sur le côté pour sauter à un mois, et un filtre pour écarter des albums.
+- **Grilles.** Pincer change le nombre de colonnes. Un appui long sélectionne des photos
+  (glisser en prend plusieurs, toucher un mois le prend en entier) pour les partager, les
+  mettre en favoris ou les télécharger d’un coup.
 - **Carte.** Les photos géolocalisées, regroupées par lieu ; toucher un groupe zoome dessus,
   et un bandeau montre les photos de la zone.
 - **Visionneuse.** Plein écran, glisser pour passer d’une photo à l’autre, pincer pour
-  zoomer, lecture des vidéos. Les photos HEIC s’affichent via la grande miniature de
+  zoomer, lecture des vidéos. Toucher la date ouvre les infos : date et son origine, album,
+  dossier, appareil photo, taille, lieu. Les photos HEIC s’affichent via la grande miniature de
   OneDrive. Partager ou télécharger l’original se fait à la demande.
 - **Dates fiables.** La date de prise de vue vient des données EXIF, sinon du nom du fichier
   (`20261006_084759.jpg`, `IMG-20250914-WA0003.jpg`, `Screenshot_…`, horodatages…), sinon
