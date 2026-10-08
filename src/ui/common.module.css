@@ -60,6 +60,13 @@
   color: var(--color-on-primary-soft);
 }
 
+/* An action that erases something (signing out erases what is kept on the device). */
+.buttonDanger {
+  composes: button;
+  background: var(--color-danger);
+  color: var(--color-on-danger);
+}
+
 .chip {
   position: relative;
   display: inline-flex;

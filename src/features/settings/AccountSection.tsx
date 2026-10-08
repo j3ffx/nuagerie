@@ -61,7 +61,7 @@ export function AccountSection() {
             </dl>
             <button
               type="button"
-              className={common.buttonSoft}
+              className={common.buttonDanger}
               onClick={() => void signOutAndForget()}
               disabled={!online}
             >
