@@ -253,3 +253,19 @@ export function folderTrail(folders: ReadonlyMap<string, Folder>, folderId: stri
   }
   return names;
 }
+
+/** The items of a folder and of every folder below it (an album on the map, sub-albums included). */
+export function withinFolder(index: MediaIndex, folderId: string): readonly MediaItem[] {
+  const inside = new Map<string, boolean>();
+  const isInside = (id: string | null): boolean => {
+    if (id === null) return false;
+    if (id === folderId) return true;
+    const known = inside.get(id);
+    if (known !== undefined) return known;
+    inside.set(id, false); // guards against a cycle
+    const value = isInside(index.folders.get(id)?.parentId ?? null);
+    inside.set(id, value);
+    return value;
+  };
+  return index.items.filter((item) => isInside(item.folderId));
+}

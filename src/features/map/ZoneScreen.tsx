@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'wouter';
-import { withoutFolders } from '../../data/albums.ts';
+import { withinFolder, withoutFolders } from '../../data/albums.ts';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import { formatItemCount } from '../../lib/format.ts';
 import common from '../../ui/common.module.css';
@@ -19,17 +19,28 @@ export function ZoneScreen() {
   const { excluded } = useAllFilter();
   const [params] = useSearchParams();
   const zone = params.get('b');
+  // From an album's map: that album and its sub-albums only.
+  const albumId = params.get('album');
   const items = useMemo(() => {
     const bounds = parseBounds(zone);
-    return index && bounds ? itemsInBounds(withoutFolders(index, excluded), bounds) : [];
-  }, [index, excluded, zone]);
+    if (!index || !bounds) return [];
+    const shown =
+      albumId && index.folders.has(albumId)
+        ? withinFolder(index, albumId)
+        : withoutFolders(index, excluded);
+    return itemsInBounds(shown, bounds);
+  }, [index, excluded, zone, albumId]);
 
   return (
     <>
       <ScreenHeader
         title="Photos de la zone"
         leading={
-          <Link href="/carte" className={albumStyles.back} aria-label="Retour à la carte">
+          <Link
+            href={albumId ? `/carte?album=${encodeURIComponent(albumId)}` : '/carte'}
+            className={albumStyles.back}
+            aria-label="Retour à la carte"
+          >
             <BackIcon />
           </Link>
         }

@@ -1,13 +1,13 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'wouter';
-import { withoutFolders } from '../../data/albums.ts';
+import { withinFolder, withoutFolders } from '../../data/albums.ts';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { describeItem, formatCount, formatItemCount } from '../../lib/format.ts';
 import { useOnline } from '../../lib/online.ts';
 import { readPersistent, writePersistent } from '../../lib/persistent.ts';
 import common from '../../ui/common.module.css';
-import { CloudOffIcon, FilterIcon } from '../../ui/icons.tsx';
+import { CloseIcon, CloudOffIcon, FilterIcon } from '../../ui/icons.tsx';
 import { IndexStatus } from '../../ui/IndexStatus.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import { Thumbnail } from '../../ui/Thumbnail.tsx';
@@ -44,7 +44,13 @@ export function MapScreen() {
   const [zoom, setZoom] = useState<number | null>(null);
   const online = useOnline();
 
-  const items = useMemo(() => (index ? withoutFolders(index, excluded) : []), [index, excluded]);
+  // Opened from an album's menu (`?album=<id>`): that album and its sub-albums only.
+  const albumId = params.get('album');
+  const album = albumId ? (index?.folders.get(albumId) ?? null) : null;
+  const items = useMemo(
+    () => (!index ? [] : album ? withinFolder(index, album.id) : withoutFolders(index, excluded)),
+    [index, album, excluded],
+  );
   const located = useMemo(() => items.filter((item) => item.latitude !== null), [items]);
   const focusId = params.get('focus');
   const focus = useMemo(
@@ -52,16 +58,20 @@ export function MapScreen() {
     [index, focusId],
   );
   const [initial] = useState<MapViewState | Bounds | null>(() =>
-    readPersistent<MapViewState | null>(VIEW_KEY, null),
+    albumId ? null : readPersistent<MapViewState | null>(VIEW_KEY, null),
   );
   const zoneItems = useMemo(() => (zone ? itemsInBounds(located, zone) : []), [located, zone]);
   const hiddenCount = index ? [...excluded].filter((id) => index.folders.has(id)).length : 0;
 
-  const onMove = useCallback((view: MapViewState, bounds: Bounds) => {
-    writePersistent(VIEW_KEY, view);
-    setZone(bounds);
-    setZoom(view.zoom);
-  }, []);
+  const onMove = useCallback(
+    (view: MapViewState, bounds: Bounds) => {
+      // An album's map starts on its photos: the usual view is kept for the usual map.
+      if (!albumId) writePersistent(VIEW_KEY, view);
+      setZone(bounds);
+      setZoom(view.zoom);
+    },
+    [albumId],
+  );
   const onOpen = useCallback((item: MediaItem) => open(item.id), [open]);
 
   // The viewer swipes through the zone's photos; a photo outside it (a link) shows alone.
@@ -78,18 +88,29 @@ export function MapScreen() {
       <ScreenHeader
         title="Carte"
         actions={
-          <Link
-            href="/tout/filtre?retour=carte"
-            className={`${common.chip} ${allStyles.filter}`}
-            aria-label={
-              hiddenCount > 0
-                ? `Filtrer par albums (${formatCount(hiddenCount)} masqué${hiddenCount > 1 ? 's' : ''})`
-                : 'Filtrer par albums'
-            }
-          >
-            <FilterIcon width={18} height={18} />
-            {hiddenCount > 0 ? formatCount(hiddenCount) : 'Filtrer'}
-          </Link>
+          album ? (
+            <Link
+              href="/carte"
+              className={`${common.chip} ${styles.albumChip}`}
+              aria-label={`Album ${album.name} seulement : voir toutes les photos`}
+            >
+              <span className={styles.albumName}>{album.name}</span>
+              <CloseIcon width={16} height={16} />
+            </Link>
+          ) : (
+            <Link
+              href="/tout/filtre?retour=carte"
+              className={`${common.chip} ${allStyles.filter}`}
+              aria-label={
+                hiddenCount > 0
+                  ? `Filtrer par albums (${formatCount(hiddenCount)} masqué${hiddenCount > 1 ? 's' : ''})`
+                  : 'Filtrer par albums'
+              }
+            >
+              <FilterIcon width={18} height={18} />
+              {hiddenCount > 0 ? formatCount(hiddenCount) : 'Filtrer'}
+            </Link>
+          )
         }
       />
       <IndexStatus />
@@ -117,6 +138,7 @@ export function MapScreen() {
             zone={zone}
             zoom={zoom}
             focus={focus}
+            albumId={album?.id ?? null}
             onOpen={onOpen}
           />
         </div>
@@ -135,6 +157,7 @@ function ZonePanel({
   zone,
   zoom,
   focus,
+  albumId,
   onOpen,
 }: {
   items: readonly MediaItem[];
@@ -142,6 +165,8 @@ function ZonePanel({
   zone: Bounds | null;
   zoom: number | null;
   focus: MediaItem | null;
+  /** The map shows one album: so does the grid of the zone. */
+  albumId: string | null;
   onOpen: (item: MediaItem) => void;
 }) {
   // Offered only while the photo it is for is on screen, at the scale of its
@@ -168,7 +193,10 @@ function ZonePanel({
               : `${formatItemCount(items.length)} dans cette zone`}
         </h2>
         {zone && items.length > 0 && (
-          <Link href={`/carte/zone?b=${formatBounds(zone)}`} className={common.chip}>
+          <Link
+            href={`/carte/zone?b=${formatBounds(zone)}${albumId ? `&album=${encodeURIComponent(albumId)}` : ''}`}
+            className={common.chip}
+          >
             Tout voir
           </Link>
         )}

@@ -197,3 +197,15 @@
     left: var(--rail-width);
   }
 }
+
+/* Map of one album (from its menu): its name, and a cross back to every photo. */
+.albumChip {
+  gap: var(--space-1);
+  max-width: 55vw;
+}
+
+.albumName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

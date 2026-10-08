@@ -6,6 +6,7 @@ import {
   folderTree,
   orderItems,
   sortAlbums,
+  withinFolder,
   withoutFolders,
   type Album,
 } from './albums.ts';
@@ -237,5 +238,14 @@ describe('folderTrail', () => {
     expect(folderTrail(index.folders, 'cam-m')).toEqual(['Pictures', 'Camera Roll', '2026', '10']);
     expect(folderTrail(index.folders, 'pics')).toEqual(['Pictures']);
     expect(folderTrail(index.folders, 'unknown')).toEqual([]);
+  });
+});
+
+describe('withinFolder', () => {
+  it('takes the items of a folder and of all its sub-folders', () => {
+    expect(itemIds(withinFolder(index, 'evt')).sort()).toEqual(['m1', 'm2', 'v1']);
+    expect(itemIds(withinFolder(index, 'cam')).sort()).toEqual(['c1', 'c2', 'c3']);
+    expect(itemIds(withinFolder(index, 'party'))).toEqual(['m2']);
+    expect(withinFolder(index, 'unknown')).toEqual([]);
   });
 });
