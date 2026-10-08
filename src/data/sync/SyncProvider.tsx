@@ -24,6 +24,7 @@ import {
 import {
   SYNC_ENABLED_KEY,
   SYNC_GRANTED_KEY,
+  SYNC_TURNED_OFF_KEY,
   SyncContext,
   syncStateKey,
   type SyncStatus,
@@ -210,6 +211,7 @@ export function SyncProvider({
 
   const enable = useCallback(async (favoriteId?: string) => {
     if (favoriteId) writePersistent(PENDING_FAVORITE_KEY, favoriteId);
+    writePersistent(SYNC_TURNED_OFF_KEY, false);
     setNotice(null);
     try {
       // Granted already (on another device, or before signing out): no page to go through.
@@ -233,7 +235,34 @@ export function SyncProvider({
     }
   }, []);
 
-  const disable = useCallback(() => writePersistent(SYNC_ENABLED_KEY, false), []);
+  const disable = useCallback(() => {
+    writePersistent(SYNC_ENABLED_KEY, false);
+    writePersistent(SYNC_TURNED_OFF_KEY, true);
+  }, []);
+
+  // Turned on from another device: Microsoft grants the permission to the account, not to a
+  // device, and the app folder holds a copy. This device then follows without a word, unless
+  // the user turned the sync off here. One token and one small read, once per start.
+  useEffect(() => {
+    if (!available || enabledSetting || !isOnline()) return;
+    if (readPersistent(SYNC_TURNED_OFF_KEY, false)) return;
+    let cancelled = false;
+    const getToken = () => getSyncToken({ deviceOnly: true });
+    void (async () => {
+      try {
+        await getToken();
+        const copy = await createAppFolder(createGraphClient({ getToken })).read();
+        if (cancelled || !copy) return;
+        writePersistent(SYNC_GRANTED_KEY, true);
+        writePersistent(SYNC_ENABLED_KEY, true);
+      } catch {
+        // Not granted, or never turned on anywhere: the sync stays off.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [available, enabledSetting]);
 
   const dismissNotice = useCallback(
     (retry: boolean) => {

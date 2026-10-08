@@ -6,6 +6,8 @@ export const syncStateKey = (mode: DataMode) => `sync.state.${mode}`;
 export const SYNC_ENABLED_KEY = 'sync.enabled';
 /** Microsoft granted the sync permission on this device (a token was obtained). */
 export const SYNC_GRANTED_KEY = 'sync.granted';
+/** The user turned the sync off on this device: it no longer follows the other devices. */
+export const SYNC_TURNED_OFF_KEY = 'sync.turnedOff';
 
 export type SyncStatus =
   /** Kept on this device only (sync off, demo, or no account). */

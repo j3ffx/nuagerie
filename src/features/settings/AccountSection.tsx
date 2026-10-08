@@ -1,7 +1,12 @@
 import { useAccount } from '@azure/msal-react';
 import { signIn, signOut } from '../../auth/msal.ts';
 import { useData } from '../../data/dataContext.ts';
-import { SYNC_ENABLED_KEY, SYNC_GRANTED_KEY, syncStateKey } from '../../data/sync/syncContext.ts';
+import {
+  SYNC_ENABLED_KEY,
+  SYNC_GRANTED_KEY,
+  SYNC_TURNED_OFF_KEY,
+  syncStateKey,
+} from '../../data/sync/syncContext.ts';
 import { removePersistent } from '../../lib/persistent.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
@@ -30,6 +35,7 @@ export function AccountSection() {
     removePersistent(syncStateKey('onedrive'));
     removePersistent(SYNC_ENABLED_KEY);
     removePersistent(SYNC_GRANTED_KEY);
+    removePersistent(SYNC_TURNED_OFF_KEY);
     await signOut();
   };
 
