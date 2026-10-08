@@ -26,6 +26,8 @@ const LAST_SYNC_KEY = 'sync.lastSyncAt';
 const PENDING_FAVORITE_KEY = 'sync.pendingFavorite';
 /** A change goes out after this pause, so a few taps make one write. */
 const SYNC_DELAY_MS = 1500;
+/** While the app is on screen, another device's changes come in within this time. */
+const SYNC_INTERVAL_MS = 60_000;
 
 const SYNCED = new Set<string>(SYNCED_PREFERENCES);
 
@@ -86,65 +88,71 @@ export function SyncProvider({
   const running = useRef(false);
   const again = useRef(false);
 
-  const run = useCallback(async () => {
-    if (!folder) return;
-    if (running.current) {
-      again.current = true;
-      return;
-    }
-    if (!isOnline()) {
-      setStatus({ status: 'offline', message: null });
-      return;
-    }
-    running.current = true;
-    setStatus({ status: 'syncing', message: null });
-    try {
-      // Preferences set before the sync was on count as the oldest change: another device wins.
-      let local = current();
-      for (const key of SYNCED_PREFERENCES) {
-        const value = readPersistent<unknown>(key, undefined);
-        if (value !== undefined && !local.preferences[key]) {
-          local = withPreference(local, key, value, 0);
-        }
+  const run = useCallback(
+    async ({ quiet = false } = {}) => {
+      if (!folder) return;
+      if (running.current) {
+        again.current = true;
+        return;
       }
-      const merged = await syncWith(folder, local);
-      // Changes made on this device while the sync ran are kept, the next run sends them.
-      const latest = current();
-      const kept = mergeStates(merged, latest);
-      if (!sameState(kept, latest)) save(kept);
-      applying.current = true;
+      if (!isOnline()) {
+        setStatus({ status: 'offline', message: null });
+        return;
+      }
+      running.current = true;
+      // The check every minute shows nothing while it runs: the status line would blink.
+      if (!quiet) setStatus({ status: 'syncing', message: null });
       try {
-        for (const [key, entry] of Object.entries(merged.preferences)) {
-          if (!SYNCED.has(key)) continue;
-          const mine = readPersistent<unknown>(key, undefined);
-          if (JSON.stringify(mine) !== JSON.stringify(entry.value))
-            writePersistent(key, entry.value);
+        // Preferences set before the sync was on count as the oldest change: another device wins.
+        let local = current();
+        for (const key of SYNCED_PREFERENCES) {
+          const value = readPersistent<unknown>(key, undefined);
+          if (value !== undefined && !local.preferences[key]) {
+            local = withPreference(local, key, value, 0);
+          }
         }
+        const merged = await syncWith(folder, local);
+        // Changes made on this device while the sync ran are kept, the next run sends them.
+        const latest = current();
+        const kept = mergeStates(merged, latest);
+        if (!sameState(kept, latest)) save(kept);
+        applying.current = true;
+        try {
+          for (const [key, entry] of Object.entries(merged.preferences)) {
+            if (!SYNCED.has(key)) continue;
+            const mine = readPersistent<unknown>(key, undefined);
+            if (JSON.stringify(mine) !== JSON.stringify(entry.value))
+              writePersistent(key, entry.value);
+          }
+        } finally {
+          applying.current = false;
+        }
+        writePersistent(LAST_SYNC_KEY, Date.now());
+        setStatus({ status: 'ok', message: null });
+      } catch (error) {
+        setStatus(
+          error instanceof SyncPermissionMissing
+            ? { status: 'needs-permission', message: null }
+            : {
+                status: isOnline() ? 'error' : 'offline',
+                message: error instanceof Error ? error.message : String(error),
+              },
+        );
       } finally {
-        applying.current = false;
+        running.current = false;
+        if (again.current) {
+          again.current = false;
+          void run();
+        }
       }
-      writePersistent(LAST_SYNC_KEY, Date.now());
-      setStatus({ status: 'ok', message: null });
-    } catch (error) {
-      setStatus(
-        error instanceof SyncPermissionMissing
-          ? { status: 'needs-permission', message: null }
-          : {
-              status: isOnline() ? 'error' : 'offline',
-              message: error instanceof Error ? error.message : String(error),
-            },
-      );
-    } finally {
-      running.current = false;
-      if (again.current) {
-        again.current = false;
-        void run();
-      }
-    }
+    },
     // `current` reads storage; it needs no dependency.
-  }, [folder, save]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [folder, save],
+  );
 
-  // On start, after a change (a short pause first), when back online or in the foreground.
+  // On start, after a change (a short pause first), when back online or in the foreground,
+  // and every minute while on screen (one small read; a write only if something changed).
   useEffect(() => {
     if (!folder) return;
     void run();
@@ -152,9 +160,13 @@ export function SyncProvider({
       if (document.visibilityState === 'visible') void run();
     };
     const onOnline = () => void run();
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && isOnline()) void run({ quiet: true });
+    }, SYNC_INTERVAL_MS);
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('online', onOnline);
     return () => {
+      window.clearInterval(timer);
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('online', onOnline);
     };
