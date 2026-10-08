@@ -16,6 +16,8 @@ export interface PressDragHandlers {
   onLongPress: (id: string) => void;
   /** That finger, still down, is now over this photo. */
   onDrag: (id: string) => void;
+  /** The finger lifted (or the gesture was cancelled). */
+  onDragEnd: () => void;
 }
 
 /** The part of the screen where the grid's photos show: below the header, above the bottom bar. */
@@ -84,7 +86,10 @@ export function usePressDrag(
     let frame = 0;
 
     const stop = () => {
-      if (dragging && pressed.current) pressed.current.liftedAt = Date.now();
+      if (dragging) {
+        if (pressed.current) pressed.current.liftedAt = Date.now();
+        latest.current.onDragEnd();
+      }
       window.clearTimeout(timer);
       window.cancelAnimationFrame(frame);
       start = null;

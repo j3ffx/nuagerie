@@ -147,6 +147,8 @@ test('dragging onto the bottom bar scrolls on and keeps picking; back up, it sto
   await expect.poll(scrolled).toBeGreaterThan(300);
   const before = await count();
   await expect.poll(count).toBeGreaterThan(before);
+  // Far enough that the row the finger started on is well off screen.
+  await expect.poll(scrolled, { timeout: 15_000 }).toBeGreaterThan(3000);
 
   // Back to the middle of the screen: the page stops.
   await touch('touchMove', x, height / 2);
@@ -154,7 +156,15 @@ test('dragging onto the bottom bar scrolls on and keeps picking; back up, it sto
   const stopped = await scrolled();
   await page.waitForTimeout(400);
   expect(await scrolled()).toBe(stopped);
+
+  // Down again, then the finger lifts over the bar: the page stops there too.
+  await touch('touchMove', x, height - 15);
+  await expect.poll(scrolled).toBeGreaterThan(stopped + 200);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await page.waitForTimeout(200);
+  const lifted = await scrolled();
+  await page.waitForTimeout(400);
+  expect(await scrolled()).toBe(lifted);
   await expect(bar(page)).toBeVisible();
 });
 

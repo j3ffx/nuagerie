@@ -1,4 +1,4 @@
-import { useWindowVirtualizer } from '@tanstack/react-virtual';
+import { defaultRangeExtractor, useWindowVirtualizer, type Range } from '@tanstack/react-virtual';
 import {
   memo,
   useCallback,
@@ -112,20 +112,37 @@ export function PhotoGrid({
   );
   usePinchSteps(sectionRef, onPinch);
 
+  // While a finger drags to pick photos, the row it started on stays rendered even far off
+  // screen: the browser sends that finger's moves and lift to the element it first touched,
+  // and a row taken out of the page would take them away with it.
+  const pinnedRow = useRef<number | null>(null);
+  const rangeExtractor = useCallback((range: Range) => {
+    const rows = defaultRangeExtractor(range);
+    const pinned = pinnedRow.current;
+    return pinned === null || rows.includes(pinned)
+      ? rows
+      : [...rows, pinned].sort((a, b) => a - b);
+  }, []);
+
   // Long press then drag (finger), clicks with Ctrl or Shift: picking photos.
   const byId = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
   const pressHandlers = useMemo(
     () => ({
       onLongPress: (id: string) => {
         const item = byId.get(id);
-        if (item) selection?.onLongPress(item);
+        if (!item) return;
+        pinnedRow.current = rowIndexOfItem(layout, id);
+        selection?.onLongPress(item);
+      },
+      onDragEnd: () => {
+        pinnedRow.current = null;
       },
       onDrag: (id: string) => {
         const item = byId.get(id);
         if (item) selection?.onDrag(item);
       },
     }),
-    [byId, selection],
+    [byId, selection, layout],
   );
   const swallowClick = usePressDrag(sectionRef, pressHandlers);
   const onCell = useCallback<CellClick>(
@@ -160,6 +177,7 @@ export function PhotoGrid({
 
   const virtualizer = useWindowVirtualizer({
     count: layout.rows.length,
+    rangeExtractor,
     estimateSize: (index) => layout.rows[index]?.size ?? 0,
     // A new identity for each layout makes the virtualizer recompute every offset.
     getItemKey: useCallback((index: number) => index, [layout]), // eslint-disable-line react-hooks/exhaustive-deps
