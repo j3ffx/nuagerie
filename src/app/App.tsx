@@ -22,6 +22,7 @@ import { MapScreen } from '../features/map/MapScreen.tsx';
 import { ZoneScreen } from '../features/map/ZoneScreen.tsx';
 import { FoldersScreen } from '../features/settings/FoldersScreen.tsx';
 import { FavoritesScreen } from '../features/favorites/FavoritesScreen.tsx';
+import { SyncNotice } from '../features/favorites/SyncNotice.tsx';
 import { SettingsScreen } from '../features/settings/SettingsScreen.tsx';
 import { WhatsNewScreen } from '../features/settings/WhatsNewScreen.tsx';
 import { SignInScreen } from '../features/welcome/SignInScreen.tsx';
@@ -112,6 +113,7 @@ function ShellContent() {
         <WhatsNewBanner />
         <ConnectionBanner />
       </div>
+      <SyncNotice />
       <main id="main" className={styles.main}>
         <Switch>
           <Route path="/" component={AlbumsScreen} />

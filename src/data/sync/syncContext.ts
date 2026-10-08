@@ -4,6 +4,8 @@ import type { DataMode } from '../source.ts';
 /** This device's copy of the synced state, per data source (demo and OneDrive ids differ). */
 export const syncStateKey = (mode: DataMode) => `sync.state.${mode}`;
 export const SYNC_ENABLED_KEY = 'sync.enabled';
+/** Microsoft granted the sync permission on this device (a token was obtained). */
+export const SYNC_GRANTED_KEY = 'sync.granted';
 
 export type SyncStatus =
   /** Kept on this device only (sync off, demo, or no account). */
@@ -27,9 +29,14 @@ export interface SyncContextValue {
   status: SyncStatus;
   message: string | null;
   lastSyncAt: number | null;
+  /** Why turning the favourites on did not go through (permission declined, error), to show once. */
+  notice: string | null;
+  /** The notice was seen; `retry` turns the favourites on again. */
+  dismissNotice: (retry: boolean) => void;
   /**
-   * Turns the sync on, asking Microsoft for the permission when needed (leaves
-   * the page); `favoriteId` becomes a favourite once it is on.
+   * Turns the sync on, asking Microsoft for the permission unless this device
+   * already holds it (leaves the page); `favoriteId` becomes a favourite once
+   * the first sync went through.
    */
   enable: (favoriteId?: string) => Promise<void>;
   /** Turns it off; what is on this device stays. */

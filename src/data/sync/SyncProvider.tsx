@@ -10,6 +10,7 @@ import {
 import { createGraphClient } from '../graph/client.ts';
 import type { DataMode } from '../source.ts';
 import { createAppFolder, syncWith } from './appFolder.ts';
+import { whenPermissionMissing } from './permission.ts';
 import {
   favoriteIds,
   mergeStates,
@@ -20,10 +21,23 @@ import {
   withPreference,
   type SyncedState,
 } from './state.ts';
-import { SYNC_ENABLED_KEY, SyncContext, syncStateKey, type SyncStatus } from './syncContext.ts';
+import {
+  SYNC_ENABLED_KEY,
+  SYNC_GRANTED_KEY,
+  SyncContext,
+  syncStateKey,
+  type SyncStatus,
+} from './syncContext.ts';
 
 const LAST_SYNC_KEY = 'sync.lastSyncAt';
 const PENDING_FAVORITE_KEY = 'sync.pendingFavorite';
+/** Set while the user is on Microsoft's page for the permission, to know what they answered. */
+const ASKING_KEY = 'sync.asking';
+
+const DECLINED_NOTICE =
+  'Microsoft n’a pas donné la permission : sans elle, Nuagerie ne peut pas ranger tes favoris dans ton OneDrive. Tu peux réessayer quand tu veux.';
+const failedNotice = (detail: string) =>
+  `La synchronisation n’a pas pu démarrer (${detail}). Réessaie dans un moment.`;
 /** A change goes out after this pause, so a few taps make one write. */
 const SYNC_DELAY_MS = 1500;
 /** While the app is on screen, another device's changes come in within this time. */
@@ -50,6 +64,7 @@ export function SyncProvider({
   const [stored] = usePersistentState<unknown>(stateKey, null);
   const state = useMemo(() => parseState(stored), [stored]);
   const [enabledSetting] = usePersistentState<boolean>(SYNC_ENABLED_KEY, false);
+  const [granted] = usePersistentState<boolean>(SYNC_GRANTED_KEY, false);
   const [lastSyncAt] = usePersistentState<number | null>(LAST_SYNC_KEY, null);
   const available = mode === 'onedrive' && signedIn;
   const enabled = available && enabledSetting;
@@ -57,6 +72,7 @@ export function SyncProvider({
     status: 'off',
     message: null,
   });
+  const [notice, setNotice] = useState<string | null>(null);
 
   /** Always the latest copy, for writes from event listeners. */
   const current = () => parseState(readPersistent<unknown>(stateKey, null));
@@ -128,16 +144,25 @@ export function SyncProvider({
           applying.current = false;
         }
         writePersistent(LAST_SYNC_KEY, Date.now());
+        writePersistent(SYNC_GRANTED_KEY, true);
+        writePersistent(ASKING_KEY, false);
         setStatus({ status: 'ok', message: null });
       } catch (error) {
-        setStatus(
-          error instanceof SyncPermissionMissing
-            ? { status: 'needs-permission', message: null }
-            : {
-                status: isOnline() ? 'error' : 'offline',
-                message: error instanceof Error ? error.message : String(error),
-              },
-        );
+        const asked = readPersistent(ASKING_KEY, false);
+        writePersistent(ASKING_KEY, false);
+        if (error instanceof SyncPermissionMissing) {
+          const outcome = whenPermissionMissing({
+            granted: readPersistent(SYNC_GRANTED_KEY, false),
+            asked,
+          });
+          if (!outcome.enabled) writePersistent(SYNC_ENABLED_KEY, false);
+          if (outcome.declined) setNotice(DECLINED_NOTICE);
+          setStatus({ status: outcome.status, message: null });
+        } else {
+          const message = error instanceof Error ? error.message : String(error);
+          if (asked) setNotice(failedNotice(message));
+          setStatus({ status: isOnline() ? 'error' : 'offline', message });
+        }
       } finally {
         running.current = false;
         if (again.current) {
@@ -185,21 +210,45 @@ export function SyncProvider({
 
   const enable = useCallback(async (favoriteId?: string) => {
     if (favoriteId) writePersistent(PENDING_FAVORITE_KEY, favoriteId);
+    setNotice(null);
+    try {
+      // Granted already (on another device, or before signing out): no page to go through.
+      await getSyncToken({ deviceOnly: true });
+      writePersistent(SYNC_GRANTED_KEY, true);
+      writePersistent(SYNC_ENABLED_KEY, true);
+      return;
+    } catch {
+      // Whatever the reason, Microsoft's page asks the user; the first sync tells what they said.
+    }
+    writePersistent(SYNC_GRANTED_KEY, false);
+    writePersistent(ASKING_KEY, true);
     writePersistent(SYNC_ENABLED_KEY, true);
     try {
-      await getSyncToken();
+      await requestSyncPermission();
     } catch (error) {
-      // Not granted yet: Microsoft's page asks the user, then the app comes back.
-      if (error instanceof SyncPermissionMissing) await requestSyncPermission();
-      else throw error;
+      // The page could not be opened: nothing was asked.
+      writePersistent(ASKING_KEY, false);
+      writePersistent(SYNC_ENABLED_KEY, false);
+      setNotice(failedNotice(error instanceof Error ? error.message : String(error)));
     }
   }, []);
 
   const disable = useCallback(() => writePersistent(SYNC_ENABLED_KEY, false), []);
 
+  const dismissNotice = useCallback(
+    (retry: boolean) => {
+      setNotice(null);
+      if (retry) void enable();
+      else writePersistent(PENDING_FAVORITE_KEY, null);
+    },
+    [enable],
+  );
+
   // Favourites need the sync with OneDrive: kept on the device only, they would be lost with
-  // the app. The demo has no OneDrive: there they stay on the device.
-  const favoritesOn = mode === 'demo' || (enabled && status.status !== 'needs-permission');
+  // the app. They come on once Microsoft has granted the permission. The demo has no OneDrive:
+  // there they stay on the device.
+  const favoritesOn =
+    mode === 'demo' || (enabled && granted && status.status !== 'needs-permission');
   const favorites = useMemo(
     () => (favoritesOn ? favoriteIds(state) : new Set<string>()),
     [favoritesOn, state],
@@ -227,6 +276,8 @@ export function SyncProvider({
         status: shownStatus.status,
         message: shownStatus.message,
         lastSyncAt,
+        notice,
+        dismissNotice,
         enable,
         disable,
         syncNow: () => void run(),

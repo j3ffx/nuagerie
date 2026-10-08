@@ -89,7 +89,8 @@ export function SyncSection() {
         ) : (
           <>
             <p className={common.muted}>Rangés dans le dossier Applis/Nuagerie de ton OneDrive.</p>
-            {sync.status === 'needs-permission' ? (
+            {/* Not granted yet, or withdrawn at Microsoft: the page is the way on. */}
+            {!sync.favoritesOn && sync.status !== 'syncing' ? (
               <button
                 type="button"
                 className={common.button}

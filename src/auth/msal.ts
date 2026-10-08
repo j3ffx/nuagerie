@@ -1,4 +1,5 @@
 import {
+  CacheLookupPolicy,
   InteractionRequiredAuthError,
   PublicClientApplication,
   type AccountInfo,
@@ -180,13 +181,23 @@ export class SyncPermissionMissing extends Error {
   }
 }
 
-/** A token allowing the sync, without ever sending the user to Microsoft's page. */
-export async function getSyncToken(): Promise<string> {
+/**
+ * A token allowing the sync, without ever sending the user to Microsoft's page.
+ * `deviceOnly` uses only the tokens kept on the device, never MSAL's hidden
+ * iframe: quick to say no, when asking Microsoft is the next step anyway.
+ */
+export async function getSyncToken({ deviceOnly = false } = {}): Promise<string> {
   const msal = getMsal();
   const account = msal.getActiveAccount();
   if (!account) throw new NotSignedInError();
   try {
-    return (await msal.acquireTokenSilent({ scopes: [SYNC_SCOPE], account })).accessToken;
+    return (
+      await msal.acquireTokenSilent({
+        scopes: [SYNC_SCOPE],
+        account,
+        ...(deviceOnly ? { cacheLookupPolicy: CacheLookupPolicy.AccessTokenAndRefreshToken } : {}),
+      })
+    ).accessToken;
   } catch (error) {
     if (error instanceof InteractionRequiredAuthError) throw new SyncPermissionMissing();
     throw error;
