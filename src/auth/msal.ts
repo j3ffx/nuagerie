@@ -124,8 +124,12 @@ async function signInSilently(msal: PublicClientApplication): Promise<AccountInf
   }
 }
 
-/** Whether the hidden sign-in can work in this browser (false once it failed). */
-const SILENT_SIGN_IN_KEY = 'silentSignIn';
+/**
+ * Whether the hidden sign-in can work in this browser (false once it failed).
+ * Renamed when the site stopped refusing to be framed by itself, which made it
+ * fail everywhere: each device tries again once.
+ */
+const SILENT_SIGN_IN_KEY = 'silentSignIn.v2';
 
 export function signIn(): Promise<void> {
   const loginHint = readPersistent<string | null>(LOGIN_HINT_KEY, null);

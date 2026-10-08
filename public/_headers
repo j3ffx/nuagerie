@@ -3,13 +3,15 @@
 
 /*
   X-Content-Type-Options: nosniff
-  X-Frame-Options: DENY
+  # Framed by no other site. The app itself frames its /redirect page: MSAL
+  # gets tokens without a screen in a hidden iframe that ends there.
+  X-Frame-Options: SAMEORIGIN
   Referrer-Policy: no-referrer
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
   # Only Microsoft is reachable from scripts: sign-in, Graph, and the OneDrive
   # hosts that serve thumbnails (thumbnail cache; svc.ms measured on a real
   # drive) and original files (sharing). Map tile hosts get pinned with the map.
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; font-src 'self'; connect-src 'self' https://login.microsoftonline.com https://login.live.com https://graph.microsoft.com https://*.svc.ms https://*.1drv.com https://*.livefilestore.com https://*.microsoftpersonalcontent.com; frame-src 'self' https://login.microsoftonline.com https://login.live.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; font-src 'self'; connect-src 'self' https://login.microsoftonline.com https://login.live.com https://graph.microsoft.com https://*.svc.ms https://*.1drv.com https://*.livefilestore.com https://*.microsoftpersonalcontent.com; frame-src 'self' https://login.microsoftonline.com https://login.live.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
 
 # Always revalidate the entry points, so a deploy is picked up immediately.
 /index.html
