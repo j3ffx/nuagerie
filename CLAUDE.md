@@ -59,9 +59,12 @@ commit metadata.
 - **Read-only by default.** At sign-in, Microsoft Graph delegated scopes are `Files.Read`, `User.Read`,
   `offline_access` and nothing else. The app never creates, changes, moves or deletes the user's files.
   Requests are GETs, plus `POST /$batch` whose sub-requests are GETs.
-- **One opt-in write: the app's own folder.** Favourites and a few preferences sync to OneDrive only
-  when the user turns it on (Réglages, or the first heart): only then is `Files.ReadWrite.AppFolder`
-  requested (incremental consent), which reaches `Apps/Nuagerie` (`special/approot`) and nothing else.
+- **One opt-in write: the app's own folder.** The sync (favourites, preferences, root folders) goes
+  to OneDrive only once the user turns it on (Réglages → Synchronisation, or the first heart): only
+  then is `Files.ReadWrite.AppFolder` requested (incremental consent), which reaches `Apps/Nuagerie`
+  (`special/approot`) and nothing else. Microsoft grants it to the account, so another device follows
+  on its own when a silent token and the app folder's copy are both there, unless the user turned the
+  sync off on that device.
   The one write is `putAppFile` in `src/data/graph/client.ts`, which builds its path itself; without
   the sync, there are no favourites in OneDrive mode (on the device only, they would be lost with the
   app; the demo keeps them locally). Réglages → Permissions shows the scopes the tokens actually carry,
