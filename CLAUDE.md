@@ -112,8 +112,9 @@ change with `npx npm@10 ci` in a clean clone. `overrides` in `package.json` forc
 
 ## Releases
 
-Semantic versioning: `0.x.0` for a milestone of features, `0.x.y` for fixes, `1.0.0` once the app is
-considered complete. `CHANGELOG.md` (in French, for users) says what each version brings: the app
+Semantic versioning: `0.x.0` for a milestone of features, `0.x.y` for fixes and small improvements
+between milestones (released as they come, so the version on the phone names what it runs), `1.0.0`
+once the app is considered complete. `CHANGELOG.md` (in French, for users) says what each version brings: the app
 shows it after an update ("Nouveautés"), and a unit test requires an entry for the version in
 `package.json`.
 
