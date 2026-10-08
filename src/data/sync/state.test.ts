@@ -4,6 +4,7 @@ import {
   favoriteIds,
   mergeStates,
   parseState,
+  pendingFavorites,
   sameState,
   withFavorite,
   withPreference,
@@ -44,5 +45,14 @@ describe('synced state', () => {
       favorites: { a: { value: true, at: 1 } },
       preferences: { 'albums.sort': { value: { key: 'name' }, at: 4 } },
     });
+  });
+});
+
+describe('pendingFavorites', () => {
+  it('reads a selection waiting for the sync, or the one id earlier versions kept', () => {
+    expect(pendingFavorites(['a', 'b'])).toEqual(['a', 'b']);
+    expect(pendingFavorites('a')).toEqual(['a']);
+    expect(pendingFavorites(null)).toEqual([]);
+    expect(pendingFavorites([1, 'b'])).toEqual(['b']);
   });
 });

@@ -37,10 +37,10 @@ export interface SyncContextValue {
   dismissNotice: (retry: boolean) => void;
   /**
    * Turns the sync on, asking Microsoft for the permission unless this device
-   * already holds it (leaves the page); `favoriteId` becomes a favourite once
-   * the first sync went through.
+   * already holds it (leaves the page); `favorites` (one photo's id, or a
+   * selection's) become favourites once the first sync went through.
    */
-  enable: (favoriteId?: string) => Promise<void>;
+  enable: (favorites?: string | readonly string[]) => Promise<void>;
   /** Turns it off; what is on this device stays. */
   disable: () => void;
   syncNow: () => void;

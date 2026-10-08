@@ -17,6 +17,7 @@ import {
   favoriteIds,
   mergeStates,
   parseState,
+  pendingFavorites,
   sameState,
   SYNCED_PREFERENCES,
   withFavorite,
@@ -216,8 +217,9 @@ export function SyncProvider({
     return () => window.clearTimeout(timer);
   }, [stored, folder, run]);
 
-  const enable = useCallback(async (favoriteId?: string) => {
-    if (favoriteId) writePersistent(PENDING_FAVORITE_KEY, favoriteId);
+  const enable = useCallback(async (favorites?: string | readonly string[]) => {
+    const pending = typeof favorites === 'string' ? [favorites] : (favorites ?? []);
+    if (pending.length > 0) writePersistent(PENDING_FAVORITE_KEY, pending);
     writePersistent(SYNC_TURNED_OFF_KEY, false);
     setNotice(null);
     try {
@@ -290,14 +292,19 @@ export function SyncProvider({
     [favoritesOn, state],
   );
 
-  // A heart touched before the sync was on: that photo becomes a favourite once it is.
+  // Hearts touched before the sync was on (one photo, or a selection): they become favourites
+  // once it is, even after the trip to Microsoft's page.
   useEffect(() => {
     if (!enabled || status.status !== 'ok') return;
-    const pending = readPersistent<string | null>(PENDING_FAVORITE_KEY, null);
-    if (!pending) return;
+    const pending = pendingFavorites(readPersistent<unknown>(PENDING_FAVORITE_KEY, null));
+    if (pending.length === 0) return;
     writePersistent(PENDING_FAVORITE_KEY, null);
-    const latest = parseState(readPersistent(stateKey, null));
-    if (!favoriteIds(latest).has(pending)) save(withFavorite(latest, pending, true, Date.now()));
+    let latest = parseState(readPersistent(stateKey, null));
+    const now = Date.now();
+    for (const id of pending) {
+      if (!favoriteIds(latest).has(id)) latest = withFavorite(latest, id, true, now);
+    }
+    save(latest);
   }, [enabled, status.status, save, stateKey]);
   const shownStatus = enabled ? status : { status: 'off' as const, message: null };
 

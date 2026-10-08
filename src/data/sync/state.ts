@@ -119,3 +119,9 @@ export function parseState(raw: unknown): SyncedState {
     preferences: entries(candidate.preferences, (v): v is unknown => v !== undefined),
   };
 }
+
+/** The photos waiting to become favourites: a list, or one id as earlier versions kept it. */
+export function pendingFavorites(stored: unknown): string[] {
+  if (typeof stored === 'string') return [stored];
+  return Array.isArray(stored) ? stored.filter((id): id is string => typeof id === 'string') : [];
+}
