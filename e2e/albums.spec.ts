@@ -152,21 +152,44 @@ test('sorts the sub-albums from a button, remembered apart from the home sort', 
   await expect(page.getByLabel('Trier les albums par')).toHaveValue('last');
 });
 
-test('shows the full name of an album on a long press, without opening it', async ({ page }) => {
+test('a long press on an album opens its menu: its full name, the map, hiding it', async ({
+  page,
+}) => {
   await homeAlbums(page)
     .getByRole('link', { name: /^Événements/ })
     .click();
   await expect(page.getByRole('heading', { level: 1, name: 'Événements' })).toBeVisible();
 
-  const bubble = page.locator('[data-bubble]');
+  const menu = page.getByRole('dialog', { name: '2026-07 - Vacances à la mer' });
   await longPress(page, /^2026-07 - Vacances à la mer/);
-  await expect(bubble).toHaveText('2026-07 - Vacances à la mer');
+  await expect(menu).toBeVisible();
   await expect(page.getByRole('heading', { level: 1, name: 'Événements' })).toBeVisible();
+  await menu.getByRole('button', { name: 'Annuler' }).click();
+  await expect(menu).toBeHidden();
 
-  // A tap then opens the album, as usual.
-  await page.getByRole('link', { name: /^2026-07 - Vacances à la mer/ }).click();
-  await expect(bubble).toBeHidden();
-  await expect(
-    page.getByRole('heading', { level: 1, name: '2026-07 - Vacances à la mer' }),
-  ).toBeVisible();
+  // Its photos alone on the map, until the chip is closed.
+  await longPress(page, /^2026-07 - Vacances à la mer/);
+  await menu.getByRole('button', { name: 'Voir sur la carte' }).click();
+  await expect(page).toHaveURL(/\/carte\?album=/);
+  const chip = page.getByRole('link', { name: /^Album 2026-07 - Vacances à la mer seulement/ });
+  await expect(chip).toBeVisible();
+  await expect(page.getByText(/\d+ éléments? dans cette zone/)).toBeVisible();
+  await chip.click();
+  await expect(page).toHaveURL(/\/carte$/);
+
+  // Hidden among the sub-albums.
+  await page.goBack();
+  await page.goBack();
+  await longPress(page, /^2026-07 - Vacances à la mer/);
+  await menu.getByRole('button', { name: /^Masquer ce sous-album/ }).click();
+  await expect(page.getByRole('link', { name: /^2026-07 - Vacances à la mer/ })).toBeHidden();
+});
+
+test('hides an album from the home screen with its menu', async ({ page }) => {
+  await longPress(page, /^Screenshots/);
+  await page
+    .getByRole('dialog', { name: 'Screenshots' })
+    .getByRole('button', { name: /^Masquer de l’accueil/ })
+    .click();
+  await expect(homeAlbums(page).getByRole('link', { name: /^Screenshots/ })).toBeHidden();
 });

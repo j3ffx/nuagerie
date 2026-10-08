@@ -1,0 +1,102 @@
+/* A sheet from the bottom on a phone, a card in the middle on a wide screen. */
+.dialog {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+}
+
+.dialog[open] {
+  display: grid;
+  align-items: end;
+  justify-items: center;
+}
+
+.dialog::backdrop {
+  background: rgb(5 10 20 / 0.6);
+}
+
+.sheet {
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+  max-width: 480px;
+  padding: var(--space-5) var(--space-3) calc(env(safe-area-inset-bottom) + var(--space-3));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--color-surface);
+  box-shadow:
+    var(--shadow-soft),
+    0 0 0 1px var(--color-border);
+  animation: rise var(--duration) var(--ease);
+}
+
+@media (min-width: 900px) {
+  .dialog[open] {
+    align-items: center;
+  }
+
+  .sheet {
+    border-radius: var(--radius-lg);
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+/* The album's full name, however long. */
+.title {
+  margin: 0 var(--space-2) var(--space-2);
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.item {
+  display: grid;
+  gap: 2px;
+  min-height: 52px;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: none;
+  align-content: center;
+}
+
+.item:active:not(:disabled) {
+  background: var(--color-press);
+}
+
+.item:disabled,
+.item[data-disabled] {
+  opacity: 0.55;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.note {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cancel {
+  composes: buttonSoft from '../../ui/common.module.css';
+  margin-top: var(--space-2);
+}

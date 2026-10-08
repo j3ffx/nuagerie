@@ -52,7 +52,7 @@ export function AlbumsScreen() {
                 )}
                 {albums.map((album) => (
                   <li key={album.id}>
-                    <AlbumTile album={album} />
+                    <AlbumTile album={album} menu="home" />
                   </li>
                 ))}
               </ul>

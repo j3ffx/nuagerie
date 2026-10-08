@@ -445,9 +445,9 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
 
     getOriginalUrl: originalUrls,
 
-    async getWebUrl(item) {
+    async getWebUrl(id) {
       const found = await client.getJson<{ webUrl?: string }>(
-        `/me/drive/items/${encodeURIComponent(item.id)}?$select=webUrl`,
+        `/me/drive/items/${encodeURIComponent(id)}?$select=webUrl`,
       );
       return found.webUrl ?? null;
     },

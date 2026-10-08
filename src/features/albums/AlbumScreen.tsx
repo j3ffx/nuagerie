@@ -133,7 +133,7 @@ function AlbumContent({
           <ul className={`${tiles.grid} ${styles.subGrid}`}>
             {subAlbums.map((sub) => (
               <li key={sub.id}>
-                <AlbumTile album={sub} />
+                <AlbumTile album={sub} menu="sub" />
               </li>
             ))}
           </ul>

@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { folderTrail } from '../../data/albums.ts';
-import { useData, useMediaIndex } from '../../data/dataContext.ts';
+import { useMediaIndex } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
 import {
   formatBytes,
@@ -10,8 +9,8 @@ import {
   formatLongDate,
   formatTakenTime,
 } from '../../lib/format.ts';
-import { useOnline } from '../../lib/online.ts';
 import { CloseIcon } from '../../ui/icons.tsx';
+import { OneDriveLink } from '../../ui/OneDriveLink.tsx';
 import styles from './InfoPanel.module.css';
 import { usePlaceName } from './usePlaceName.ts';
 
@@ -113,45 +112,7 @@ export function InfoPanel({ item, onClose }: { item: MediaItem; onClose: () => v
           </>
         )}
       </dl>
-      <OneDriveLink item={item} />
+      <OneDriveLink id={item.id} className={styles.action} />
     </section>
-  );
-}
-
-/** The file on OneDrive's website, its address asked for once the panel shows it. */
-function OneDriveLink({ item }: { item: MediaItem }) {
-  const { source } = useData();
-  const online = useOnline();
-  const [found, setFound] = useState<{ id: string; url: string | null } | null>(null);
-  const getWebUrl = source.getWebUrl?.bind(source);
-
-  useEffect(() => {
-    if (!getWebUrl || !online) return;
-    let cancelled = false;
-    getWebUrl(item).then(
-      (url) => {
-        if (!cancelled) setFound({ id: item.id, url });
-      },
-      () => {
-        if (!cancelled) setFound({ id: item.id, url: null });
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-    // The item, not each new copy of the source's bound method.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item, online, source]);
-
-  if (!getWebUrl) return null;
-  const url = found?.id === item.id ? found.url : null;
-  return url && online ? (
-    <a className={styles.action} href={url} target="_blank" rel="noopener noreferrer">
-      Ouvrir dans OneDrive
-    </a>
-  ) : (
-    <span className={styles.action} aria-disabled="true" data-disabled="">
-      {online ? 'Ouvrir dans OneDrive…' : 'Ouvrir dans OneDrive (hors connexion)'}
-    </span>
   );
 }
