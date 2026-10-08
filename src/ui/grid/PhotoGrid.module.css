@@ -121,12 +121,50 @@
 }
 
 .titleButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   min-height: var(--tap-min);
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--color-primary);
+  color: inherit;
   font: inherit;
-  text-decoration: underline;
-  text-underline-offset: 4px;
+}
+
+/* A month's round box while picking, as on the photos: empty, ticked, or a dash for some. */
+.monthCheck {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-text-muted);
+  border-radius: 50%;
+  background: center / 16px no-repeat;
+}
+
+.monthCheck[data-state='true'],
+.monthCheck[data-state='mixed'] {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+}
+
+.monthCheck[data-state='true'] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+}
+
+.monthCheck[data-state='mixed'] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E");
+}
+
+.monthCheck[hidden] {
+  display: none;
+}
+
+/* The floating month: a tap takes it while picking. */
+.stickyTitle {
+  gap: var(--space-2);
+}
+
+.stickyTitle[data-picking] {
+  cursor: pointer;
 }

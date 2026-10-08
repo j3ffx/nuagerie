@@ -24,6 +24,7 @@ import {
   usePinchSteps,
 } from './columns.ts';
 import { buildGridLayout, rowIndexOfItem, type GridLayout, type GridRow } from './layout.ts';
+import { monthState } from './monthState.ts';
 import { usePressDrag } from './pressDrag.ts';
 import { stickyHeaderHeight } from './page.ts';
 import { StickyMonth } from './StickyMonth.tsx';
@@ -207,7 +208,12 @@ export function PhotoGrid({
 
   return (
     <section ref={sectionRef} aria-label={label} className={styles.grid}>
-      <StickyMonth layout={layout} gridTop={gridTop} />
+      <StickyMonth
+        layout={layout}
+        gridTop={gridTop}
+        selected={selection?.active ? selection.selected : null}
+        onMonth={selection?.active ? selection.onMonth : null}
+      />
       <div ref={rowsRef} className={styles.rows} style={{ height: layout.totalSize }}>
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const row = layout.rows[virtualRow.index];
@@ -256,13 +262,19 @@ const Row = memo(function Row({
   if (row.kind === 'header') {
     return (
       <h2 className={`${styles.row} ${styles.title}`} style={style}>
-        {selecting && onMonth ? (
+        {selecting && onMonth && selected ? (
           <button
             type="button"
+            role="checkbox"
+            aria-checked={monthState(section.items, selected)}
             className={styles.titleButton}
             onClick={() => onMonth(section.items)}
-            aria-label={`${section.title} : tout sélectionner ou désélectionner`}
+            aria-label={`Tout le mois : ${section.title}`}
           >
+            <span
+              className={styles.monthCheck}
+              data-state={String(monthState(section.items, selected))}
+            />
             {section.title}
           </button>
         ) : (

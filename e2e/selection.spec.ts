@@ -49,13 +49,17 @@ test('a long press starts picking photos; taps add them; back ends it', async ({
   await cells(page).nth(3).click();
   await expect(bar(page)).toContainText('1 sélectionné');
 
-  // A month's title takes the whole month.
-  await page
+  // A month's round box takes the whole month; a photo less makes it "mixed".
+  const month = page
     .getByRole('main')
-    .getByRole('button', { name: /tout sélectionner/ })
-    .first()
-    .click();
+    .getByRole('checkbox', { name: /^Tout le mois/ })
+    .first();
+  await expect(month).toHaveAttribute('aria-checked', 'mixed');
+  await month.click();
+  await expect(month).toHaveAttribute('aria-checked', 'true');
   await expect(bar(page)).toContainText(/\d{2,} sélectionnés/);
+  await cells(page).nth(0).click();
+  await expect(month).toHaveAttribute('aria-checked', 'mixed');
 
   await page.goBack();
   await expect(bar(page)).toBeHidden();
@@ -102,7 +106,7 @@ test('asks before sharing many photos, and can share them anyway', async ({ page
   await longPress(page, cells(page).nth(0));
   await page
     .getByRole('main')
-    .getByRole('button', { name: /tout sélectionner/ })
+    .getByRole('checkbox', { name: /^Tout le mois/ })
     .first()
     .click();
   const count = Number((await bar(page).getByRole('status').textContent())?.match(/\d+/)?.[0]);
@@ -180,4 +184,17 @@ test('a long press works in the Favoris album too', async ({ page }) => {
   await expect(bar(page)).toContainText('1 sélectionné');
   await cells(page).nth(1).click();
   await expect(bar(page)).toContainText('2 sélectionnés');
+});
+
+test('the floating month title takes its month too', async ({ page }) => {
+  await longPress(page, cells(page).nth(0));
+  // Well into the first month: its own title has scrolled away, the floating one shows it.
+  await page.mouse.wheel(0, 600);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(400);
+  const sticky = page.locator('[data-picking]');
+  await expect(sticky).toBeVisible();
+  const box = await sticky.boundingBox();
+  if (!box) throw new Error('no floating title');
+  await page.mouse.click(box.x + 40, box.y + box.height / 2);
+  await expect(bar(page)).toContainText(/\d{2,} sélectionnés/);
 });
