@@ -175,8 +175,20 @@
   border-radius: var(--radius-sm);
 }
 
+.stripEmpty {
+  display: grid;
+  align-items: center;
+  /* As tall as the strip of thumbnails it stands for. */
+  min-height: 72px;
+  font-size: 14px;
+}
+
 .maps {
   justify-self: start;
+}
+
+.maps[data-hidden] {
+  visibility: hidden;
 }
 
 @media (min-width: 900px) {

@@ -147,14 +147,15 @@ function ZonePanel({
   // Offered only while the photo it is for is on screen, at the scale of its
   // place: zoomed out to a region or the world, it no longer reads as "this place".
   const focusPosition =
-    focus?.latitude != null &&
-    focus.longitude != null &&
+    focus?.latitude != null && focus.longitude != null
+      ? { latitude: focus.latitude, longitude: focus.longitude }
+      : null;
+  const focusShown =
+    focus !== null &&
     zone !== null &&
     zoom !== null &&
     zoom >= MAPS_LINK_MIN_ZOOM &&
-    itemsInBounds([focus], zone).length > 0
-      ? { latitude: focus.latitude, longitude: focus.longitude }
-      : null;
+    itemsInBounds([focus], zone).length > 0;
 
   return (
     <section className={styles.panel} aria-labelledby="map-zone">
@@ -172,6 +173,16 @@ function ZonePanel({
           </Link>
         )}
       </div>
+      {/*
+        The panel keeps its height whatever the zone holds: a panel that grew or
+        shrank would resize the map, and a photo on its edge would come in and
+        out of the zone again and again.
+      */}
+      {total > 0 && items.length === 0 && (
+        <p className={`${common.muted} ${styles.stripEmpty}`}>
+          Déplace la carte ou dézoome pour voir des photos.
+        </p>
+      )}
       {items.length > 0 && (
         <ul className={styles.strip}>
           {items.slice(0, STRIP).map((item) => (
@@ -195,6 +206,10 @@ function ZonePanel({
         <a
           className={`${common.buttonSoft} ${styles.maps}`}
           href={mapsHref(focusPosition.latitude, focusPosition.longitude)}
+          // Offered only while its photo is on screen; its room stays, for the same reason.
+          data-hidden={!focusShown || undefined}
+          inert={!focusShown}
+          aria-hidden={!focusShown || undefined}
         >
           Ouvrir ce lieu dans Maps
         </a>

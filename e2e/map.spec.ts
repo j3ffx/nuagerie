@@ -75,6 +75,25 @@ test('opens a photo of the zone, then its place on the map, with a link to Maps'
   await expect(maps).toBeHidden();
 });
 
+test('keeps the panel the same height, with photos in the zone or none', async ({ page }) => {
+  // A panel that changed height would resize the map, and a photo on its
+  // edge would come in and out of the zone again and again (flicker).
+  const panel = page.getByRole('region', { name: /dans cette zone|Rien dans cette zone/ });
+  await expect(zoneTitle(page)).toHaveText(/dans cette zone$/);
+  const withPhotos = await panel.evaluate((el) => el.getBoundingClientRect().height);
+
+  // The middle of the Atlantic: nothing there.
+  await page.evaluate(() =>
+    localStorage.setItem(
+      'nuagerie.map.view',
+      JSON.stringify({ latitude: 30, longitude: -40, zoom: 7 }),
+    ),
+  );
+  await page.reload();
+  await expect(zoneTitle(page)).toHaveText('Rien dans cette zone');
+  expect(await panel.evaluate((el) => el.getBoundingClientRect().height)).toBe(withPhotos);
+});
+
 test('stays within the world, and zooms close enough to part nearby photos', async ({ page }) => {
   // Dragging far down cannot show the blank beyond the North Pole.
   for (let i = 0; i < 4; i++) {
