@@ -52,3 +52,23 @@ test('says in the settings where the favourites are kept', async ({ page }) => {
     'En démo, les favoris et les préférences restent sur cet appareil.',
   );
 });
+
+test('keeps a photo open once taken out of the Favoris album, to put it back', async ({ page }) => {
+  await page.goto('/tout');
+  await page.getByRole('main').locator('a[data-item-id]').nth(2).click();
+  await viewer(page).getByRole('button', { name: 'Ajouter aux favoris' }).click();
+  await page.keyboard.press('Escape');
+
+  await page.goto('/favoris');
+  await page.getByRole('main').locator('a[data-item-id]').first().click();
+  await viewer(page).getByRole('button', { name: 'Retirer des favoris' }).click();
+  // A slip of the finger: the photo stays, and a second tap puts it back.
+  await expect(viewer(page)).toBeVisible();
+  await viewer(page).getByRole('button', { name: 'Ajouter aux favoris' }).click();
+  await expect(viewer(page).getByRole('button', { name: 'Retirer des favoris' })).toBeVisible();
+
+  // Taken out for good: it leaves the album once the viewer closes.
+  await viewer(page).getByRole('button', { name: 'Retirer des favoris' }).click();
+  await viewer(page).getByRole('button', { name: 'Fermer' }).click();
+  await expect(page.getByText('Aucun favori pour l’instant.')).toBeVisible();
+});

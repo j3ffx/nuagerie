@@ -10,6 +10,8 @@ Petites retouches déjà en ligne, sans nouveau numéro : elles rejoindront la p
 
 - Avec la synchronisation, une copie de l’index de tes photos est rangée dans Applis/Nuagerie : un
   nouvel appareil (ou après une déconnexion) s’ouvre en quelques secondes au lieu de tout relister.
+- Dans l’album Favoris, une photo retirée des favoris reste ouverte : un second appui sur le cœur
+  la remet, en cas d’erreur.
 
 ## 0.2.0 — 2026-10-08
 

@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'wouter';
 import { orderItems } from '../../data/albums.ts';
+import type { MediaItem } from '../../data/model.ts';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import { formatItemCount } from '../../lib/format.ts';
 import common from '../../ui/common.module.css';
@@ -10,6 +11,7 @@ import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import styles from '../albums/AlbumScreen.module.css';
 import { usePhotoOrder } from '../albums/useAlbums.ts';
 import { PhotoBrowser } from '../viewer/PhotoBrowser.tsx';
+import { useViewer } from '../viewer/useViewer.ts';
 import { useFavoriteItems } from './useFavorites.ts';
 
 /** The favourite photos and videos, wherever they are on the drive, in one grid. */
@@ -17,7 +19,19 @@ export function FavoritesScreen() {
   const index = useMediaIndex();
   const favorites = useFavoriteItems();
   const [order, setOrder] = usePhotoOrder();
-  const items = useMemo(() => orderItems(favorites, order), [favorites, order]);
+  const { photoId } = useViewer();
+
+  // Taken out of the favourites in the viewer, a photo stays in it (and in the grid behind)
+  // until the viewer closes, so a slip of the finger can be undone with a second tap.
+  const [kept, setKept] = useState<readonly MediaItem[] | null>(null);
+  if (photoId !== null && kept === null) setKept(favorites);
+  if (photoId === null && kept !== null) setKept(null);
+  const browsed = useMemo(() => {
+    if (!kept) return favorites;
+    const ids = new Set(favorites.map((item) => item.id));
+    return [...favorites, ...kept.filter((item) => !ids.has(item.id))];
+  }, [favorites, kept]);
+  const items = useMemo(() => orderItems(browsed, order), [browsed, order]);
 
   return (
     <>
