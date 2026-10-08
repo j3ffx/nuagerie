@@ -4,14 +4,15 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
-## Depuis la dernière version
+## 0.2.1 — 2026-10-08
 
-Petites retouches déjà en ligne, sans nouveau numéro : elles rejoindront la prochaine version.
+### Nouveautés
 
 - Avec la synchronisation, une copie de l’index de tes photos est rangée dans Applis/Nuagerie : un
   nouvel appareil (ou après une déconnexion) s’ouvre en quelques secondes au lieu de tout relister.
 - Dans l’album Favoris, une photo retirée des favoris reste ouverte : un second appui sur le cœur
   la remet, en cas d’erreur.
+- Le bouton « Se déconnecter » est rouge, comme ce qu’il efface.
 
 ## 0.2.0 — 2026-10-08
 
