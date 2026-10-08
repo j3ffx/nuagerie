@@ -13,6 +13,9 @@
   box-shadow: var(--shadow-soft);
   color: var(--color-text);
   animation: drop var(--duration) var(--ease);
+  /* It appears while the finger that started the selection is still down. */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 @keyframes drop {
