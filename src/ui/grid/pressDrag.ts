@@ -50,9 +50,12 @@ export function dragPoint(
 
 /** The photo at a point of the grid, even under what floats over it (bars, date scrubber). */
 const idAt = (grid: HTMLElement, x: number, y: number): string | null => {
-  for (const element of document.elementsFromPoint(x, y)) {
-    const cell = element.closest<HTMLElement>('[data-item-id]');
-    if (cell && grid.contains(cell)) return cell.dataset.itemId ?? null;
+  // On the thin gap between two photos, the one just beside.
+  for (const dx of [0, -3, 3]) {
+    for (const element of document.elementsFromPoint(x + dx, y)) {
+      const cell = element.closest<HTMLElement>('[data-item-id]');
+      if (cell && grid.contains(cell)) return cell.dataset.itemId ?? null;
+    }
   }
   return null;
 };

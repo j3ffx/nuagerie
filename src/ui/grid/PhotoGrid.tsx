@@ -115,14 +115,25 @@ export function PhotoGrid({
 
   // While a finger drags to pick photos, the row it started on stays rendered even far off
   // screen: the browser sends that finger's moves and lift to the element it first touched,
-  // and a row taken out of the page would take them away with it.
-  const pinnedRow = useRef<number | null>(null);
+  // and a row taken out of the page would take them away with it. The photo is kept, not its
+  // row's number: the rows may move meanwhile (the index updated, a month added on top).
+  const pinnedId = useRef<string | null>(null);
+  const latestLayout = useRef(layout);
+  useEffect(() => {
+    latestLayout.current = layout;
+  }, [layout]);
+  const pinnedRow = useRef<{ id: string; layout: GridLayout; row: number } | null>(null);
   const rangeExtractor = useCallback((range: Range) => {
     const rows = defaultRangeExtractor(range);
-    const pinned = pinnedRow.current;
-    return pinned === null || rows.includes(pinned)
-      ? rows
-      : [...rows, pinned].sort((a, b) => a - b);
+    const id = pinnedId.current;
+    if (id === null) return rows;
+    let found = pinnedRow.current;
+    if (!found || found.id !== id || found.layout !== latestLayout.current) {
+      found = { id, layout: latestLayout.current, row: rowIndexOfItem(latestLayout.current, id) };
+      pinnedRow.current = found;
+    }
+    const pinned = found.row;
+    return pinned < 0 || rows.includes(pinned) ? rows : [...rows, pinned].sort((a, b) => a - b);
   }, []);
 
   // Long press then drag (finger), clicks with Ctrl or Shift: picking photos.
@@ -132,18 +143,18 @@ export function PhotoGrid({
       onLongPress: (id: string) => {
         const item = byId.get(id);
         if (!item) return;
-        pinnedRow.current = rowIndexOfItem(layout, id);
+        pinnedId.current = id;
         selection?.onLongPress(item);
       },
       onDragEnd: () => {
-        pinnedRow.current = null;
+        pinnedId.current = null;
       },
       onDrag: (id: string) => {
         const item = byId.get(id);
         if (item) selection?.onDrag(item);
       },
     }),
-    [byId, selection, layout],
+    [byId, selection],
   );
   const swallowClick = usePressDrag(sectionRef, pressHandlers);
   const onCell = useCallback<CellClick>(
@@ -228,6 +239,7 @@ export function PhotoGrid({
               selecting={selection?.active ?? false}
               selected={selection?.selected ?? null}
               onMonth={selection?.onMonth ?? null}
+              onSpace={selection?.onToggle ?? null}
             />
           ) : null;
         })}
@@ -246,6 +258,7 @@ const Row = memo(function Row({
   selecting,
   selected,
   onMonth,
+  onSpace,
 }: {
   row: GridRow;
   layout: GridLayout;
@@ -255,6 +268,8 @@ const Row = memo(function Row({
   selecting: boolean;
   selected: ReadonlySet<string> | null;
   onMonth: ((items: readonly MediaItem[]) => void) | null;
+  /** Space on a photo while picking. */
+  onSpace: ((item: MediaItem) => void) | null;
 }) {
   const section = layout.sections[row.section];
   if (!section) return null;
@@ -298,8 +313,17 @@ const Row = memo(function Row({
             data-item-id={item.id}
             data-selected={picked || undefined}
             aria-label={describeItem(item)}
+            // Held, a link could be dragged by the browser, which would end the long press.
+            draggable={false}
             {...(selecting ? { role: 'checkbox', 'aria-checked': picked } : {})}
             onClick={(event: MouseEvent) => onCell(item, event)}
+            onKeyDown={(event) => {
+              // A checkbox ticks with Space; a link would scroll the page.
+              if (selecting && event.key === ' ') {
+                event.preventDefault();
+                onSpace?.(item);
+              }
+            }}
           >
             <Thumbnail item={item} decorative />
             {selecting && (
