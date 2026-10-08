@@ -33,6 +33,28 @@ export interface GraphClientOptions {
   isOnline?: () => boolean;
 }
 
+interface Request {
+  method: 'GET' | 'POST' | 'PUT';
+  headers?: Record<string, string>;
+  body?: string;
+}
+
+/** A plain file name: no path, so no way out of the app's folder. */
+const APP_FILE_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+
+/**
+ * The app's only write: a file in its own folder of the drive (Apps/Nuagerie,
+ * `special/approot`), with the opt-in `Files.ReadWrite.AppFolder` permission.
+ * Photos and every other folder stay read-only.
+ */
+export interface AppFolderWriter {
+  putAppFile(
+    name: string,
+    content: string,
+    options: { ifMatch: string | null },
+  ): Promise<{ eTag: string }>;
+}
+
 export interface GraphClient {
   getJson<T>(pathOrUrl: string): Promise<T>;
   /** JSON batching: up to 20 read requests in one round trip. */
@@ -86,35 +108,27 @@ async function toGraphError(response: Response): Promise<GraphError> {
   return new GraphError(response.status, code, message, response.headers.get('Location'));
 }
 
-export function createGraphClient(options: GraphClientOptions): GraphClient {
+export function createGraphClient(options: GraphClientOptions): GraphClient & AppFolderWriter {
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   const sleep = options.sleep ?? ((ms: number) => new Promise((r) => setTimeout(r, ms)));
   const maxRetries = options.maxRetries ?? 6;
   const online = options.isOnline ?? isOnline;
 
-  async function send(pathOrUrl: string, body?: unknown): Promise<Response> {
+  async function send(pathOrUrl: string, request: Request = { method: 'GET' }): Promise<Response> {
     const url = /^https:\/\//.test(pathOrUrl) ? pathOrUrl : `${GRAPH_BASE}${pathOrUrl}`;
     for (let attempt = 0; ; attempt++) {
       const token = await options.getToken();
       let response: Response;
       try {
-        response = await doFetch(
-          url,
-          body === undefined
-            ? {
-                method: 'GET',
-                headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-              }
-            : {
-                method: 'POST',
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  Accept: 'application/json',
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(body),
-              },
-        );
+        response = await doFetch(url, {
+          method: request.method,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+            ...request.headers,
+          },
+          ...(request.body === undefined ? {} : { body: request.body }),
+        });
       } catch (error) {
         // Network failure (DNS, flaky link…): retry, then give up with the original error.
         // Offline, waiting is pointless: the app tries again once the connection is back.
@@ -139,10 +153,32 @@ export function createGraphClient(options: GraphClientOptions): GraphClient {
     async batch(requests: BatchRequest[]): Promise<BatchResponse[]> {
       if (requests.length > MAX_BATCH) throw new Error(`At most ${MAX_BATCH} requests per batch`);
       const body = { requests: requests.map(({ id, url }) => ({ id, method: 'GET', url })) };
-      const result = (await (await send('/$batch', body)).json()) as {
+      const result = (await (
+        await send('/$batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+      ).json()) as {
         responses?: BatchResponse[];
       };
       return result.responses ?? [];
+    },
+
+    async putAppFile(name, content, { ifMatch }) {
+      // The path is built here, and only ever points into the app's own folder.
+      if (!APP_FILE_NAME.test(name)) throw new Error(`Not an app folder file name: ${name}`);
+      const response = await send(`/me/drive/special/approot:/${name}:/content`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          // Never overwrite a newer copy: a changed eTag answers 412, the caller merges again.
+          ...(ifMatch ? { 'If-Match': ifMatch } : { 'If-None-Match': '*' }),
+        },
+        body: content,
+      });
+      const item = (await response.json()) as { eTag?: string };
+      return { eTag: item.eTag ?? '' };
     },
   };
 }

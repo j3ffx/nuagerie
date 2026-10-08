@@ -138,3 +138,39 @@ describe('mapWithConcurrency', () => {
     expect(peak).toBe(3);
   });
 });
+
+describe('putAppFile', () => {
+  it('writes only into the app folder, never over a newer copy', async () => {
+    const { client, calls } = setup([json({ eTag: '"e2"' }), json({ eTag: '"e3"' })]);
+    await expect(client.putAppFile('nuagerie.json', '{}', { ifMatch: null })).resolves.toEqual({
+      eTag: '"e2"',
+    });
+    expect(calls[0]?.url).toBe(
+      'https://graph.microsoft.com/v1.0/me/drive/special/approot:/nuagerie.json:/content',
+    );
+    expect(calls[0]?.init?.method).toBe('PUT');
+    expect(calls[0]?.init?.body).toBe('{}');
+    expect(calls[0]?.init?.headers).toMatchObject({ 'If-None-Match': '*' });
+
+    await client.putAppFile('nuagerie.json', '{}', { ifMatch: '"e2"' });
+    expect(calls[1]?.init?.headers).toMatchObject({ 'If-Match': '"e2"' });
+  });
+
+  it('refuses any name that could lead out of the app folder', async () => {
+    const { client, calls } = setup([]);
+    for (const name of ['../photo.jpg', 'a/b.json', '', '.hidden', 'x:y']) {
+      await expect(client.putAppFile(name, '{}', { ifMatch: null })).rejects.toThrow(
+        /Not an app folder file name/,
+      );
+    }
+    expect(calls).toHaveLength(0);
+  });
+
+  it('reports a conflict (newer copy) without retrying', async () => {
+    const { client, calls } = setup([json({ error: { code: 'preconditionFailed' } }, 412)]);
+    await expect(
+      client.putAppFile('nuagerie.json', '{}', { ifMatch: '"old"' }),
+    ).rejects.toMatchObject({ status: 412 });
+    expect(calls).toHaveLength(1);
+  });
+});
