@@ -58,3 +58,16 @@ test('opens the album choice from the settings and comes back', async ({ page })
   await page.getByRole('link', { name: 'Retour aux réglages' }).click();
   await expect(page).toHaveURL('/reglages');
 });
+
+test('describes the open folder, even one with no subfolder', async ({ page }) => {
+  await page.getByRole('link', { name: 'Choisir les dossiers' }).click();
+  await page.getByRole('button', { name: /^Ouvrir Documents/ }).click();
+  await page.getByRole('button', { name: /^Ouvrir Scans/ }).click();
+  await expect(page.getByText(/^41 éléments · [\d,]+ Mo · \/Documents\/Scans$/)).toBeVisible();
+  await page.getByRole('button', { name: /^Ouvrir Anciennes/ }).click();
+  await expect(page.getByText(/^Aucun sous-dossier : 12 fichiers · [\d,]+ Mo\.$/)).toBeVisible();
+
+  // Back up, each level still says what it holds.
+  await page.getByRole('button', { name: 'Revenir à Scans' }).click();
+  await expect(page.getByText(/^41 éléments · /)).toBeVisible();
+});

@@ -10,7 +10,7 @@ import {
   writeRootPaths,
 } from '../../data/roots.ts';
 import type { DriveFolder } from '../../data/source.ts';
-import { formatBytes, formatItemCount } from '../../lib/format.ts';
+import { formatBytes, formatCount, formatItemCount } from '../../lib/format.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
 import { BackIcon, ChevronIcon } from '../../ui/icons.tsx';
@@ -22,6 +22,12 @@ import styles from './FoldersScreen.module.css';
 function folderContent(folder: DriveFolder): string {
   if (folder.childCount === 0) return 'vide';
   const count = formatItemCount(folder.childCount);
+  return folder.size ? `${count} · ${formatBytes(folder.size)}` : count;
+}
+
+/** "40 fichiers · 120 Mo": the content of a folder that holds no subfolder. */
+function filesContent(folder: DriveFolder): string {
+  const count = `${formatCount(folder.childCount)} fichier${folder.childCount > 1 ? 's' : ''}`;
   return folder.size ? `${count} · ${formatBytes(folder.size)}` : count;
 }
 
@@ -138,7 +144,10 @@ function FolderBrowser({
   roots: readonly string[];
   onAdd: (path: string) => void;
 }) {
-  const [path, setPath] = useState('/');
+  // The folders opened so far, from the drive root: what each holds stays known on the way back.
+  const [trail, setTrail] = useState<readonly DriveFolder[]>([]);
+  const current = trail.at(-1) ?? null;
+  const path = current?.path ?? '/';
   const [attempt, setAttempt] = useState(0);
   const [listing, setListing] = useState<{
     path: string;
@@ -173,7 +182,7 @@ function FolderBrowser({
             <button
               type="button"
               className={styles.up}
-              onClick={() => setPath(parentOf(path))}
+              onClick={() => setTrail(trail.slice(0, -1))}
               aria-label={`Revenir à ${folderName(parentOf(path))}`}
             >
               <BackIcon />
@@ -181,7 +190,11 @@ function FolderBrowser({
           )}
           <span className={styles.text}>
             <span className={styles.name}>{folderName(path)}</span>
-            {path !== '/' && <span className={styles.meta}>{path}</span>}
+            {current && (
+              <span className={styles.meta}>
+                {folderContent(current)} · {current.path}
+              </span>
+            )}
           </span>
         </div>
 
@@ -201,7 +214,11 @@ function FolderBrowser({
             </button>
           </div>
         ) : listing.folders.length === 0 ? (
-          <p className={`${common.muted} ${styles.state}`}>Aucun sous-dossier.</p>
+          <p className={`${common.muted} ${styles.state}`}>
+            {current && current.childCount > 0
+              ? `Aucun sous-dossier : ${filesContent(current)}.`
+              : 'Dossier vide.'}
+          </p>
         ) : (
           <ul aria-label={`Dossiers de ${folderName(path)}`}>
             {listing.folders.map((folder) => {
@@ -219,7 +236,7 @@ function FolderBrowser({
                   <button
                     type="button"
                     className={styles.open}
-                    onClick={() => setPath(folder.path)}
+                    onClick={() => setTrail([...trail, folder])}
                     disabled={!opens}
                     aria-label={opens ? `Ouvrir ${folder.name}, ${details}` : undefined}
                   >
