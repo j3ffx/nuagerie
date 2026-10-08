@@ -153,7 +153,10 @@ annuaire par défaut (**Default Directory**). L’inscription d’application es
 7. **Authentification** → plateforme SPA → ajouter l’URL de l’instance déployée suivie de
    `/redirect`, par exemple `https://nuagerie.pages.dev/redirect`.
 8. **Autorisations d’API** → **Microsoft Graph** → **Autorisations déléguées** :
-   `Files.Read`, `User.Read`, `offline_access`, **et rien d’autre**.
+   `Files.Read`, `User.Read`, `offline_access`. Les favoris demandent en plus, au moment où on les
+   active, `Files.ReadWrite.AppFolder` (écriture dans le seul dossier `Applis/Nuagerie`) : Microsoft
+   accepte cette demande sans qu’elle soit déclarée ici, mais on peut l’ajouter à la liste pour la
+   transparence. Aucune autre permission.
 9. Copier l’ID d’application dans `.env` : `VITE_MSAL_CLIENT_ID=…`.
 
 Le Client ID n’est pas un secret, mais il reste hors du dépôt (`.env` est ignoré par git).

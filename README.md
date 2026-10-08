@@ -5,8 +5,10 @@ rangées par albums, retrouvées par date et par lieu. Une PWA pensée pour le t
 agréable aussi sur PC.
 
 - 100 % côté client, sans serveur, sans suivi.
-- Permissions Microsoft Graph limitées à `Files.Read`, `User.Read`, `offline_access` :
-  l’application ne peut rien modifier dans OneDrive.
+- Lecture seule : permissions Microsoft Graph limitées à `Files.Read`, `User.Read`,
+  `offline_access`. Seule exception, à activer soi-même : les favoris, rangés dans un dossier à part
+  (`Applis/Nuagerie`), avec une permission limitée à ce dossier. Réglages → Permissions montre ce
+  que Microsoft autorise réellement.
 - Un **mode démo** avec ~20 000 photos factices permet de tout essayer sans compte.
 
 ## Ce que fait Nuagerie
@@ -29,9 +31,12 @@ agréable aussi sur PC.
 - **Hors connexion.** L’application s’installe sur le téléphone. L’index des photos et les
   miniatures déjà vues restent sur l’appareil : sans réseau, tout ce qui a été vu reste
   consultable.
+- **Favoris.** Un cœur dans la visionneuse, et un album « Favoris » en tête de l’accueil.
+  Optionnels : ils se rangent, avec les préférences d’albums, dans un dossier à part de
+  OneDrive (`Applis/Nuagerie`), pour ne jamais être perdus et suivre d’un appareil à l’autre.
 - **Réglages.** Les dossiers OneDrive parcourus (`/Pictures` par défaut, d’autres à
-  ajouter), le choix des albums, le thème clair ou sombre, la taille du cache des
-  miniatures.
+  ajouter), le choix des albums, les favoris, le thème clair ou sombre, la taille du cache des
+  miniatures, et les permissions accordées à l’application.
 
 ## Vie privée
 
@@ -41,6 +46,8 @@ agréable aussi sur PC.
   envoyées nulle part.
 - L’index et les miniatures sont gardés dans le navigateur (IndexedDB, Cache Storage), sur
   l’appareil uniquement, et effacés à la déconnexion.
+- Les favoris, une fois activés, sont le seul contenu écrit dans OneDrive : un fichier,
+  `Applis/Nuagerie/nuagerie.json`, dans le OneDrive de la personne connectée.
 
 ## Essayer
 
