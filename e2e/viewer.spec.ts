@@ -277,18 +277,26 @@ test('the info panel opened twice still closes at once', async ({ page }) => {
 
 test('on a phone, the info panel leaves the whole photo above it', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 780 });
+  // No rise: a panel still moving up would read lower than where it ends.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await cells(page).nth(2).click();
   await viewer(page)
     .getByRole('button', { name: /voir les infos$/ })
     .click();
   const panel = viewer(page).getByRole('region', { name: 'Infos' });
   await expect(panel).toBeVisible();
-  await page.waitForTimeout(400); // the panel's rise
-  const photo = await viewer(page).locator('[data-active] img').last().boundingBox();
-  const sheet = await panel.boundingBox();
-  if (!photo || !sheet) throw new Error('nothing to measure');
-  expect(photo.y + photo.height).toBeLessThanOrEqual(sheet.y + 1);
-  expect(photo.height).toBeGreaterThan(150);
+  // Until the large image is there, the preview (scaled 1.02) is what gets measured:
+  // on a busy machine that takes longer than any fixed wait.
+  const measure = async () => {
+    const photo = await viewer(page).locator('[data-active] img').last().boundingBox();
+    const sheet = await panel.boundingBox();
+    if (!photo || !sheet) throw new Error('nothing to measure');
+    return { overlap: photo.y + photo.height - sheet.y, height: photo.height };
+  };
+  await expect
+    .poll(async () => (await measure()).overlap, { message: 'photo bottom minus panel top' })
+    .toBeLessThanOrEqual(1);
+  expect((await measure()).height).toBeGreaterThan(150);
 });
 
 test('with the info panel open on a phone, a swipe down closes the panel only', async ({
