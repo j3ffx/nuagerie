@@ -119,8 +119,7 @@ commit metadata.
 Keep them few, and say why in the commit that adds one. Dependabot proposes grouped updates every
 Monday (`.github/dependabot.yml`); the CI checks them like any change. The CI installs with `npm ci` and the npm that
 ships with Node 22 (npm 10): let npm write `package-lock.json`, never edit it by hand, and check a lock
-change with `npx npm@10 ci` in a clean clone. `overrides` in `package.json` forces a fixed `sharp`
-(pulled in by wrangler's miniflare); drop it once miniflare depends on a fixed version.
+change with `npx npm@10 ci` in a clean clone.
 
 ## Releases
 
