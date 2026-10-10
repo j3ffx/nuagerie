@@ -4,6 +4,26 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## 0.3.0 — 2026-10-10
+
+Mieux voir tes photos.
+
+### Nouveautés
+
+- Infos d’une photo : touche la date en haut de la visionneuse (repère l’icône « i ») pour voir sa
+  date et d’où elle vient, l’album (en entier, même long), le dossier, le nom du fichier,
+  l’appareil photo, la taille, le lieu, et l’ouvrir dans OneDrive. Sur téléphone, le panneau prend
+  le bas de l’écran et la photo reste entière au-dessus ; sur ordinateur, il s’affiche à côté.
+- Pince une grille pour changer le nombre de colonnes (de 3 à 7 sur téléphone, Ctrl + molette sur
+  ordinateur) ; le réglage est gardé sur l’appareil.
+- Sélection de plusieurs photos : un appui long en sélectionne une, glisser le doigt en prend
+  plusieurs, la case ronde d’un mois le prend en entier. Ensuite, partage-les d’un coup, ajoute-les
+  aux favoris ou télécharge-les. Le bouton retour quitte la sélection. Sur ordinateur : Ctrl + clic,
+  Maj + clic pour une suite, Échap pour quitter.
+- Un appui long sur un album (clic droit sur ordinateur) ouvre son menu : le masquer, voir ses photos
+  sur la carte, l’ouvrir dans OneDrive. Sur la tuile Favoris, « Voir sur la carte » montre tes
+  favoris seuls.
+
 ## 0.2.1 — 2026-10-08
 
 ### Nouveautés
