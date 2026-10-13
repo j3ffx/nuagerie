@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signIn } from '../auth/msal.ts';
+import { UNREACHABLE_MESSAGE, useSignIn } from '../auth/useSignIn.ts';
 import { useData } from '../data/dataContext.ts';
 import { useOnline } from '../lib/online.ts';
 import common from '../ui/common.module.css';
@@ -9,8 +9,9 @@ import styles from './Banner.module.css';
 
 /**
  * Says when the device is offline (only the thumbnails kept on the device
- * show), and once the connection is back after an offline start, offers to
- * sign in again so the index can be updated.
+ * show), and after an offline start (or one where Microsoft could not be
+ * reached) offers to sign in again so the index can be updated: only when
+ * Microsoft answers, or its page would never load.
  */
 export function ConnectionBanner() {
   const online = useOnline();
@@ -18,9 +19,11 @@ export function ConnectionBanner() {
   // Dismissed until the connection changes: going offline again shows it again.
   const [dismissed, setDismissed] = useState(false);
   const [shownFor, setShownFor] = useState(online);
+  const { start, checking, unreachable, forget } = useSignIn();
   if (shownFor !== online) {
     setShownFor(online);
     setDismissed(false);
+    forget();
   }
   const reconnect = online && mode === 'onedrive' && !signedIn;
   if ((online && !reconnect) || dismissed) return null;
@@ -35,10 +38,12 @@ export function ConnectionBanner() {
         </span>
       )}
       <span className={styles.text}>
-        <span className={styles.title}>{online ? 'En ligne' : 'Hors connexion'}</span>
+        <span className={styles.title}>{online ? 'Pas à jour' : 'Hors connexion'}</span>
         <span className={styles.subtitle}>
           {online
-            ? 'Pas à jour'
+            ? unreachable
+              ? UNREACHABLE_MESSAGE.replace(/\.$/, '')
+              : 'Photos de cet appareil'
             : mode === 'demo'
               ? 'La carte n’a pas de fond'
               : 'Photos déjà vues seulement'}
@@ -48,9 +53,11 @@ export function ConnectionBanner() {
         <button
           type="button"
           className={`${common.button} ${styles.action}`}
-          onClick={() => void signIn()}
+          disabled={checking}
+          aria-busy={checking}
+          onClick={() => void start()}
         >
-          Se connecter
+          {checking ? 'Connexion…' : unreachable ? 'Réessayer' : 'Se connecter'}
         </button>
       )}
       <button

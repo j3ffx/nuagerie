@@ -54,13 +54,52 @@ export function getMsal(): PublicClientApplication {
   return instance;
 }
 
+/** Microsoft's public sign-in metadata: small, cached nowhere, readable from the page (CORS). */
+const REACHABILITY_URL =
+  'https://login.microsoftonline.com/consumers/v2.0/.well-known/openid-configuration';
+/** Long enough for a first contact (name, connection, encryption) on a poor mobile network. */
+const REACHABILITY_TIMEOUT_MS = 8000;
+
+/**
+ * Whether Microsoft's sign-in answers now. A device can say it is online and
+ * still not reach it: a plane's Wi-Fi that lets only messaging apps through,
+ * a hotel's portal, a very poor network. Sending the user to Microsoft's page
+ * there would leave them on a page that never loads.
+ */
+export async function microsoftReachable(
+  fetcher: typeof fetch = (input, init) => fetch(input, init),
+  timeoutMs = REACHABILITY_TIMEOUT_MS,
+): Promise<boolean> {
+  try {
+    const response = await fetcher(REACHABILITY_URL, {
+      cache: 'no-store',
+      credentials: 'omit',
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!response.ok) return false;
+    // A portal may answer in Microsoft's place: only Microsoft's own answer counts.
+    const body = (await response.json()) as { issuer?: unknown };
+    return typeof body.issuer === 'string';
+  } catch {
+    return false;
+  }
+}
+
+let unreachableAtStart = false;
+
+/** The app started without Microsoft, which did not answer (the banner says why). */
+export function startedUnreachable(): boolean {
+  return unreachableAtStart;
+}
+
 /**
  * Initializes MSAL, completes a pending redirect and returns the signed-in
- * account. Offline, only an account still in the local cache counts: signing
- * in again needs Microsoft, so the app starts without an account and shows
- * the index kept on the device.
+ * account. Offline (or when Microsoft cannot be reached), only an account
+ * still in the local cache counts: signing in again needs Microsoft, so the
+ * app starts without an account (`offline`) and shows the index kept on the
+ * device.
  */
-export async function initAuth(): Promise<AccountInfo | null> {
+export async function initAuth(): Promise<{ account: AccountInfo | null; offline: boolean }> {
   const msal = getMsal();
   await msal.initialize();
   let result: AuthenticationResult | null = null;
@@ -72,16 +111,21 @@ export async function initAuth(): Promise<AccountInfo | null> {
     if (!msal.getActiveAccount() && msal.getAllAccounts().length === 0) throw error;
   }
   const cached = result?.account ?? msal.getActiveAccount() ?? msal.getAllAccounts()[0] ?? null;
-  if (!cached && !isOnline()) return null;
+  if (!cached && !isOnline()) return { account: null, offline: true };
+  // About to go through Microsoft (hidden sign-in, then its page): only if it answers.
+  if (!cached && hasSignedInBefore() && !(await microsoftReachable())) {
+    unreachableAtStart = true;
+    return { account: null, offline: true };
+  }
   const account = cached ?? (await signInSilently(msal));
   if (account) {
     msal.setActiveAccount(account);
     writePersistent(LOGIN_HINT_KEY, account.username);
     sessionStorage.removeItem(AUTO_SIGN_IN_KEY);
-    return account;
+    return { account, offline: false };
   }
   await signInAgain();
-  return null;
+  return { account: null, offline: false };
 }
 
 /** Signed in on this device before, and not signed out since. */

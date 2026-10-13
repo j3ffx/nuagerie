@@ -1,5 +1,6 @@
 import { useAccount } from '@azure/msal-react';
-import { signIn, signOut } from '../../auth/msal.ts';
+import { signOut } from '../../auth/msal.ts';
+import { useSignIn } from '../../auth/useSignIn.ts';
 import { useData } from '../../data/dataContext.ts';
 import {
   SYNC_ENABLED_KEY,
@@ -18,6 +19,7 @@ export function AccountSection() {
   const { signedIn, source, thumbnails } = useData();
   const online = useOnline();
   const confirm = useConfirm();
+  const reconnect = useSignIn();
 
   /** Signing out leaves nothing of the drive on the device: index and thumbnails go too. */
   const signOutAndForget = async () => {
@@ -71,16 +73,19 @@ export function AccountSection() {
         ) : (
           <>
             <p className={common.muted}>
-              Démarré hors connexion : les photos enregistrées sur l’appareil s’affichent, sans mise
-              à jour.
+              {reconnect.unreachable
+                ? 'Microsoft ne répond pas sur ce réseau'
+                : 'Démarré hors connexion'}{' '}
+              : les photos enregistrées sur l’appareil s’affichent, sans mise à jour.
             </p>
             <button
               type="button"
               className={common.buttonSoft}
-              onClick={() => void signIn()}
-              disabled={!online}
+              onClick={() => void reconnect.start()}
+              disabled={!online || reconnect.checking}
+              aria-busy={reconnect.checking}
             >
-              Se connecter
+              {reconnect.checking ? 'Connexion…' : 'Se connecter'}
             </button>
           </>
         )}

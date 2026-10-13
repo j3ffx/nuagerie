@@ -9,7 +9,6 @@ import { applyStoredTheme } from './lib/theme.ts';
 import { hasSignedInBefore, initAuth, REDIRECT_PATH } from './auth/msal.ts';
 import { resolveDataMode } from './data/mode.ts';
 import { ConnectingScreen } from './features/welcome/SignInScreen.tsx';
-import { isOnline } from './lib/online.ts';
 
 async function start() {
   // The chosen theme from the first screen (the redirect bridge included).
@@ -36,17 +35,19 @@ async function start() {
 
   const mode = resolveDataMode();
   let account: AccountInfo | null = null;
+  let unreachable = false;
   let authError: string | null = null;
   if (mode === 'onedrive') {
     root.render(<ConnectingScreen />);
     try {
-      account = await initAuth();
+      ({ account, offline: unreachable } = await initAuth());
     } catch (error) {
       authError = error instanceof Error ? error.message : String(error);
     }
   }
-  // Offline with no session to restore: show the index kept on the device.
-  const offline = mode === 'onedrive' && !account && !isOnline() && hasSignedInBefore();
+  // Offline (or Microsoft out of reach) with no session to restore: show the index kept on
+  // the device.
+  const offline = mode === 'onedrive' && !account && unreachable && hasSignedInBefore();
 
   root.render(
     <StrictMode>

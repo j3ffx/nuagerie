@@ -1,5 +1,5 @@
 import { useMsal } from '@azure/msal-react';
-import { signIn } from '../../auth/msal.ts';
+import { UNREACHABLE_MESSAGE, useSignIn } from '../../auth/useSignIn.ts';
 import { enterDemoMode } from '../../data/mode.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
@@ -10,7 +10,8 @@ import styles from './SignInScreen.module.css';
 export function SignInScreen({ error }: { error: string | null }) {
   const { inProgress } = useMsal();
   const online = useOnline();
-  const busy = inProgress !== 'none';
+  const signIn = useSignIn();
+  const busy = inProgress !== 'none' || signIn.checking;
 
   return (
     <main className={styles.welcome}>
@@ -24,6 +25,10 @@ export function SignInScreen({ error }: { error: string | null }) {
         <p className={styles.error} role="status">
           Hors connexion : la connexion à Microsoft attend le réseau.
         </p>
+      ) : signIn.unreachable ? (
+        <p className={styles.error} role="status">
+          {UNREACHABLE_MESSAGE} Réessaie sur un autre réseau, ou essaie la démo.
+        </p>
       ) : (
         error && (
           <p className={styles.error} role="alert">
@@ -35,10 +40,11 @@ export function SignInScreen({ error }: { error: string | null }) {
         <button
           type="button"
           className={common.button}
-          onClick={() => void signIn()}
+          onClick={() => void signIn.start()}
           disabled={busy || !online}
+          aria-busy={signIn.checking}
         >
-          Se connecter avec Microsoft
+          {signIn.checking ? 'Connexion…' : 'Se connecter avec Microsoft'}
         </button>
         <button type="button" className={common.buttonSoft} onClick={enterDemoMode}>
           Essayer la démo
