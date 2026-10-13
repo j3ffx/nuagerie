@@ -31,6 +31,8 @@ export interface GraphClientOptions {
   maxRetries?: number;
   /** False when the device is known to be offline: network errors are not retried then. */
   isOnline?: () => boolean;
+  /** For tests: how long one request may last (REQUEST_TIMEOUT_MS). */
+  requestTimeoutMs?: number;
 }
 
 interface Request {
@@ -83,6 +85,14 @@ export interface BatchResponse {
 export const MAX_BATCH = 20;
 
 const RETRYABLE = new Set([429, 500, 502, 503, 504]);
+/**
+ * A request with no answer from the server after this long gives up: on a
+ * network that lets nothing through but never says no (a plane's Wi-Fi), it
+ * would otherwise wait for ever. It then counts as a network failure, retried
+ * like one. Only the wait for the answer counts, not reading a long one on a
+ * slow network; and not an upload, whose answer comes once it is all sent.
+ */
+const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_BACKOFF_MS = 60_000;
 
 /** Delay before the next attempt: Retry-After when given, else exponential backoff with jitter. */
@@ -125,6 +135,14 @@ export function createGraphClient(options: GraphClientOptions): GraphClient & Ap
     for (let attempt = 0; ; attempt++) {
       const token = await options.getToken();
       let response: Response;
+      const controller = new AbortController();
+      const timer =
+        request.method === 'PUT'
+          ? 0
+          : setTimeout(
+              () => controller.abort(new DOMException('No answer in time', 'TimeoutError')),
+              options.requestTimeoutMs ?? REQUEST_TIMEOUT_MS,
+            );
       try {
         response = await doFetch(url, {
           method: request.method,
@@ -134,6 +152,7 @@ export function createGraphClient(options: GraphClientOptions): GraphClient & Ap
             ...request.headers,
           },
           ...(request.body === undefined ? {} : { body: request.body }),
+          signal: controller.signal,
         });
       } catch (error) {
         // Network failure (DNS, flaky link…): retry, then give up with the original error.
@@ -141,6 +160,8 @@ export function createGraphClient(options: GraphClientOptions): GraphClient & Ap
         if (attempt >= maxRetries || !online()) throw error;
         await sleep(retryDelay(attempt, null));
         continue;
+      } finally {
+        clearTimeout(timer);
       }
       if (response.ok) return response;
       if (RETRYABLE.has(response.status) && attempt < maxRetries) {

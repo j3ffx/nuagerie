@@ -187,3 +187,54 @@ describe('putAppFile', () => {
     expect(calls).toHaveLength(1);
   });
 });
+
+describe('a request that never ends', () => {
+  it('gives up, then retries, rather than waiting for ever', async () => {
+    let calls = 0;
+    const client = createGraphClient({
+      getToken: async () => 't',
+      // A network that lets nothing through and never says no (a plane's Wi-Fi).
+      fetch: ((_url: RequestInfo | URL, init?: RequestInit) => {
+        calls++;
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () =>
+            reject(new DOMException('The operation timed out.', 'TimeoutError')),
+          );
+        });
+      }) as typeof fetch,
+      sleep: async () => undefined,
+      maxRetries: 2,
+      requestTimeoutMs: 20,
+    });
+    await expect(client.getJson('/me/drive/root')).rejects.toMatchObject({ name: 'TimeoutError' });
+    expect(calls).toBe(3);
+  });
+});
+
+describe('a long answer on a slow network', () => {
+  it('is read to the end: only the wait for the answer has a limit', async () => {
+    const client = createGraphClient({
+      getToken: async () => 't',
+      // The answer comes at once, its body slowly (a big delta page on a weak network).
+      // As in a browser, cancelling the request also cuts its body.
+      fetch: (async (_url: RequestInfo | URL, init?: RequestInit) =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              init?.signal?.addEventListener('abort', () =>
+                controller.error(new DOMException('Cut', 'TimeoutError')),
+              );
+              setTimeout(() => {
+                controller.enqueue(new TextEncoder().encode('{"value":[1,2,3]}'));
+                controller.close();
+              }, 80);
+            },
+          }),
+          { status: 200 },
+        )) as typeof fetch,
+      sleep: async () => undefined,
+      requestTimeoutMs: 20,
+    });
+    await expect(client.getJson('/me/drive/root/delta')).resolves.toEqual({ value: [1, 2, 3] });
+  });
+});
