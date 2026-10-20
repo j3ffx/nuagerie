@@ -12,7 +12,7 @@ import { createGraphClient } from '../graph/client.ts';
 import { readRootPaths } from '../roots.ts';
 import type { DataMode } from '../source.ts';
 import { createAppFolder, syncWith } from './appFolder.ts';
-import { whenPermissionMissing } from './permission.ts';
+import { favoritesShown, whenPermissionMissing } from './permission.ts';
 import {
   favoriteIds,
   mergeStates,
@@ -283,10 +283,15 @@ export function SyncProvider({
   );
 
   // Favourites need the sync with OneDrive: kept on the device only, they would be lost with
-  // the app. They come on once Microsoft has granted the permission. The demo has no OneDrive:
-  // there they stay on the device.
-  const favoritesOn =
-    mode === 'demo' || (enabled && granted && status.status !== 'needs-permission');
+  // the app. They come on once Microsoft has granted the permission, and stay on when no
+  // session could be restored (no network). The demo has no OneDrive: there they stay on the
+  // device.
+  const favoritesOn = favoritesShown({
+    mode,
+    enabled: enabledSetting,
+    granted,
+    status: status.status,
+  });
   const favorites = useMemo(
     () => (favoritesOn ? favoriteIds(state) : new Set<string>()),
     [favoritesOn, state],

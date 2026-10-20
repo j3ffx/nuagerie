@@ -1,3 +1,5 @@
+import type { DataMode } from '../source.ts';
+
 /** What becomes of the sync when Microsoft does not grant its permission. */
 export interface PermissionOutcome {
   /** The sync stays on. */
@@ -22,4 +24,25 @@ export function whenPermissionMissing({
 }): PermissionOutcome {
   if (granted) return { enabled: true, status: 'needs-permission', declined: false };
   return { enabled: false, status: 'off', declined: asked };
+}
+
+/**
+ * Whether favourites show. The demo keeps them on the device. In OneDrive mode
+ * they need the sync turned on and granted, but no Microsoft session: started
+ * with no network, the app shows the copy kept on the device, and hearts
+ * touched meanwhile go out with the next sync.
+ */
+export function favoritesShown({
+  mode,
+  enabled,
+  granted,
+  status,
+}: {
+  mode: DataMode;
+  /** The setting on this device, whether or not a session could be restored. */
+  enabled: boolean;
+  granted: boolean;
+  status: string;
+}): boolean {
+  return mode === 'demo' || (enabled && granted && status !== 'needs-permission');
 }

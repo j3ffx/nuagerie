@@ -12,6 +12,7 @@ Petites retouches déjà en ligne, sans nouveau numéro : elles rejoindront la p
   reste plus bloquée sur la connexion : elle s’ouvre avec les photos de l’appareil, et « Se
   connecter » attend que Microsoft réponde.
 - L’écran « Connexion à OneDrive… » suit le thème choisi dans les réglages.
+- Sans réseau, tes favoris restent affichés, même quand Nuagerie n’a pas pu joindre Microsoft.
 
 ## 0.3.0 — 2026-10-10
 
