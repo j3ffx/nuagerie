@@ -13,6 +13,7 @@ Petites retouches déjà en ligne, sans nouveau numéro : elles rejoindront la p
   connecter » attend que Microsoft réponde.
 - L’écran « Connexion à OneDrive… » suit le thème choisi dans les réglages.
 - Sans réseau, tes favoris restent affichés, même quand Nuagerie n’a pas pu joindre Microsoft.
+- Le bandeau « Hors connexion » affiche son texte en entier, sur deux lignes s’il le faut.
 
 ## 0.3.0 — 2026-10-10
 

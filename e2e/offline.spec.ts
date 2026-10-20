@@ -31,6 +31,22 @@ test('says when the device is offline, and keeps working', async ({ page, contex
   await expect(banner(page)).toBeHidden();
 });
 
+test('shows the whole offline message, on several lines if needed', async ({ page, context }) => {
+  await context.setOffline(true);
+  // As with a larger system font, or a longer message beside a button.
+  const subtitle = banner(page).locator('span > span').last();
+  await subtitle.evaluate((element) => {
+    element.style.fontSize = '28px';
+  });
+  const box = await subtitle.evaluate((element) => ({
+    cut: element.scrollWidth > element.clientWidth,
+    lines: Math.round(element.getBoundingClientRect().height / 28),
+  }));
+  expect(box.cut).toBe(false);
+  expect(box.lines).toBeGreaterThan(1);
+  await context.setOffline(false);
+});
+
 test('crosses out sharing and saving in the viewer while offline', async ({ page, context }) => {
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'canShare', { value: () => true });
