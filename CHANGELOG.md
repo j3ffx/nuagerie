@@ -4,9 +4,9 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
-## Depuis la dernière version
+## 0.3.1 — 2026-10-20
 
-Petites retouches déjà en ligne, sans nouveau numéro : elles rejoindront la prochaine version.
+### Corrections
 
 - Sur un Wi-Fi qui ne laisse rien passer (avion, hôtel) ou un très mauvais réseau, Nuagerie ne
   reste plus bloquée sur la connexion : elle s’ouvre avec les photos de l’appareil, et « Se
