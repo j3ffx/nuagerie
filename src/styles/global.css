@@ -97,6 +97,13 @@ img,
   border: 0;
 }
 
+/* Hidden text within a line, read by screen readers (a comma, a hint): positioned out of the
+   line like .visually-hidden, or in an inline block, it would count as a block and add a space
+   before it in the accessible name ("Albums , 7 albums"). */
+.hidden-inline {
+  font-size: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

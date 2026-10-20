@@ -14,6 +14,8 @@ Petites retouches déjà en ligne, sans nouveau numéro : elles rejoindront la p
 - L’écran « Connexion à OneDrive… » suit le thème choisi dans les réglages.
 - Sans réseau, tes favoris restent affichés, même quand Nuagerie n’a pas pu joindre Microsoft.
 - Le bandeau « Hors connexion » affiche son texte en entier, sur deux lignes s’il le faut.
+- Avec un lecteur d’écran ou la commande vocale, les albums, la date d’une photo et les dossiers
+  s’annoncent avec le texte affiché.
 
 ## 0.3.0 — 2026-10-10
 

@@ -28,8 +28,8 @@ test('adds a folder outside Pictures, then removes it', async ({ page }) => {
     .click();
   await expect(page).toHaveURL('/');
   // A root with files of its own is an album; its subfolder is one too.
-  await expect(homeAlbums(page).getByText('Scans', { exact: true })).toBeVisible();
-  await expect(homeAlbums(page).getByText('Anciennes', { exact: true })).toBeVisible();
+  await expect(homeAlbums(page).getByRole('link', { name: /^Scans,/ })).toBeVisible();
+  await expect(homeAlbums(page).getByRole('link', { name: /^Anciennes,/ })).toBeVisible();
   await homeAlbums(page)
     .getByRole('link', { name: /^Scans/ })
     .click();
@@ -46,8 +46,8 @@ test('adds a folder outside Pictures, then removes it', async ({ page }) => {
     .getByRole('button', { name: 'Enregistrer' })
     .click();
   await expect(page).toHaveURL('/');
-  await expect(homeAlbums(page).getByText('Camera Roll', { exact: true })).toBeVisible();
-  await expect(homeAlbums(page).getByText('Scans', { exact: true })).toBeHidden();
+  await expect(homeAlbums(page).getByRole('link', { name: /^Camera Roll,/ })).toBeVisible();
+  await expect(homeAlbums(page).getByRole('link', { name: /^Scans,/ })).toBeHidden();
 });
 
 test('keeps a draft until it is saved', async ({ page }) => {

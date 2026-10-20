@@ -27,7 +27,6 @@ export function AlbumTile({
 }) {
   const period =
     album.first !== null && album.last !== null ? formatYearRange(album.first, album.last) : null;
-  const label = [album.name, albumCountLabel(album), period].filter(Boolean).join(', ');
   // A long press (a right click with a mouse) opens its menu, titled with its full name.
   // Closed, the menu gives the focus back to its tile (keyboard, screen readers).
   const [menuFor, setMenuFor] = useState<HTMLElement | null>(null);
@@ -46,7 +45,6 @@ export function AlbumTile({
       <Link
         href={href ?? `/album/${encodeURIComponent(album.id)}`}
         className={styles.tile}
-        aria-label={label}
         // Held, a link would be dragged instead of opening the menu.
         draggable={false}
         {...longPress}
@@ -61,11 +59,17 @@ export function AlbumTile({
         ) : (
           <div className={styles.cover} aria-hidden="true" />
         )}
+        {/* The caption names the link: what is read is what is shown. The hidden commas sit
+            inside the lines: between them, a space would come before each. */}
         <span className={styles.caption}>
           <span className={styles.name} title={album.name}>
             {album.name}
+            <span className="hidden-inline">, </span>
           </span>
-          <span className={styles.meta}>{albumCountLabel(album)}</span>
+          <span className={styles.meta}>
+            {albumCountLabel(album)}
+            {period && <span className="hidden-inline">, </span>}
+          </span>
           {period && <span className={styles.meta}>{period}</span>}
         </span>
       </Link>

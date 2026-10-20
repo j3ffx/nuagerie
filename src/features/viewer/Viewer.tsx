@@ -570,15 +570,24 @@ function ViewerBar({
       ? null
       : formatTakenTime({ takenAt: item.takenAt, dateSource: item.dateSource });
   const day = item.takenAt === null ? 'Sans date' : formatLongDate(item.takenAt);
-  const captionText = [day, time, album].filter(Boolean).join(', ');
+  // The caption names its button (no aria-label: it must say what is seen), what it does last.
+  // The hidden commas sit inside the lines: between them, a space would come before each.
+  const action = <span className="hidden-inline">, {infoOpen ? 'masquer' : 'voir'} les infos</span>;
+  const details = [time, album].filter(Boolean).join(' · ');
   const caption = (
     <>
       <span className={styles.dateLine}>
-        <span className={styles.date}>{day}</span>
+        <span className={styles.date}>
+          {day}
+          {details ? <span className="hidden-inline">, </span> : action}
+        </span>
         <InfoIcon width={18} height={18} className={styles.infoIcon} />
       </span>
-      {(time || album) && (
-        <span className={styles.album}>{[time, album].filter(Boolean).join(' · ')}</span>
+      {details && (
+        <span className={styles.album}>
+          {details}
+          {action}
+        </span>
       )}
     </>
   );
@@ -615,13 +624,7 @@ function ViewerBar({
         </button>
         {/* The day on top, then the time and the album: the bar has four buttons on a phone.
             A tap opens the information panel, where a long album name reads in full. */}
-        <button
-          type="button"
-          className={styles.caption}
-          onClick={onInfo}
-          aria-label={`${captionText}, ${infoOpen ? 'masquer' : 'voir'} les infos`}
-          aria-expanded={infoOpen}
-        >
+        <button type="button" className={styles.caption} onClick={onInfo} aria-expanded={infoOpen}>
           {caption}
         </button>
         {(sync.favoritesOn || sync.available) && (

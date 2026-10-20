@@ -23,8 +23,8 @@ test('shows the demo albums on the home screen', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Albums' })).toBeVisible();
   await expect(page.getByRole('link', { name: /Mode démo/ })).toBeVisible();
   const albums = page.getByRole('list', { name: 'Albums' });
-  await expect(albums.getByText('Camera Roll', { exact: true })).toBeVisible();
-  await expect(albums.getByText('Événements', { exact: true })).toBeVisible();
+  await expect(albums.getByRole('link', { name: /^Camera Roll,/ })).toBeVisible();
+  await expect(albums.getByRole('link', { name: /^Événements,/ })).toBeVisible();
   expect(await albums.getByRole('listitem').count()).toBeGreaterThanOrEqual(10);
   // The demo flag is consumed and removed from the URL.
   expect(new URL(page.url()).search).toBe('');

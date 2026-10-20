@@ -249,10 +249,15 @@ function FolderBrowser({
                     className={styles.open}
                     onClick={() => setTrail([...trail, folder])}
                     disabled={!opens}
-                    aria-label={opens ? `Ouvrir ${folder.name}, ${details}` : undefined}
                   >
+                    {/* Named by what it shows (no aria-label: it must say what is seen), with hidden
+                        words and commas for screen readers. */}
                     <span className={styles.text}>
-                      <span className={styles.name}>{folder.name}</span>
+                      <span className={styles.name}>
+                        {opens && <span className="hidden-inline">Ouvrir&nbsp;</span>}
+                        {folder.name}
+                        <span className="hidden-inline">, </span>
+                      </span>
                       <span className={styles.meta}>{details}</span>
                     </span>
                     {opens && <ChevronIcon className={styles.chevron} />}
