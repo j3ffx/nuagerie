@@ -11,6 +11,7 @@ import { useConfirm } from '../../ui/confirmContext.ts';
 import { checkForUpdate } from '../../app/updates.ts';
 import { AboutSection } from './AboutSection.tsx';
 import { AccountSection } from './AccountSection.tsx';
+import { MemoriesNotificationSection } from './MemoriesNotificationSection.tsx';
 import { PermissionsSection } from './PermissionsSection.tsx';
 import { SyncSection } from './SyncSection.tsx';
 import { ThumbnailCacheSection } from './ThumbnailCacheSection.tsx';
@@ -88,6 +89,8 @@ export function SettingsScreen() {
         </section>
 
         <SyncSection />
+
+        <MemoriesNotificationSection />
 
         <section className={common.section} aria-labelledby="settings-data">
           <h2 id="settings-data" className={common.sectionTitle}>
