@@ -21,6 +21,7 @@ import { AllScreen } from '../features/all/AllScreen.tsx';
 import { DiagnosticScreen } from '../features/diagnostic/DiagnosticScreen.tsx';
 import { MapScreen } from '../features/map/MapScreen.tsx';
 import { ZoneScreen } from '../features/map/ZoneScreen.tsx';
+import { MemoriesScreen } from '../features/memories/MemoriesScreen.tsx';
 import { SearchScreen } from '../features/search/SearchScreen.tsx';
 import { FoldersScreen } from '../features/settings/FoldersScreen.tsx';
 import { FavoritesScreen } from '../features/favorites/FavoritesScreen.tsx';
@@ -123,6 +124,7 @@ function ShellContent() {
           <Route path="/albums/choisir" component={ChooseAlbumsScreen} />
           <Route path="/album/:id" component={AlbumScreen} />
           <Route path="/favoris" component={FavoritesScreen} />
+          <Route path="/souvenirs" component={MemoriesScreen} />
           <Route path="/tout" component={AllScreen} />
           <Route path="/tout/filtre" component={AllFilterScreen} />
           <Route path="/carte" component={MapScreen} />

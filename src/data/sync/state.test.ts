@@ -6,6 +6,7 @@ import {
   parseState,
   pendingFavorites,
   sameState,
+  SYNCED_PREFERENCES,
   withFavorite,
   withPreference,
 } from './state.ts';
@@ -54,5 +55,11 @@ describe('pendingFavorites', () => {
     expect(pendingFavorites('a')).toEqual(['a']);
     expect(pendingFavorites(null)).toEqual([]);
     expect(pendingFavorites([1, 'b'])).toEqual(['b']);
+  });
+});
+
+describe('SYNCED_PREFERENCES', () => {
+  it('carries the memories closed for the day, so they close on every device', () => {
+    expect(SYNCED_PREFERENCES).toContain('memories.closedOn');
   });
 });

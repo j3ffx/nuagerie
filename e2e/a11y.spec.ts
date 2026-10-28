@@ -89,6 +89,20 @@ const SCREENS: { name: string; path: string; ready: (page: Page) => Promise<void
     ready: (page) => expect(page.getByText(/dans cette zone/)).toBeVisible(),
   },
   {
+    name: 'memories',
+    path: '/souvenirs',
+    ready: async (page) => {
+      // Any day may have no memories: the screen then says so.
+      await expect(
+        page
+          .getByRole('main')
+          .locator('a[data-item-id] img')
+          .first()
+          .or(page.getByText('Pas de souvenir aujourd’hui.')),
+      ).toBeVisible();
+    },
+  },
+  {
     name: 'search',
     path: '/recherche',
     ready: (page) =>

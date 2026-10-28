@@ -15,7 +15,7 @@ const ENTRIES: NavEntry[] = [
     href: '/',
     label: 'Albums',
     icon: AlbumsIcon,
-    isActive: (path) => path === '/' || path.startsWith('/album'),
+    isActive: (path) => path === '/' || path.startsWith('/album') || path === '/souvenirs',
   },
   { href: '/tout', label: 'Tout', icon: GridIcon, isActive: (path) => path.startsWith('/tout') },
   { href: '/carte', label: 'Carte', icon: MapIcon, isActive: (path) => path.startsWith('/carte') },

@@ -34,6 +34,8 @@ export const SYNCED_PREFERENCES = [
   'albums.photoOrder',
   'all.excluded.onedrive',
   'all.photoOrder',
+  // The memories closed for the day are closed on every device.
+  'memories.closedOn',
 ] as const;
 
 function mergeEntries<T>(

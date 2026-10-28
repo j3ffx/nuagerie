@@ -10,6 +10,7 @@ import { AlbumTile } from './AlbumTile.tsx';
 import tiles from './AlbumTile.module.css';
 import styles from './AlbumsScreen.module.css';
 import { useFavoritesAlbum } from '../favorites/useFavorites.ts';
+import { MemoriesSection } from '../memories/MemoriesSection.tsx';
 import { useAlbumModel, useAlbumSort } from './useAlbums.ts';
 
 export function AlbumsScreen() {
@@ -34,6 +35,7 @@ export function AlbumsScreen() {
         <IndexStatus />
         {model && (
           <>
+            <MemoriesSection />
             <AlbumSortControls sort={sort} onChange={setSort} label="Trier les albums par" />
 
             {albums.length === 0 && !favorites ? (
