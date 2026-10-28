@@ -20,17 +20,31 @@ const supported = () =>
   typeof ServiceWorkerRegistration !== 'undefined' &&
   'periodicSync' in ServiceWorkerRegistration.prototype;
 
+/** How long to wait for the service worker, which may never come (failed to register). */
+const READY_TIMEOUT_MS = 5000;
+
 async function periodicSync(): Promise<PeriodicSyncManager | null> {
-  const registration = (await navigator.serviceWorker.ready) as WithPeriodicSync;
-  return registration.periodicSync ?? null;
+  const registration = await Promise.race([
+    navigator.serviceWorker.ready as Promise<WithPeriodicSync>,
+    new Promise<null>((resolve) => window.setTimeout(() => resolve(null), READY_TIMEOUT_MS)),
+  ]);
+  return registration?.periodicSync ?? null;
 }
 
 type State = 'unknown' | 'on' | 'off';
 
-/** On when the periodic sync is registered and notifications are allowed. */
+/**
+ * On when the periodic sync is registered and notifications are allowed. Notifications taken
+ * back in the phone's settings: the sync goes too, rather than waking the app for nothing.
+ */
 async function currentState(): Promise<State> {
-  const tags = (await (await periodicSync())?.getTags()) ?? [];
-  return tags.includes(MEMORIES_SYNC_TAG) && Notification.permission === 'granted' ? 'on' : 'off';
+  const sync = await periodicSync();
+  const registered = ((await sync?.getTags()) ?? []).includes(MEMORIES_SYNC_TAG);
+  if (registered && Notification.permission !== 'granted') {
+    await sync?.unregister(MEMORIES_SYNC_TAG);
+    return 'off';
+  }
+  return registered ? 'on' : 'off';
 }
 
 /**
@@ -71,7 +85,8 @@ export function MemoriesNotificationSection() {
         return;
       }
       const sync = await periodicSync();
-      await sync?.register(MEMORIES_SYNC_TAG, { minInterval: MIN_INTERVAL });
+      if (!sync) throw new Error('no periodic sync');
+      await sync.register(MEMORIES_SYNC_TAG, { minInterval: MIN_INTERVAL });
       await read();
     } catch {
       setMessage(
@@ -88,6 +103,8 @@ export function MemoriesNotificationSection() {
     setMessage(null);
     try {
       await (await periodicSync())?.unregister(MEMORIES_SYNC_TAG);
+    } catch {
+      setMessage('La notification n’a pas pu être désactivée. Réessaie dans un moment.');
     } finally {
       await read().catch(() => setState('off'));
       setBusy(false);
