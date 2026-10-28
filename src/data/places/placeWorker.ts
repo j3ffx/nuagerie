@@ -8,14 +8,15 @@ import {
 
 /** Loads and indexes the place list off the main thread (half a second on a phone). */
 
-export interface PlaceRequest {
-  requestId: number;
-  latitude: number;
-  longitude: number;
-}
+export type PlaceRequest =
+  | { requestId: number; latitude: number; longitude: number }
+  /** Many photos at once: latitude, longitude, latitude, longitude… */
+  | { requestId: number; points: Float64Array };
 
 export type PlaceResponse =
-  { requestId: number; place: Place | null } | { requestId: number; error: string };
+  | { requestId: number; place: Place | null }
+  | { requestId: number; places: (Place | null)[] }
+  | { requestId: number; error: string };
 
 // Typed by hand: the app is compiled with the DOM library, not the worker one.
 const scope = self as unknown as {
@@ -31,9 +32,24 @@ const load = () =>
   }));
 
 scope.onmessage = (event) => {
-  const { requestId, latitude, longitude } = event.data;
+  const request = event.data;
+  const { requestId } = request;
   load().then(
-    (places) => scope.postMessage({ requestId, place: nearestPlace(places, latitude, longitude) }),
+    (places) => {
+      if ('points' in request) {
+        const { points } = request;
+        const found: (Place | null)[] = [];
+        for (let i = 0; i + 1 < points.length; i += 2) {
+          found.push(nearestPlace(places, points[i] ?? 0, points[i + 1] ?? 0));
+        }
+        scope.postMessage({ requestId, places: found });
+      } else {
+        scope.postMessage({
+          requestId,
+          place: nearestPlace(places, request.latitude, request.longitude),
+        });
+      }
+    },
     (error: unknown) => {
       index = null; // try again next time (offline now, maybe not later)
       scope.postMessage({ requestId, error: String(error) });
