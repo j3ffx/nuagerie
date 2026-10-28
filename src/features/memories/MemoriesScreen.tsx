@@ -9,7 +9,7 @@ import { IndexStatus } from '../../ui/IndexStatus.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import albumStyles from '../albums/AlbumScreen.module.css';
 import { PhotoBrowser } from '../viewer/PhotoBrowser.tsx';
-import { useMemories, useToday } from './useMemories.ts';
+import { useMemories } from './useMemories.ts';
 
 const dayMonth = new Intl.DateTimeFormat('fr-FR', {
   day: 'numeric',
@@ -24,16 +24,19 @@ const dayMonth = new Intl.DateTimeFormat('fr-FR', {
  */
 export function MemoriesScreen() {
   const index = useMediaIndex();
-  const { memories } = useMemories();
-  const today = useToday();
+  const { memories, today } = useMemories();
   const [params] = useSearchParams();
   const year = Number(params.get('annee')) || null;
-  const shown = useMemo(
-    () => (year === null ? memories : memories.filter((memory) => memory.year === year)),
-    [memories, year],
-  );
+  // A year with nothing today (a link kept from another day): all of today's memories instead.
+  const shown = useMemo(() => {
+    const ofYear = memories.filter((memory) => memory.year === year);
+    return ofYear.length > 0 ? ofYear : memories;
+  }, [memories, year]);
   const items = useMemo(() => shown.flatMap((memory) => memory.items), [shown]);
-  const title = year !== null && shown[0] ? yearsAgoLabel(shown[0].yearsAgo) : 'Souvenirs';
+  const title =
+    year !== null && shown.length === 1 && shown[0]?.year === year
+      ? yearsAgoLabel(shown[0].yearsAgo)
+      : 'Souvenirs';
 
   return (
     <>

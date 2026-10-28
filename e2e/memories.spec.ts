@@ -76,9 +76,20 @@ test('closes the memories for the day only', async ({ page }) => {
   await expect(section(page)).toBeVisible();
 });
 
-test('says when a year has no memory today', async ({ page }) => {
+test('shows every memory of today for a year without any (a link from another day)', async ({
+  page,
+}) => {
+  const count = await cards(page).count();
   await page.goto('/souvenirs?annee=2001');
-  await expect(page.getByText('Pas de souvenir aujourd’hui.')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Souvenirs' })).toBeVisible();
+  await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveCount(count);
+});
+
+test('moves the focus on to the sort when the memories close', async ({ page }) => {
+  await section(page).getByRole('button', { name: 'Fermer les souvenirs jusqu’à demain' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(section(page)).toHaveCount(0);
+  await expect(page.getByRole('combobox', { name: 'Trier les albums par' })).toBeFocused();
 });
 
 test('explains the morning notification, off in the demo', async ({ page }) => {
@@ -111,5 +122,25 @@ test('renews the memories at midnight, for an app left open', async ({ browser }
   await page.clock.fastForward('05:00');
   await expect(section(page)).toBeVisible();
   await expect(cards(page).first()).toHaveAccessibleName(/, 29 octobre 20\d\d, /);
+  await context.close();
+});
+
+test('renews at midnight on the day clocks go back, 25 hours long', async ({ browser }) => {
+  const context = await browser.newContext({ timezoneId: 'Europe/Paris', locale: 'fr-FR' });
+  const page = await context.newPage();
+  // Sunday 25 October 2026: at 3:00 summer time, it is 2:00 again.
+  await page.clock.install({ time: new Date('2026-10-25T01:00:00+02:00') });
+  await page.goto('/?demo=1');
+  await expect(page.getByRole('list', { name: 'Albums' })).toBeVisible();
+  await page.evaluate(() => localStorage.setItem('nuagerie.memories.closedOn', '"2026-10-25"'));
+  await page.reload();
+  await expect(page.getByRole('list', { name: 'Albums' })).toBeVisible();
+  await expect(section(page)).toHaveCount(0);
+  // 23 hours later it is 23:00 the same day: still closed, and the next midnight still counts.
+  await page.clock.fastForward('23:00:00');
+  await expect(section(page)).toHaveCount(0);
+  await page.clock.fastForward('01:30:00');
+  await expect(section(page)).toBeVisible();
+  await expect(cards(page).first()).toHaveAccessibleName(/, 26 octobre 20\d\d, /);
   await context.close();
 });

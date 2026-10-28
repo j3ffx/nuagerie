@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Link } from 'wouter';
 import { yearsAgoLabel, type MemoryYear } from '../../data/memories.ts';
 import { formatItemCount, formatLongDate } from '../../lib/format.ts';
@@ -17,10 +18,20 @@ const coverOf = (memory: MemoryYear) =>
  */
 export function MemoriesSection() {
   const { memories, closed, close } = useMemories();
+  const section = useRef<HTMLElement>(null);
   if (closed || memories.length === 0) return null;
 
+  // The section goes with the button that has the focus: the focus moves on to what follows
+  // (the albums' sort), not back to the top of the page (screen readers, keyboard).
+  const closeAndMoveOn = () => {
+    const next =
+      section.current?.nextElementSibling?.querySelector<HTMLElement>('a[href], button, select');
+    close();
+    next?.focus();
+  };
+
   return (
-    <section className={styles.section} aria-labelledby="memories-title">
+    <section ref={section} className={styles.section} aria-labelledby="memories-title">
       <div className={styles.header}>
         <h2 id="memories-title" className={styles.title}>
           Souvenirs
@@ -32,7 +43,7 @@ export function MemoriesSection() {
           type="button"
           className={styles.close}
           aria-label="Fermer les souvenirs jusqu’à demain"
-          onClick={close}
+          onClick={closeAndMoveOn}
         >
           <CloseIcon width={20} height={20} />
         </button>
