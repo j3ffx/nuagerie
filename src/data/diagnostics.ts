@@ -1,6 +1,7 @@
 import { parseExifDate, parseFileNameDate, type DateContext } from './dates.ts';
 import type { GraphDriveItem } from './graph/types.ts';
 import type { MediaIndex } from './model.ts';
+import { photoLocation } from './normalize.ts';
 import type { FullSyncStats } from './store.ts';
 
 /**
@@ -131,7 +132,7 @@ export function summarize(
       counts.takenDateTime++;
       if (video) counts.videosWithTakenDateTime++;
     }
-    if (item.location?.latitude !== undefined) counts.location++;
+    if (photoLocation(item.location).latitude !== null) counts.location++;
     if (item.image?.width) counts.imageSize++;
   }
 

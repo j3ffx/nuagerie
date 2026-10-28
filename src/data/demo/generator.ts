@@ -479,6 +479,7 @@ export function generateDemoDataset(options: DemoOptions = {}): DemoDataset {
     buckets.map((b) => b.weight),
   );
 
+  let unknownPlaces = 0;
   const fillBucket = (b: Bucket, count: number) => {
     let remaining = count;
     let counter = randomInt(random, 1, 4000);
@@ -539,6 +540,10 @@ export function generateDemoDataset(options: DemoOptions = {}): DemoDataset {
             latitude: round6(session.place.latitude + gaussian(random) * session.spread),
             longitude: round6(session.place.longitude + gaussian(random) * session.spread),
           };
+        } else if (kind === 'image' && ++unknownPlaces % 40 === 0) {
+          // Apps that know nothing of the place write 0, 0: the index must drop it. Counted
+          // rather than drawn, so the rest of the dataset stays the same.
+          extra.location = { latitude: 0, longitude: 0 };
         }
         addFile(path, name, kind, extra, b.outside);
       }

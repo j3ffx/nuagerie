@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { GraphDriveItem } from './graph/types.ts';
-import { buildIndex, cameraName, type DateResolver } from './normalize.ts';
+import { buildIndex, cameraName, photoLocation, type DateResolver } from './normalize.ts';
 
 const folder = (id: string, name: string, parentId: string): GraphDriveItem => ({
   id,
@@ -91,5 +91,37 @@ describe('cameraName', () => {
     expect(cameraName(undefined, 'Pixel 7')).toBe('Pixel 7');
     expect(cameraName('Google', '')).toBe('Google');
     expect(cameraName(undefined, undefined)).toBeNull();
+  });
+});
+
+describe('photoLocation', () => {
+  const none = { latitude: null, longitude: null };
+
+  it('keeps a real place, the equator and the prime meridian included', () => {
+    expect(photoLocation({ latitude: 45.764, longitude: 4.836 })).toEqual({
+      latitude: 45.764,
+      longitude: 4.836,
+    });
+    expect(photoLocation({ latitude: 0, longitude: 32.5 })).toEqual({
+      latitude: 0,
+      longitude: 32.5,
+    });
+    expect(photoLocation({ latitude: 51.48, longitude: 0 })).toEqual({
+      latitude: 51.48,
+      longitude: 0,
+    });
+  });
+
+  it('drops 0, 0, written by apps that know nothing', () => {
+    expect(photoLocation({ latitude: 0, longitude: 0 })).toEqual(none);
+    expect(photoLocation({ latitude: 0, longitude: 0, altitude: 0 })).toEqual(none);
+  });
+
+  it('drops half a point and points off the globe', () => {
+    expect(photoLocation(undefined)).toEqual(none);
+    expect(photoLocation({ latitude: 45 })).toEqual(none);
+    expect(photoLocation({ latitude: 91, longitude: 0.5 })).toEqual(none);
+    expect(photoLocation({ latitude: 10, longitude: 181 })).toEqual(none);
+    expect(photoLocation({ latitude: Number.NaN, longitude: 2 })).toEqual(none);
   });
 });

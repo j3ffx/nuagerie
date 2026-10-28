@@ -122,13 +122,36 @@ export function buildIndex(
       height: file.image?.height ?? file.video?.height ?? null,
       durationMs: file.video?.duration ?? null,
       camera: cameraName(file.photo?.cameraMake, file.photo?.cameraModel),
-      latitude: file.location?.latitude ?? null,
-      longitude: file.location?.longitude ?? null,
+      ...photoLocation(file.location),
     });
   }
 
   items.sort(compareByDateDesc);
   return { folders, items, rootFolderIds: [...rootFolderIds] };
+}
+
+/**
+ * The place a photo was taken, or none. Some apps write 0, 0 when they know
+ * nothing (a point in the sea off Ghana): that is no place. Nor is a point
+ * off the globe, nor half a point.
+ */
+export function photoLocation(
+  location: GraphDriveItem['location'],
+): Pick<MediaItem, 'latitude' | 'longitude'> {
+  const latitude = location?.latitude;
+  const longitude = location?.longitude;
+  if (
+    latitude === undefined ||
+    longitude === undefined ||
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    Math.abs(latitude) > 90 ||
+    Math.abs(longitude) > 180 ||
+    (latitude === 0 && longitude === 0)
+  ) {
+    return { latitude: null, longitude: null };
+  }
+  return { latitude, longitude };
 }
 
 /**

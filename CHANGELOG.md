@@ -17,6 +17,11 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 - Les lieux de tes photos sont trouvés sur l’appareil la première fois, puis gardés : la
   recherche par lieu marche ensuite hors connexion.
 
+### Corrections
+
+- Les photos que certaines applis placent en 0, 0 (en mer, au large du Ghana) n’ont plus de
+  lieu : elles ne sont plus sur la carte, ni dans la recherche par lieu.
+
 ## 0.3.1 — 2026-10-20
 
 ### Corrections

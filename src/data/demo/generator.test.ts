@@ -47,8 +47,11 @@ describe('generateDemoDataset', () => {
   it('matches the target proportions', () => {
     expect(ratio((item) => item.demoExpectedDate === null)).toBeGreaterThan(0.02);
     expect(ratio((item) => item.demoExpectedDate === null)).toBeLessThan(0.04);
-    expect(ratio((item) => item.location !== undefined)).toBeGreaterThan(0.35);
-    expect(ratio((item) => item.location !== undefined)).toBeLessThan(0.45);
+    const located = (item: (typeof dataset.items)[number]) =>
+      item.location !== undefined &&
+      (item.location.latitude !== 0 || item.location.longitude !== 0);
+    expect(ratio(located)).toBeGreaterThan(0.35);
+    expect(ratio(located)).toBeLessThan(0.45);
     expect(ratio((item) => item.video !== undefined)).toBeGreaterThan(0.03);
     expect(ratio((item) => item.video !== undefined)).toBeLessThan(0.1);
   });
@@ -101,6 +104,17 @@ describe('generateDemoDataset', () => {
     const albums = new Set(sample.map((item) => index.folders.get(item.albumId)?.name));
     expect(albums.has('Camera Roll')).toBe(true);
     expect(cameraRoll?.technical).toBe(false);
+  });
+
+  it('has photos placed at 0, 0, which the index drops', () => {
+    const nowhere = media.filter(
+      (item) => item.location?.latitude === 0 && item.location.longitude === 0,
+    );
+    expect(nowhere.length).toBeGreaterThan(100);
+    const ids = new Set(nowhere.map((item) => item.id));
+    const indexed = index.items.filter((item) => ids.has(item.id));
+    expect(indexed.length).toBeGreaterThan(100); // a few are outside the perimeter
+    expect(indexed.every((item) => item.latitude === null && item.longitude === null)).toBe(true);
   });
 
   it('keeps file names unique within a folder', () => {
