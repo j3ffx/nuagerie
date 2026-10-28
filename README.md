@@ -24,6 +24,10 @@ agréable aussi sur PC.
 - **Grilles.** Pincer change le nombre de colonnes. Un appui long sélectionne des photos
   (glisser en prend plusieurs, toucher un mois le prend en entier) pour les partager, les
   mettre en favoris ou les télécharger d’un coup.
+- **Souvenirs.** En haut de l’accueil, les photos prises le même jour les années passées
+  (« Il y a 3 ans »). Fermée, la section revient le lendemain, sur tous les appareils
+  synchronisés. Une notification les jours de souvenirs, à activer dans les réglages (Chrome,
+  application installée) : au plus une par jour, jamais avant 8 h, calculée sur l’appareil.
 - **Recherche.** Par album, par lieu (ville ou pays) et par date en langage courant
   (« 2019 », « juillet 2024 », « 14 juillet », « été 2023 », « 2019 à 2021 »), et tout
   ensemble : « Lyon été 2023 ». Les lieux des résultats permettent d’affiner. Elle porte sur

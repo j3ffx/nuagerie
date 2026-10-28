@@ -79,6 +79,10 @@ commit metadata.
   (`src/features/map/`, Leaflet + supercluster) uses OpenStreetMap's tiles: credited, never prefetched
   or stored for offline use, and requested with a Referer (`referrerPolicy` on the layer), as their
   usage policy requires.
+- **Memories** (`src/data/memories.ts`): the photos taken on this day in earlier years, on the
+  device's wall clock. The optional notification (`src/data/memoryNotifier.ts`, Réglages →
+  Souvenirs) runs in the service worker on Periodic Background Sync, from the index on the device
+  and with no network: at most once a day, never before 8 o'clock, at a time the browser chooses.
 - **Demo mode works with no account and no network** (`?demo=1`, `npm run dev:demo`, or no Client ID).
   The demo source goes through the same normalization as real data (`src/data/normalize.ts`).
 - **Capture dates** (`MediaItem.takenAt`): `photo.takenDateTime` (EXIF) first, kept as wall-clock time

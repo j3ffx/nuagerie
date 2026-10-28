@@ -4,6 +4,17 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## Depuis la dernière version
+
+### Nouveautés
+
+- Souvenirs : en haut des albums, les photos prises le même jour les années passées, une carte
+  par année (« Il y a 3 ans »). « Tout voir » les montre ensemble. La croix les ferme jusqu’au
+  lendemain, sur tous tes appareils si la synchronisation est activée.
+- Une notification les jours de souvenirs, à activer dans Réglages → Souvenirs (Chrome, appli
+  installée) : une fois par jour au plus, jamais avant 8 h. C’est le téléphone qui choisit
+  l’heure.
+
 ## 0.4.0 — 2026-10-28
 
 Retrouver tes photos.
