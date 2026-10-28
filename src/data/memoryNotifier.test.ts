@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { MediaIndex, MediaItem } from './model.ts';
-import { notifyMemories, type NotifierDeps } from './memoryNotifier.ts';
+import { isNavigateMessage, notifyMemories, type NotifierDeps } from './memoryNotifier.ts';
 
 const item = (id: string, takenAt: number): MediaItem => ({
   id,
@@ -55,6 +55,15 @@ describe('notifyMemories', () => {
     expect(show).toHaveBeenCalledTimes(1);
   });
 
+  it('reads the index only when a notification could be shown', async () => {
+    const loadIndex = vi.fn(() => Promise.resolve(index));
+    const early = deps({ loadIndex, now: () => Date.UTC(2026, 9, 28, 3) });
+    expect(await notifyMemories(early.all)).toBe(false);
+    const told = deps({ loadIndex, readNotifiedOn: () => Promise.resolve('2026-10-28') });
+    expect(await notifyMemories(told.all)).toBe(false);
+    expect(loadIndex).not.toHaveBeenCalled();
+  });
+
   it('tells nothing without an index on the device, or too early', async () => {
     const none = deps({ loadIndex: () => Promise.resolve(null) });
     expect(await notifyMemories(none.all)).toBe(false);
@@ -67,5 +76,15 @@ describe('notifyMemories', () => {
     const { all } = deps({ show: () => Promise.reject(new Error('no permission')) });
     await expect(notifyMemories(all)).rejects.toThrow();
     expect(await all.readNotifiedOn()).toBeNull();
+  });
+});
+
+describe('isNavigateMessage', () => {
+  it('takes a screen of the app only', () => {
+    expect(isNavigateMessage({ type: 'NAVIGATE', url: '/souvenirs' })).toBe(true);
+    expect(isNavigateMessage({ type: 'NAVIGATE', url: 'https://example.com/' })).toBe(false);
+    expect(isNavigateMessage({ type: 'NAVIGATE', url: '//example.com/' })).toBe(false);
+    expect(isNavigateMessage({ type: 'SKIP_WAITING' })).toBe(false);
+    expect(isNavigateMessage(null)).toBe(false);
   });
 });

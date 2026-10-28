@@ -1,5 +1,5 @@
 import { currentDateContext, resolveCaptureDate } from './dates.ts';
-import { memoryNotification } from './memories.ts';
+import { dayKey, memoryNotification, NOTIFY_FROM_HOUR } from './memories.ts';
 import type { MediaIndex } from './model.ts';
 import { buildIndex } from './normalize.ts';
 import { IndexStore } from './store.ts';
@@ -17,6 +17,22 @@ export const MEMORIES_SYNC_TAG = 'souvenirs';
 /** What a tap on the notification opens. */
 export const MEMORIES_URL = '/souvenirs';
 
+/** Asks an open window of the app to show a screen, without reloading it (src/app/App.tsx). */
+export interface NavigateMessage {
+  type: 'NAVIGATE';
+  url: string;
+}
+
+export function isNavigateMessage(data: unknown): data is NavigateMessage {
+  const message = data as Partial<NavigateMessage> | null;
+  return (
+    message?.type === 'NAVIGATE' &&
+    typeof message.url === 'string' &&
+    message.url.startsWith('/') &&
+    !message.url.startsWith('//')
+  );
+}
+
 export interface NotifierDeps {
   /** The index of the device, or null when there is none (demo, signed out). */
   loadIndex(): Promise<MediaIndex | null>;
@@ -29,9 +45,15 @@ export interface NotifierDeps {
 
 /** Tells the memories of the day if it is time; says whether it did. */
 export async function notifyMemories(deps: NotifierDeps): Promise<boolean> {
+  // The browser may wake the app at night or several times a day: the index (the whole drive)
+  // is read only when a notification could be shown.
+  const now = deps.now();
+  if (new Date(now).getUTCHours() < NOTIFY_FROM_HOUR) return false;
+  const notifiedOn = await deps.readNotifiedOn();
+  if (notifiedOn === dayKey(now)) return false;
   const index = await deps.loadIndex();
   if (!index) return false;
-  const notification = memoryNotification(index.items, deps.now(), await deps.readNotifiedOn());
+  const notification = memoryNotification(index.items, now, notifiedOn);
   if (!notification) return false;
   await deps.show(notification.title, notification.body);
   await deps.writeNotifiedOn(notification.day);

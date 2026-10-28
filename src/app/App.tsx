@@ -4,9 +4,10 @@ import '../styles/global.css';
 
 import type { AccountInfo } from '@azure/msal-browser';
 import { MsalProvider } from '@azure/msal-react';
-import { useState } from 'react';
-import { Redirect, Route, Router, Switch } from 'wouter';
+import { useEffect, useState } from 'react';
+import { Redirect, Route, Router, Switch, useLocation } from 'wouter';
 import { getAccessToken, getMsal } from '../auth/msal.ts';
+import { isNavigateMessage } from '../data/memoryNotifier.ts';
 import { DataProvider } from '../data/DataProvider.tsx';
 import { createAppFolderSnapshots } from '../data/sync/appFolderSnapshots.ts';
 import { SyncProvider } from '../data/sync/SyncProvider.tsx';
@@ -105,7 +106,22 @@ function Shell() {
   );
 }
 
+/** The service worker asks for a screen (a tap on the memories notification): no reload. */
+function useServiceWorkerNavigation() {
+  const [, navigate] = useLocation();
+  useEffect(() => {
+    const container = 'serviceWorker' in navigator ? navigator.serviceWorker : null;
+    if (!container) return;
+    const onMessage = (event: MessageEvent) => {
+      if (isNavigateMessage(event.data)) navigate(event.data.url);
+    };
+    container.addEventListener('message', onMessage);
+    return () => container.removeEventListener('message', onMessage);
+  }, [navigate]);
+}
+
 function ShellContent() {
+  useServiceWorkerNavigation();
   return (
     <div className={styles.shell}>
       <a className={styles.skipLink} href="#main">

@@ -14,6 +14,7 @@ import {
   MEMORIES_SYNC_TAG,
   MEMORIES_URL,
   notifyMemories,
+  type NavigateMessage,
 } from './data/memoryNotifier.ts';
 
 declare let self: ServiceWorkerGlobalScope & {
@@ -43,48 +44,57 @@ interface PeriodicSyncEvent extends ExtendableEvent {
   readonly tag: string;
 }
 
-const memoryState = () =>
+const openMemoryState = () =>
   openDB('nuagerie-memories', 1, {
     upgrade(database) {
       database.createObjectStore('state');
     },
   });
 
-self.addEventListener('periodicsync', (event) => {
-  const sync = event as PeriodicSyncEvent;
-  if (sync.tag !== MEMORIES_SYNC_TAG || Notification.permission !== 'granted') return;
-  sync.waitUntil(
-    notifyMemories({
+/** One connection per wake-up, closed at the end: an open one would block a later upgrade. */
+async function tellMemories(): Promise<void> {
+  const state = await openMemoryState();
+  try {
+    await notifyMemories({
       loadIndex: loadStoredIndex,
       now: () => currentDateContext().nowWallClock,
       readNotifiedOn: async () =>
-        ((await (await memoryState()).get('state', 'notifiedOn')) as string | undefined) ?? null,
+        ((await state.get('state', 'notifiedOn')) as string | undefined) ?? null,
       writeNotifiedOn: async (day) => {
-        await (await memoryState()).put('state', day, 'notifiedOn');
+        await state.put('state', day, 'notifiedOn');
       },
+      // No badge: Android draws it from the icon's transparency, and ours is full-bleed.
       show: (title, body) =>
         self.registration.showNotification(title, {
           body,
           icon: '/pwa-192x192.png',
-          badge: '/pwa-64x64.png',
           tag: MEMORIES_SYNC_TAG,
           data: { url: MEMORIES_URL },
         }),
-    }).then(() => undefined),
-  );
+    });
+  } finally {
+    state.close();
+  }
+}
+
+self.addEventListener('periodicsync', (event) => {
+  const sync = event as PeriodicSyncEvent;
+  if (sync.tag !== MEMORIES_SYNC_TAG || Notification.permission !== 'granted') return;
+  sync.waitUntil(tellMemories());
 });
 
-// A tap on the notification opens the memories, in the app if it is already open.
+// A tap on the notification opens the memories: in the app if it is open (its own routing, no
+// reload), else in a new window.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = (event.notification.data as { url?: string } | null)?.url ?? '/';
   event.waitUntil(
     (async () => {
-      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-      const open = windows[0];
-      if (open) {
-        await open.focus();
-        await open.navigate(url).catch(() => undefined);
+      const windows = await self.clients.matchAll({ type: 'window' });
+      const app = windows.find((client) => new URL(client.url).origin === self.location.origin);
+      if (app) {
+        await app.focus();
+        app.postMessage({ type: 'NAVIGATE', url } satisfies NavigateMessage);
       } else {
         await self.clients.openWindow(url);
       }
