@@ -1,0 +1,275 @@
+.form {
+  position: relative;
+  margin: 0 var(--space-4) var(--space-3);
+}
+
+.formIcon {
+  position: absolute;
+  top: 50%;
+  left: var(--space-3);
+  translate: 0 -50%;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 52px 0 46px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px; /* below 16 px, phones zoom in on the field */
+  appearance: none;
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+/* Our own button clears the field: the browser's would be a second, smaller one. */
+.input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.clear {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  translate: 0 -50%;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.status {
+  padding: 0 var(--space-4) var(--space-3);
+  font-size: 14px;
+}
+
+.start {
+  padding: 0 var(--space-4) var(--space-6);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hint {
+  margin: var(--space-2) var(--space-1) var(--space-4);
+  font-size: 15px;
+}
+
+.section {
+  margin-top: var(--space-4);
+}
+
+.section:first-child {
+  margin-top: 0;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.sectionTitle {
+  margin: 0 0 var(--space-2);
+  padding: 0 var(--space-1);
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sectionHeader .sectionTitle {
+  margin-bottom: 0;
+}
+
+.forget {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.rows {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 60px;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.rowCover,
+.rowIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.rowIcon {
+  display: grid;
+  place-items: center;
+  background: var(--color-primary-soft);
+  color: var(--color-on-primary-soft);
+}
+
+.rowText {
+  display: grid;
+  min-width: 0;
+}
+
+.rowTitle,
+.rowDetail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowTitle {
+  font-weight: 800;
+}
+
+.rowDetail {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chips,
+.chipScroller {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips {
+  flex-wrap: wrap;
+}
+
+/* In the results: one line that scrolls sideways, so the photos stay near the top. */
+.chipScroller {
+  overflow-x: auto;
+  margin: 0 calc(-1 * var(--space-4));
+  padding: 0 var(--space-4) var(--space-1);
+  scrollbar-width: none;
+}
+
+.chipScroller > li {
+  flex: none;
+}
+
+/* No gap: the hidden comma between the name and the count would take one too. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  max-width: 100%;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.chipCount {
+  margin-left: var(--space-2);
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-2);
+  list-style: none;
+}
+
+.filters > li {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  max-width: 100%;
+  padding: 0 var(--space-3) 0 var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-soft);
+  color: var(--color-on-primary-soft);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.filterText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter svg {
+  flex: none;
+}
+
+.summary {
+  padding: 0 var(--space-4) var(--space-2);
+  font-size: 14px;
+}
+
+/* The places of the results sit between the summary and the grid. */
+.summary + .section {
+  margin: 0 0 var(--space-3);
+  padding: 0 var(--space-4);
+}
+
+@media (hover: hover) {
+  .row:hover,
+  .chip:hover {
+    background: var(--color-surface-2);
+  }
+  .clear:hover,
+  .forget:hover {
+    background: var(--color-surface-2);
+  }
+}

@@ -89,6 +89,33 @@ const SCREENS: { name: string; path: string; ready: (page: Page) => Promise<void
     ready: (page) => expect(page.getByText(/dans cette zone/)).toBeVisible(),
   },
   {
+    name: 'search',
+    path: '/recherche',
+    ready: (page) =>
+      expect(page.getByRole('list').getByRole('link', { name: /^Lyon,/ })).toBeVisible(),
+  },
+  {
+    name: 'search suggestions',
+    path: '/recherche',
+    ready: async (page) => {
+      await page.getByRole('searchbox').fill('lyon 2024');
+      await expect(page.getByRole('heading', { name: 'Lieux' })).toBeVisible();
+    },
+  },
+  {
+    name: 'search results',
+    path: '/recherche?q=lyon+2024',
+    ready: async (page) => {
+      await page
+        .getByRole('region', { name: 'Lieux dans ces résultats' })
+        .getByRole('link')
+        .first()
+        .click();
+      await expect(page.getByRole('link', { name: /^Retirer le lieu/ })).toBeVisible();
+      await expect(page.getByRole('main').locator('a[data-item-id] img').first()).toBeVisible();
+    },
+  },
+  {
     name: 'settings',
     path: '/reglages',
     ready: (page) => expect(page.getByRole('heading', { name: 'Apparence' })).toBeVisible(),

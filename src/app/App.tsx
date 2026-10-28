@@ -21,6 +21,7 @@ import { AllScreen } from '../features/all/AllScreen.tsx';
 import { DiagnosticScreen } from '../features/diagnostic/DiagnosticScreen.tsx';
 import { MapScreen } from '../features/map/MapScreen.tsx';
 import { ZoneScreen } from '../features/map/ZoneScreen.tsx';
+import { SearchScreen } from '../features/search/SearchScreen.tsx';
 import { FoldersScreen } from '../features/settings/FoldersScreen.tsx';
 import { FavoritesScreen } from '../features/favorites/FavoritesScreen.tsx';
 import { SyncNotice } from '../features/favorites/SyncNotice.tsx';
@@ -126,6 +127,7 @@ function ShellContent() {
           <Route path="/tout/filtre" component={AllFilterScreen} />
           <Route path="/carte" component={MapScreen} />
           <Route path="/carte/zone" component={ZoneScreen} />
+          <Route path="/recherche" component={SearchScreen} />
           <Route path="/reglages" component={SettingsScreen} />
           <Route path="/reglages/dossiers" component={FoldersScreen} />
           <Route path="/nouveautes" component={WhatsNewScreen} />

@@ -1,6 +1,6 @@
 import type { ComponentType, SVGProps } from 'react';
 import { Link, useLocation } from 'wouter';
-import { AlbumsIcon, GridIcon, MapIcon, SettingsIcon } from '../ui/icons.tsx';
+import { AlbumsIcon, GridIcon, MapIcon, SearchIcon, SettingsIcon } from '../ui/icons.tsx';
 import styles from './NavBar.module.css';
 
 interface NavEntry {
@@ -19,6 +19,12 @@ const ENTRIES: NavEntry[] = [
   },
   { href: '/tout', label: 'Tout', icon: GridIcon, isActive: (path) => path.startsWith('/tout') },
   { href: '/carte', label: 'Carte', icon: MapIcon, isActive: (path) => path.startsWith('/carte') },
+  {
+    href: '/recherche',
+    label: 'Recherche',
+    icon: SearchIcon,
+    isActive: (path) => path.startsWith('/recherche'),
+  },
   {
     href: '/reglages',
     label: 'Réglages',
