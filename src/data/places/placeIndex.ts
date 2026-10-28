@@ -6,6 +6,8 @@
 
 export interface Place {
   name: string;
+  /** The town it is part of: "Lyon" for the district "Lyon 08", else its own name. */
+  town: string;
   /** ISO 3166 country code, e.g. "FR". */
   country: string;
   /** Distance from the photo, in kilometres. */
@@ -14,6 +16,7 @@ export interface Place {
 
 export interface PlaceIndex {
   names: string[];
+  towns: string[];
   countries: string[];
   lat: Float32Array;
   lon: Float32Array;
@@ -47,7 +50,13 @@ export function buildPlaceIndex(text: string): PlaceIndex {
     if (cell) cell.push(i);
     else cells.set(key, [i]);
   }
-  return { names, countries, lat, lon, cells };
+  // "Lyon 08" is a district of "Lyon" when the list has both, in the same country.
+  const known = new Set(names.map((name, i) => `${name}\t${countries[i]}`));
+  const towns = names.map((name, i) => {
+    const base = / \d{1,2}$/.test(name) ? name.replace(/ \d{1,2}$/, '') : null;
+    return base && known.has(`${base}\t${countries[i]}`) ? base : name;
+  });
+  return { names, towns, countries, lat, lon, cells };
 }
 
 /** Flat-earth distance: exact enough at the scale of a town. */
@@ -87,5 +96,10 @@ export function nearestPlace(index: PlaceIndex, latitude: number, longitude: num
     if (best >= 0 && bestKm <= covered) break;
   }
   if (best < 0) return null;
-  return { name: index.names[best] ?? '', country: index.countries[best] ?? '', km: bestKm };
+  return {
+    name: index.names[best] ?? '',
+    town: index.towns[best] ?? '',
+    country: index.countries[best] ?? '',
+    km: bestKm,
+  };
 }

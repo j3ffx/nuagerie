@@ -9,6 +9,8 @@ const index = buildPlaceIndex(
     'Annecy\t45.899\t6.129\tFR',
     'Reykjavík\t64.135\t-21.895\tIS',
     'Suva\t-18.142\t178.441\tFJ',
+    'Lyon 08\t45.735\t4.869\tFR',
+    'Sector 3\t44.42\t26.15\tRO',
     '',
   ].join('\n'),
 );
@@ -30,6 +32,13 @@ describe('nearestPlace', () => {
   it('finds places far from the photo, and across the date line', () => {
     expect(nearestPlace(index, 63, -21)).toMatchObject({ name: 'Reykjavík' });
     expect(nearestPlace(index, -18.2, -179.9)?.name).toBe('Suva');
+  });
+
+  it('names the town a numbered district is part of, when the list has that town', () => {
+    expect(nearestPlace(index, 45.735, 4.87)).toMatchObject({ name: 'Lyon 08', town: 'Lyon' });
+    expect(nearestPlace(index, 45.764, 4.836)).toMatchObject({ name: 'Lyon', town: 'Lyon' });
+    // No "Sector" in the list: the number is part of the name.
+    expect(nearestPlace(index, 44.42, 26.15)).toMatchObject({ town: 'Sector 3' });
   });
 
   it('gives nothing in the open sea', () => {
