@@ -29,6 +29,7 @@ export const SCOPES = [
   'grid',
   'viewer',
   'map',
+  'search',
   'settings',
   'data',
   'demo',
