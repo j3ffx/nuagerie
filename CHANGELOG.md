@@ -4,7 +4,9 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
-## Depuis la dernière version
+## 0.4.0 — 2026-10-28
+
+Retrouver tes photos.
 
 ### Nouveautés
 
