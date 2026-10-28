@@ -18,6 +18,21 @@ test('opens from the bar, ready to type, with places and years to start from', a
   await page.getByRole('link', { name: 'Recherche' }).click();
   await expect(page).toHaveURL(/\/recherche$/);
   await expect(field(page)).toBeFocused();
+  // Its focus ring shows whole, below the sticky header that would cover it.
+  const ring = await field(page).evaluate((input) => {
+    const style = getComputedStyle(input);
+    const header = document.querySelector('[data-screen-header]')?.getBoundingClientRect();
+    return {
+      visible: input.matches(':focus-visible') && style.outlineStyle !== 'none',
+      top:
+        input.getBoundingClientRect().top -
+        parseFloat(style.outlineWidth) -
+        parseFloat(style.outlineOffset),
+      headerBottom: header?.bottom ?? 0,
+    };
+  });
+  expect(ring.visible).toBe(true);
+  expect(ring.top).toBeGreaterThanOrEqual(ring.headerBottom);
   await expect(lyonChip(page)).toBeVisible(PLACES);
   await expect(
     page.getByRole('region', { name: 'Pays' }).getByRole('link', { name: /^France,/ }),

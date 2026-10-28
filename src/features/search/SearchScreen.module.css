@@ -1,6 +1,7 @@
+/* Room above the field for its focus ring: the sticky header would cover it. */
 .form {
   position: relative;
-  margin: 0 var(--space-4) var(--space-3);
+  margin: var(--space-2) var(--space-4) var(--space-3);
 }
 
 .formIcon {
@@ -23,6 +24,12 @@
   font: inherit;
   font-size: 16px; /* below 16 px, phones zoom in on the field */
   appearance: none;
+}
+
+/* The ring hugs the pill instead of the global 2 px gap. */
+.input:focus-visible {
+  outline-offset: 0;
+  border-radius: var(--radius-pill);
 }
 
 .input::placeholder {
