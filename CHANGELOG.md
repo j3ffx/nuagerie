@@ -4,6 +4,19 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## Depuis la dernière version
+
+### Nouveautés
+
+- Recherche, dans un nouvel onglet : un album, une ville, un pays ou une date en mots de tous
+  les jours (« 2019 », « juillet 2024 », « 14 juillet », « été 2023 », « 2019 à 2021 »), et
+  même tout ensemble : « Lyon été 2023 ». Pendant que tu tapes, les albums et les lieux qui
+  correspondent s’affichent avec leur nombre de photos. Dans les résultats, les lieux
+  permettent d’affiner d’un toucher. Les dernières recherches restent sur l’appareil.
+- La recherche trouve aussi les albums masqués de l’accueil.
+- Les lieux de tes photos sont trouvés sur l’appareil la première fois, puis gardés : la
+  recherche par lieu marche ensuite hors connexion.
+
 ## 0.3.1 — 2026-10-20
 
 ### Corrections

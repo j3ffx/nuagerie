@@ -24,6 +24,10 @@ agréable aussi sur PC.
 - **Grilles.** Pincer change le nombre de colonnes. Un appui long sélectionne des photos
   (glisser en prend plusieurs, toucher un mois le prend en entier) pour les partager, les
   mettre en favoris ou les télécharger d’un coup.
+- **Recherche.** Par album, par lieu (ville ou pays) et par date en langage courant
+  (« 2019 », « juillet 2024 », « 14 juillet », « été 2023 », « 2019 à 2021 »), et tout
+  ensemble : « Lyon été 2023 ». Les lieux des résultats permettent d’affiner. Elle porte sur
+  tout le OneDrive parcouru, albums masqués compris.
 - **Carte.** Les photos géolocalisées, regroupées par lieu ; toucher un groupe zoome dessus,
   et un bandeau montre les photos de la zone.
 - **Visionneuse.** Plein écran, glisser pour passer d’une photo à l’autre, pincer pour
@@ -53,8 +57,8 @@ agréable aussi sur PC.
   carte d’[OpenStreetMap](https://www.openstreetmap.org/copyright).
 - Les noms de lieux sont calculés sur l’appareil : les coordonnées des photos ne sont
   envoyées nulle part.
-- L’index et les miniatures sont gardés dans le navigateur (IndexedDB, Cache Storage), et
-  effacés à la déconnexion.
+- L’index, les miniatures et les lieux des photos sont gardés dans le navigateur (IndexedDB,
+  Cache Storage), et effacés à la déconnexion, comme les recherches récentes.
 - La synchronisation, une fois activée, est le seul contenu écrit dans OneDrive, dans le
   OneDrive de la personne connectée : `Applis/Nuagerie/nuagerie.json` (favoris, préférences,
   dossiers) et `Applis/Nuagerie/index.json.gz`, une copie de l’index (noms, dates et lieux des
