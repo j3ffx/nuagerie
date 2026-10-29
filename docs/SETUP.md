@@ -39,7 +39,8 @@ Pour les vraies données, copier `.env.example` en `.env` et y renseigner le Cli
 La première fois, Playwright a besoin de son navigateur : `npx playwright install chromium`.
 `npm run e2e` construit l’application puis la sert sur le port 4173. Si un serveur y tourne
 déjà (`npm run preview`, ou un ancien lancement resté ouvert), Playwright le réutilise sans
-reconstruire : lancer `npm run build` avant, ou arrêter ce serveur.
+reconstruire : lancer `npm run build` avant, ou arrêter ce serveur. Un autre projet peut aussi
+occuper ce port (c’est celui de Vite) : `E2E_PORT=4183 npm run e2e` en prend un autre.
 
 Le mode démo s’active aussi avec `?demo=1` dans l’URL (mémorisé sur l’appareil ;
 `?demo=0` le désactive), et automatiquement quand aucun Client ID n’est configuré.

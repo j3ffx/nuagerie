@@ -1,6 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const PORT = 4173;
+/**
+ * Vite's usual preview port is shared by other projects: E2E_PORT picks
+ * another one (a server already there is reused, see webServer).
+ */
+const PORT = Number(process.env.E2E_PORT) || 4173;
 
 /**
  * End-to-end tests in demo mode, on a phone-sized screen, against the
@@ -19,7 +23,7 @@ export default defineConfig({
   },
   projects: [{ name: 'mobile', use: { ...devices['Pixel 7'] } }],
   webServer: {
-    command: 'npm run build && npm run preview',
+    command: `npm run build && npm run preview -- --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
