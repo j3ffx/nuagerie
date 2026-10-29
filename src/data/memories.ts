@@ -1,4 +1,30 @@
+import { language as appLanguage, type Language } from '../lib/i18n.ts';
 import type { MediaItem } from './model.ts';
+
+interface MemoryTexts {
+  yearsAgo: (years: number) => string;
+  yearsAgoInText: (years: number) => string;
+  title: (count: number) => string;
+  tap: string;
+}
+
+/** By language: the service worker tells the memories in the app's language (memoryNotifier.ts). */
+const TEXTS: Record<Language, MemoryTexts> = {
+  fr: {
+    yearsAgo: (years: number) => `Il y a ${years} ${years > 1 ? 'ans' : 'an'}`,
+    yearsAgoInText: (years: number) => `il y a ${years} ${years > 1 ? 'ans' : 'an'}`,
+    title: (count: number) =>
+      count > 1 ? `${count} souvenirs ce jour-là` : 'Un souvenir ce jour-là',
+    tap: 'Touche pour les revoir.',
+  },
+  en: {
+    yearsAgo: (years: number) => `${years} ${years > 1 ? 'years' : 'year'} ago`,
+    yearsAgoInText: (years: number) => `${years} ${years > 1 ? 'years' : 'year'} ago`,
+    title: (count: number) =>
+      count > 1 ? `${count} memories on this day` : 'A memory on this day',
+    tap: 'Tap to see them again.',
+  },
+};
 
 /**
  * Memories: the photos taken on this day in earlier years ("Il y a 3 ans").
@@ -51,9 +77,9 @@ export function memoriesOf(items: readonly MediaItem[], today: number): MemoryYe
     .map(([takenYear, list]) => ({ year: takenYear, yearsAgo: year - takenYear, items: list }));
 }
 
-/** "Il y a 1 an", "Il y a 7 ans". */
+/** "Il y a 1 an", "Il y a 7 ans"; "1 year ago", "7 years ago". */
 export function yearsAgoLabel(yearsAgo: number): string {
-  return `Il y a ${yearsAgo} ${yearsAgo > 1 ? 'ans' : 'an'}`;
+  return TEXTS[appLanguage].yearsAgo(yearsAgo);
 }
 
 /** Notifications wait until this hour of the morning, however early the browser wakes the app. */
@@ -67,6 +93,7 @@ export function memoryNotification(
   items: readonly MediaItem[],
   today: number,
   notifiedOn: string | null,
+  language: Language = appLanguage,
 ): { day: string; title: string; body: string; cover: MediaItem | null } | null {
   if (new Date(today).getUTCHours() < NOTIFY_FROM_HOUR) return null;
   const day = dayKey(today);
@@ -74,16 +101,15 @@ export function memoryNotification(
   const memories = memoriesOf(items, today);
   if (memories.length === 0) return null;
   const count = memories.reduce((total, memory) => total + memory.items.length, 0);
-  const years = memories
-    .slice(0, 3)
-    .map((memory) => yearsAgoLabel(memory.yearsAgo).replace(/^Il y a/, 'il y a'));
+  const texts = TEXTS[language];
+  const years = memories.slice(0, 3).map((memory) => texts.yearsAgoInText(memory.yearsAgo));
   const latest = memories[0]?.items ?? [];
   return {
     day,
     // A photo of the most recent year shows beside the text (a video when there is no photo).
     cover: latest.find((item) => item.kind === 'image') ?? latest[0] ?? null,
-    title: count > 1 ? `${count} souvenirs ce jour-là` : 'Un souvenir ce jour-là',
-    body: `${capitalize(years.join(', '))}${memories.length > 3 ? '…' : '.'} Touche pour les revoir.`,
+    title: texts.title(count),
+    body: `${capitalize(years.join(', '))}${memories.length > 3 ? '…' : '.'} ${texts.tap}`,
   };
 }
 

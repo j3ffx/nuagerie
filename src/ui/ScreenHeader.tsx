@@ -3,6 +3,12 @@ import { Link } from 'wouter';
 import { useData } from '../data/dataContext.ts';
 import common from './common.module.css';
 import styles from './ScreenHeader.module.css';
+import { localized } from '../lib/i18n.ts';
+
+const t = localized({
+  fr: { syncing: 'Mise à jour…', demo: 'Démo', demoLabel: 'Mode démo : voir les réglages' },
+  en: { syncing: 'Updating…', demo: 'Demo', demoLabel: 'Demo mode: see the settings' },
+});
 
 export function ScreenHeader({
   title,
@@ -22,12 +28,12 @@ export function ScreenHeader({
         {actions}
         {sync.status === 'running' && (
           <span className={styles.sync} role="status">
-            Mise à jour…
+            {t.syncing}
           </span>
         )}
         {mode === 'demo' && (
-          <Link href="/reglages" className={common.chip} aria-label="Mode démo : voir les réglages">
-            Démo
+          <Link href="/reglages" className={common.chip} aria-label={t.demoLabel}>
+            {t.demo}
           </Link>
         )}
       </div>

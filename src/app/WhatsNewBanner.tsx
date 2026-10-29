@@ -3,6 +3,12 @@ import common from '../ui/common.module.css';
 import { Logo } from '../ui/Logo.tsx';
 import styles from './Banner.module.css';
 import { useWhatsNew } from './whatsNew.ts';
+import { localized } from '../lib/i18n.ts';
+
+const t = localized({
+  fr: { title: 'Nouveautés', version: 'Version', see: 'Voir', later: 'Plus tard' },
+  en: { title: 'What’s new', version: 'Version', see: 'See', later: 'Later' },
+});
 
 /** After an update, offers once to see what the new version brings. */
 export function WhatsNewBanner() {
@@ -14,8 +20,10 @@ export function WhatsNewBanner() {
     <div className={styles.banner} role="status">
       <Logo size={32} />
       <span className={styles.text}>
-        <span className={styles.title}>Nouveautés</span>
-        <span className={styles.subtitle}>Version {__APP_VERSION__}</span>
+        <span className={styles.title}>{t.title}</span>
+        <span className={styles.subtitle}>
+          {t.version} {__APP_VERSION__}
+        </span>
       </span>
       <button
         type="button"
@@ -25,9 +33,9 @@ export function WhatsNewBanner() {
           navigate(`/nouveautes?retour=${encodeURIComponent(location)}`);
         }}
       >
-        Voir
+        {t.see}
       </button>
-      <button type="button" className={styles.close} onClick={markSeen} aria-label="Plus tard">
+      <button type="button" className={styles.close} onClick={markSeen} aria-label={t.later}>
         ×
       </button>
     </div>

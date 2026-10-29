@@ -10,6 +10,40 @@ import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import albumStyles from '../albums/AlbumScreen.module.css';
 import styles from '../albums/ChooseAlbumsScreen.module.css';
 import { useAllFilter } from './useAllFilter.ts';
+import { localized, plural } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    filterMap: 'Filtrer la carte',
+    filterAll: 'Filtrer « Tout »',
+    backToMap: 'Retour à la carte',
+    backToAll: 'Retour à Tout',
+    help: 'Décoche un dossier pour masquer ses photos dans « Tout » et sur la carte. Ses sous-dossiers sont masqués avec lui. Les albums ne changent pas.',
+    find: 'Rechercher un dossier',
+    list: 'Dossiers affichés dans Tout',
+    fold: (name: string) => `Replier ${name}`,
+    unfold: (name: string) => `Déplier ${name}`,
+    hiddenWith: (name: string) => `masqué avec ${name}`,
+    items: (count: string, n: number) => `${count} ${plural(n, 'élément', 'éléments')}`,
+    noMatch: 'Aucun dossier ne correspond.',
+    showAll: 'Tout afficher',
+  },
+  en: {
+    filterMap: 'Filter the map',
+    filterAll: 'Filter “All”',
+    backToMap: 'Back to the map',
+    backToAll: 'Back to All',
+    help: 'Untick a folder to hide its photos in “All” and on the map. Its subfolders are hidden with it. The albums do not change.',
+    find: 'Find a folder',
+    list: 'Folders shown in All',
+    fold: (name: string) => `Fold ${name}`,
+    unfold: (name: string) => `Unfold ${name}`,
+    hiddenWith: (name: string) => `hidden with ${name}`,
+    items: (count: string, n: number) => `${count} ${plural(n, 'item', 'items')}`,
+    noMatch: 'No folder matches.',
+    showAll: 'Show everything',
+  },
+});
 
 /** Lowercase, without accents: "Événements" matches "evene". */
 const normalize = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
@@ -79,12 +113,12 @@ export function AllFilterScreen() {
   return (
     <>
       <ScreenHeader
-        title={fromMap ? 'Filtrer la carte' : 'Filtrer « Tout »'}
+        title={fromMap ? t.filterMap : t.filterAll}
         leading={
           <Link
             href={fromMap ? '/carte' : '/tout'}
             className={albumStyles.back}
-            aria-label={fromMap ? 'Retour à la carte' : 'Retour à Tout'}
+            aria-label={fromMap ? t.backToMap : t.backToAll}
           >
             <BackIcon />
           </Link>
@@ -94,21 +128,18 @@ export function AllFilterScreen() {
         <IndexStatus />
         {index && (
           <>
-            <p className={`${common.muted} ${styles.help}`}>
-              Décoche un dossier pour masquer ses photos dans « Tout » et sur la carte. Ses
-              sous-dossiers sont masqués avec lui. Les albums ne changent pas.
-            </p>
+            <p className={`${common.muted} ${styles.help}`}>{t.help}</p>
             <label className={styles.search}>
-              <span className="visually-hidden">Rechercher un dossier</span>
+              <span className="visually-hidden">{t.find}</span>
               <input
                 type="search"
-                placeholder="Rechercher un dossier"
+                placeholder={t.find}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
             </label>
 
-            <ul className={styles.list} aria-label="Dossiers affichés dans Tout">
+            <ul className={styles.list} aria-label={t.list}>
               {rows.map(({ node, depth, hiddenWith, path }) => {
                 const { id, name } = node.folder;
                 const count = counts.get(id) ?? 0;
@@ -119,7 +150,7 @@ export function AllFilterScreen() {
                         type="button"
                         className={styles.expand}
                         aria-expanded={expanded.has(id)}
-                        aria-label={`${expanded.has(id) ? 'Replier' : 'Déplier'} ${name}`}
+                        aria-label={expanded.has(id) ? t.fold(name) : t.unfold(name)}
                         onClick={() => toggleOpen(id)}
                       >
                         <ChevronIcon />
@@ -139,8 +170,8 @@ export function AllFilterScreen() {
                         <span className={styles.meta}>
                           {searching && path.length > 0 && `${path.join(' › ')} · `}
                           {hiddenWith
-                            ? `masqué avec ${hiddenWith.folder.name}`
-                            : `${formatCount(count)} élément${count > 1 ? 's' : ''}`}
+                            ? t.hiddenWith(hiddenWith.folder.name)
+                            : t.items(formatCount(count), count)}
                         </span>
                       </span>
                     </label>
@@ -148,7 +179,7 @@ export function AllFilterScreen() {
                 );
               })}
             </ul>
-            {rows.length === 0 && <p className={common.muted}>Aucun dossier ne correspond.</p>}
+            {rows.length === 0 && <p className={common.muted}>{t.noMatch}</p>}
 
             {excluded.size > 0 && (
               <button
@@ -156,7 +187,7 @@ export function AllFilterScreen() {
                 className={`${common.buttonSoft} ${styles.reset}`}
                 onClick={showAll}
               >
-                Tout afficher
+                {t.showAll}
               </button>
             )}
           </>

@@ -1,6 +1,6 @@
 /**
- * Reads CHANGELOG.md, the list of what each version brought, for "Quoi de
- * neuf" in the app. Only the shape that file uses is understood: a "## x.y.z
+ * Reads CHANGELOG.md (CHANGELOG.en.md in English), the list of what each
+ * version brought, for "Nouveautés" in the app. Only the shape that file uses is understood: a "## x.y.z
  * — date" heading per version, optional intro lines, "### Section" headings
  * and "- " items (wrapped lines are indented).
  */
@@ -83,11 +83,13 @@ export function releasesSince(releases: readonly Release[], seen: string, curren
 
 /** Heading of the small changes already live, which the next release will take in. */
 export const UPCOMING_HEADING = '## Depuis la dernière version';
+/** The same, in CHANGELOG.en.md. */
+export const UPCOMING_HEADING_EN = '## Since the last version';
 
 /** The items of "Depuis la dernière version", if any: live already, with no number of their own. */
-export function parseUpcoming(markdown: string): string[] {
+export function parseUpcoming(markdown: string, heading: string = UPCOMING_HEADING): string[] {
   const lines = markdown.replace(/\r\n/g, '\n').split('\n');
-  const start = lines.indexOf(UPCOMING_HEADING);
+  const start = lines.indexOf(heading);
   if (start === -1) return [];
   const items: string[] = [];
   for (const line of lines.slice(start + 1)) {

@@ -1,4 +1,10 @@
 import type { MediaItem } from '../../data/model.ts';
+import { localized, plural } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: { selected: (count: number) => `${count} ${plural(count, 'sélectionné', 'sélectionnés')}` },
+  en: { selected: (count: number) => `${count} selected` },
+});
 
 /** Photos picked in a grid, by id. */
 export type Selection = ReadonlySet<string>;
@@ -46,7 +52,7 @@ export function beyondShareLimit(items: readonly MediaItem[]): boolean {
   return items.length > SHARE_LIMIT.items || bytes > SHARE_LIMIT.bytes;
 }
 
-/** "1 sélectionné", "12 sélectionnés" */
+/** "1 sélectionné", "12 sélectionnés"; "12 selected" */
 export function selectedLabel(count: number): string {
-  return `${count} ${count > 1 ? 'sélectionnés' : 'sélectionné'}`;
+  return t.selected(count);
 }

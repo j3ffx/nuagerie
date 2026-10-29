@@ -29,6 +29,12 @@ import { usePressDrag } from './pressDrag.ts';
 import { stickyHeaderHeight } from './page.ts';
 import { StickyMonth } from './StickyMonth.tsx';
 import styles from './PhotoGrid.module.css';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: { month: (title: string) => `Tout le mois : ${title}` },
+  en: { month: (title: string) => `The whole month: ${title}` },
+});
 
 const HEADER_SIZE = 44;
 
@@ -285,7 +291,7 @@ const Row = memo(function Row({
             aria-checked={monthState(section.items, selected)}
             className={styles.titleButton}
             onClick={() => onMonth(section.items)}
-            aria-label={`Tout le mois : ${section.title}`}
+            aria-label={t.month(section.title)}
           >
             <span
               className={styles.monthCheck}

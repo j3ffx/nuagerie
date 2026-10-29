@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fitsWords, inPeriod, nameWords, normalize, parseQuery } from './query.ts';
 
 const NOW = Date.UTC(2026, 9, 28, 12);
@@ -173,5 +173,58 @@ describe('fitsWords', () => {
     expect(fitsWords(['vacances', 'lyon'], words)).toBe(false);
     expect(fitsWords(['ances'], words)).toBe(false);
     expect(fitsWords([], words)).toBe(true);
+  });
+});
+
+describe('parseQuery: English words, in a French interface', () => {
+  it('reads months, days and seasons typed in English', () => {
+    expect(parse('July 2024').date).toMatchObject({
+      from: at(2024, 6, 1, 0),
+      to: at(2024, 7, 1, 0),
+      label: 'Juillet 2024',
+    });
+    expect(parse('july 14').date).toMatchObject({ months: [6], day: 14 });
+    expect(parse('14th July 2024').date).toMatchObject({
+      from: at(2024, 6, 14, 0),
+      to: at(2024, 6, 15, 0),
+    });
+    expect(parse('summer 2023').date).toMatchObject({ from: at(2023, 5, 1, 0), label: 'Été 2023' });
+    expect(parse('fall').date).toMatchObject({ months: [8, 9, 10] });
+    expect(parse('2019 to 2021').date).toMatchObject({
+      from: at(2019, 0, 1, 0),
+      to: at(2022, 0, 1, 0),
+    });
+  });
+
+  it('leaves out the little English words', () => {
+    expect(parse('the beach in may').terms).toEqual(['beach']);
+  });
+
+  it('still takes a number after a month as a year when it is one', () => {
+    expect(parse('juillet 2024').date).toMatchObject({ from: at(2024, 6, 1, 0), day: null });
+  });
+});
+
+describe('parseQuery: in an English interface', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it('labels and links the periods in English, and still reads French', async () => {
+    vi.stubGlobal('navigator', { language: 'en-GB', languages: ['en-GB'] });
+    vi.resetModules();
+    const { parseQuery: parseEnglish } = await import('./query.ts');
+    const read = (text: string) => parseEnglish(text, NOW).date;
+    expect(read('july 2024')).toMatchObject({ label: 'July 2024', query: 'july 2024' });
+    expect(read('14 juillet')).toMatchObject({ label: '14 July, every year', query: '14 july' });
+    expect(read('été 2023')).toMatchObject({ label: 'Summer 2023', query: 'summer 2023' });
+    expect(read('hiver 2023')).toMatchObject({ label: 'Winter 2023-2024' });
+    expect(read('2019 à 2021')).toMatchObject({ label: '2019 to 2021', query: '2019 to 2021' });
+    // Every link reads back as the same period.
+    for (const text of ['july 2024', '1 may', 'summer 2023', '2019 to 2021']) {
+      const period = read(text);
+      expect(read(period?.query ?? '')).toEqual(period);
+    }
   });
 });

@@ -5,6 +5,7 @@ import { childPath, readRootPaths } from '../roots.ts';
 import type { DataSource, DriveFolder } from '../source.ts';
 import { DEMO_DRIVE_ROOT_ID, generateDemoDataset, type DemoDataset } from './generator.ts';
 import { createDemoThumbnailDrawer } from './thumbnailWorkers.ts';
+import { locale } from '../../lib/i18n.ts';
 
 /** Folder ids by path from the drive root ("/" is the drive root), ignoring case. */
 function folderPaths(dataset: DemoDataset): Map<string, string> {
@@ -109,7 +110,9 @@ export function createDemoSource(): DataSource {
           childCount: stats.get(item.id)?.childCount ?? 0,
           size: stats.get(item.id)?.size ?? 0,
         }))
-        .sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base', numeric: true }));
+        .sort((a, b) =>
+          a.name.localeCompare(b.name, locale, { sensitivity: 'base', numeric: true }),
+        );
     },
 
     async getOriginalUrl(item) {

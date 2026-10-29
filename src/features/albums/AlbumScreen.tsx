@@ -8,11 +8,52 @@ import { IndexStatus } from '../../ui/IndexStatus.tsx';
 import { PhotoBrowser } from '../viewer/PhotoBrowser.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import { AlbumSortControls } from './AlbumSortControls.tsx';
-import { sortSummary } from './albumSortLabels.ts';
+import { orderToggleLabel, sortSummary } from './albumSortLabels.ts';
 import { AlbumTile } from './AlbumTile.tsx';
 import tiles from './AlbumTile.module.css';
 import styles from './AlbumScreen.module.css';
 import { useAlbumModel, usePhotoOrder, useSubAlbumSort } from './useAlbums.ts';
+import { localized, plural } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    backTo: (name: string) => `Retour à ${name}`,
+    back: 'Retour aux albums',
+    album: 'Album',
+    gone: 'Cet album n’existe plus ou n’est plus sélectionné.',
+    subAlbums: (count: number) => `${count} ${plural(count, 'sous-album', 'sous-albums')}`,
+    sortSubAlbums: (summary: string) => `Trier les sous-albums (${summary})`,
+    sort: 'Trier',
+    sortBy: 'Trier les sous-albums par',
+    photosOf: (name: string) => `Photos et vidéos de ${name}`,
+    empty: 'Cet album est vide.',
+  },
+  en: {
+    backTo: (name: string) => `Back to ${name}`,
+    back: 'Back to the albums',
+    album: 'Album',
+    gone: 'This album no longer exists or is no longer selected.',
+    subAlbums: (count: number) => `${count} ${plural(count, 'sub-album', 'sub-albums')}`,
+    sortSubAlbums: (summary: string) => `Sort the sub-albums (${summary})`,
+    sort: 'Sort',
+    sortBy: 'Sort the sub-albums by',
+    photosOf: (name: string) => `Photos and videos of ${name}`,
+    empty: 'This album is empty.',
+  },
+});
+
+/** Back to the parent album, or to the albums. */
+function BackLink({ parent }: { parent: Album | null }) {
+  return (
+    <Link
+      href={parent ? `/album/${encodeURIComponent(parent.id)}` : '/'}
+      className={styles.back}
+      aria-label={parent ? t.backTo(parent.name) : t.back}
+    >
+      <BackIcon />
+    </Link>
+  );
+}
 
 export function AlbumScreen({ params }: { params: { id: string } }) {
   const model = useAlbumModel();
@@ -21,22 +62,14 @@ export function AlbumScreen({ params }: { params: { id: string } }) {
   const [order, setOrder] = usePhotoOrder();
   const items = useMemo(() => (album ? orderItems(album.items, order) : []), [album, order]);
 
-  const back = (
-    <Link
-      href={parent ? `/album/${encodeURIComponent(parent.id)}` : '/'}
-      className={styles.back}
-      aria-label={parent ? `Retour à ${parent.name}` : 'Retour aux albums'}
-    >
-      <BackIcon />
-    </Link>
-  );
+  const back = <BackLink parent={parent} />;
 
   if (model && !album) {
     return (
       <>
-        <ScreenHeader title="Album" leading={back} />
+        <ScreenHeader title={t.album} leading={back} />
         <div className={common.page}>
-          <p className={common.muted}>Cet album n’existe plus ou n’est plus sélectionné.</p>
+          <p className={common.muted}>{t.gone}</p>
         </div>
       </>
     );
@@ -53,7 +86,7 @@ export function AlbumScreen({ params }: { params: { id: string } }) {
               type="button"
               className={styles.order}
               onClick={() => setOrder(order === 'desc' ? 'asc' : 'desc')}
-              aria-label={`Ordre : ${order === 'desc' ? 'récent d’abord' : 'ancien d’abord'}. Inverser`}
+              aria-label={orderToggleLabel(order)}
             >
               {order === 'desc' ? <SortDownIcon /> : <SortUpIcon />}
             </button>
@@ -105,7 +138,7 @@ function AlbumContent({
         <section className={styles.subAlbums} aria-labelledby="sub-albums">
           <div className={styles.subHeader}>
             <h2 id="sub-albums" className={common.sectionTitle}>
-              {subAlbums.length > 1 ? `${subAlbums.length} sous-albums` : '1 sous-album'}
+              {t.subAlbums(subAlbums.length)}
             </h2>
             {subAlbums.length > 1 && (
               <button
@@ -113,21 +146,17 @@ function AlbumContent({
                 className={styles.sortToggle}
                 aria-expanded={sorting}
                 aria-controls="sub-album-sort"
-                aria-label={`Trier les sous-albums (${sortSummary(subSort)})`}
+                aria-label={t.sortSubAlbums(sortSummary(subSort))}
                 onClick={() => setSorting(!sorting)}
               >
                 {subSort.direction === 'desc' ? <SortDownIcon /> : <SortUpIcon />}
-                Trier
+                {t.sort}
               </button>
             )}
           </div>
           {sorting && (
             <div id="sub-album-sort">
-              <AlbumSortControls
-                sort={subSort}
-                onChange={setSubSort}
-                label="Trier les sous-albums par"
-              />
+              <AlbumSortControls sort={subSort} onChange={setSubSort} label={t.sortBy} />
             </div>
           )}
           <ul className={`${tiles.grid} ${styles.subGrid}`}>
@@ -143,11 +172,9 @@ function AlbumContent({
       {items.length > 0 ? (
         // One per album: wouter keeps this screen from one album to the next, and a
         // selection must not follow into a sub-album.
-        <PhotoBrowser key={album.id} items={items} label={`Photos et vidéos de ${album.name}`} />
+        <PhotoBrowser key={album.id} items={items} label={t.photosOf(album.name)} />
       ) : (
-        subAlbums.length === 0 && (
-          <p className={`${common.muted} ${styles.summary}`}>Cet album est vide.</p>
-        )
+        subAlbums.length === 0 && <p className={`${common.muted} ${styles.summary}`}>{t.empty}</p>
       )}
     </>
   );

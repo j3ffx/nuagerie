@@ -4,6 +4,22 @@ import type { MediaItem } from '../../data/model.ts';
 import { ShareIcon } from '../../ui/icons.tsx';
 import { canShareFiles, shareableFile } from './share.ts';
 import styles from './Viewer.module.css';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    shareOffline: 'Partager (hors connexion)',
+    shareReady: 'Partager (prêt, toucher à nouveau)',
+    share: 'Partager',
+    shareFailed: 'Partage impossible pour l’instant, réessaie.',
+  },
+  en: {
+    shareOffline: 'Share (offline)',
+    shareReady: 'Share (ready, tap again)',
+    share: 'Share',
+    shareFailed: 'Sharing is not possible right now, try again.',
+  },
+});
 
 type State =
   | { status: 'idle' }
@@ -60,11 +76,7 @@ export function ShareButton({ item, offline }: { item: MediaItem; offline: boole
     else setState({ status: 'failed' });
   };
 
-  const label = offline
-    ? 'Partager (hors connexion)'
-    : state.status === 'ready'
-      ? 'Partager (prêt, toucher à nouveau)'
-      : 'Partager';
+  const label = offline ? t.shareOffline : state.status === 'ready' ? t.shareReady : t.share;
 
   return (
     <>
@@ -83,7 +95,7 @@ export function ShareButton({ item, offline }: { item: MediaItem; offline: boole
       </button>
       {state.status === 'failed' && (
         <p className={styles.toast} role="status">
-          Partage impossible pour l’instant, réessaie.
+          {t.shareFailed}
         </p>
       )}
     </>

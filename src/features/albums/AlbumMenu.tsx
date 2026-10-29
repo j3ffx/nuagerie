@@ -8,6 +8,34 @@ import { OneDriveLink } from '../../ui/OneDriveLink.tsx';
 import styles from './AlbumMenu.module.css';
 import { useAlbumPhotos } from './useAlbumPhotos.ts';
 import { useAlbumSelection } from './useAlbums.ts';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    hideHome: 'Masquer de l’accueil',
+    hideSub: 'Masquer ce sous-album',
+    hideNote: 'Il revient avec « Choisir les albums ».',
+    map: 'Voir sur la carte',
+    noPlace: 'Aucune photo localisée.',
+    unkeep: 'Ne plus garder hors connexion',
+    keep: 'Garder hors connexion',
+    frees: 'Libère la place prise sur l’appareil.',
+    withSubAlbums: ', sous-albums compris',
+    cancel: 'Annuler',
+  },
+  en: {
+    hideHome: 'Hide from the home screen',
+    hideSub: 'Hide this sub-album',
+    hideNote: 'It comes back with “Choose the albums”.',
+    map: 'See on the map',
+    noPlace: 'No photo with a place.',
+    unkeep: 'Stop keeping offline',
+    keep: 'Keep offline',
+    frees: 'Frees the space taken on the device.',
+    withSubAlbums: ', sub-albums included',
+    cancel: 'Cancel',
+  },
+});
 
 /**
  * Where the tile is: on the home screen, among an album's sub-albums (hiding
@@ -80,8 +108,8 @@ export function AlbumMenu({
             <button type="button" className={styles.item} onClick={hide}>
               <HideIcon className={styles.icon} />
               <span className={styles.text}>
-                {place === 'home' ? 'Masquer de l’accueil' : 'Masquer ce sous-album'}
-                <span className={styles.note}>Il revient avec « Choisir les albums ».</span>
+                {place === 'home' ? t.hideHome : t.hideSub}
+                <span className={styles.note}>{t.hideNote}</span>
               </span>
               <ChevronIcon className={styles.chevron} />
             </button>
@@ -97,8 +125,8 @@ export function AlbumMenu({
           >
             <MapIcon className={styles.icon} />
             <span className={styles.text}>
-              Voir sur la carte
-              {!located && <span className={styles.note}>Aucune photo localisée.</span>}
+              {t.map}
+              {!located && <span className={styles.note}>{t.noPlace}</span>}
             </span>
             <ChevronIcon className={styles.chevron} />
           </button>
@@ -113,11 +141,11 @@ export function AlbumMenu({
           >
             <OfflineIcon className={styles.icon} />
             <span className={styles.text}>
-              {kept ? 'Ne plus garder hors connexion' : 'Garder hors connexion'}
+              {kept ? t.unkeep : t.keep}
               <span className={styles.note}>
                 {kept
-                  ? 'Libère la place prise sur l’appareil.'
-                  : `≈ ${formatBytes(offline.estimate(count))} · ${formatItemCount(count)}${album.subAlbumCount > 0 ? ', sous-albums compris' : ''}`}
+                  ? t.frees
+                  : `≈ ${formatBytes(offline.estimate(count))} · ${formatItemCount(count)}${album.subAlbumCount > 0 ? t.withSubAlbums : ''}`}
               </span>
             </span>
             <ChevronIcon className={styles.chevron} />
@@ -129,7 +157,7 @@ export function AlbumMenu({
           )}
         </div>
         <button type="button" className={styles.cancel} onClick={onClose} autoFocus>
-          Annuler
+          {t.cancel}
         </button>
       </div>
     </dialog>

@@ -7,31 +7,78 @@ import menu from '../albums/AlbumMenu.module.css';
 import { useAlbumPhotos } from '../albums/useAlbumPhotos.ts';
 import styles from './KeptBadge.module.css';
 import { useOffline } from './offlineContext.ts';
+import { localized, plural } from '../../lib/i18n.ts';
 
-const REASONS: Record<FailureReason, string> = {
-  unreadable: 'OneDrive ne laisse pas le navigateur lire ces images',
-  missing: 'elles ne sont plus dans OneDrive',
-  full: 'il n’y a plus de place sur l’appareil',
-  failed: 'le réseau ou OneDrive n’a pas répondu',
-};
+const t = localized({
+  fr: {
+    reasons: {
+      unreadable: 'OneDrive ne laisse pas le navigateur lire ces images',
+      missing: 'elles ne sont plus dans OneDrive',
+      full: 'il n’y a plus de place sur l’appareil',
+      failed: 'le réseau ou OneDrive n’a pas répondu',
+    },
+    photos: (count: string, n: number) => `${count} ${plural(n, 'photo', 'photos')}`,
+    done: 'à jour',
+    downloading: (kept: string, total: string) => `téléchargement en cours, ${kept} sur ${total}`,
+    notKept: (photos: string, n: number) => `${photos} ${plural(n, 'non gardée', 'non gardées')}`,
+    paused: 'en pause, hors connexion',
+    wifi: 'en attente du Wi-Fi',
+    waiting: 'en attente',
+    badge: (state: string) => `Hors connexion : ${state}. Voir les détails`,
+    kept: (state: string) => `Gardé hors connexion : ${state}`,
+    onDevice: 'Sur l’appareil',
+    keptPhotos: 'Photos gardées',
+    of: (kept: string, total: string) => `${kept} sur ${total}`,
+    failed: (n: number, reasons: string) =>
+      `${plural(n, 'Elle n’a pas pu être gardée', 'Elles n’ont pas pu être gardées')} : ${reasons}. Nouvel essai au retour du réseau ou dans l’application.`,
+    retry: 'Réessayer maintenant',
+    anyway: 'Télécharger quand même',
+    unkeep: 'Ne plus garder',
+    close: 'Fermer',
+  },
+  en: {
+    reasons: {
+      unreadable: 'OneDrive does not let the browser read these images',
+      missing: 'they are no longer in OneDrive',
+      full: 'there is no space left on the device',
+      failed: 'the network or OneDrive did not answer',
+    },
+    photos: (count: string, n: number) => `${count} ${plural(n, 'photo', 'photos')}`,
+    done: 'up to date',
+    downloading: (kept: string, total: string) => `downloading, ${kept} of ${total}`,
+    notKept: (photos: string) => `${photos} not kept`,
+    paused: 'paused, offline',
+    wifi: 'waiting for Wi-Fi',
+    waiting: 'waiting',
+    badge: (state: string) => `Offline: ${state}. See the details`,
+    kept: (state: string) => `Kept offline: ${state}`,
+    onDevice: 'On the device',
+    keptPhotos: 'Photos kept',
+    of: (kept: string, total: string) => `${kept} of ${total}`,
+    failed: (n: number, reasons: string) =>
+      `${plural(n, 'It could not be kept', 'They could not be kept')}: ${reasons}. Another try when the network is back, or in the app.`,
+    retry: 'Try again now',
+    anyway: 'Download anyway',
+    unkeep: 'Stop keeping',
+    close: 'Close',
+  },
+});
 
-const photos = (count: number) => `${formatCount(count)} photo${count > 1 ? 's' : ''}`;
+const REASONS: Record<FailureReason, string> = t.reasons;
+
+const photos = (count: number) => t.photos(formatCount(count), count);
 
 /** The state in a few words: the badge's name, and the first line of its details. */
 function stateText(status: KeptStatus, pause: 'offline' | 'mobile-data' | null): string {
   switch (status.phase) {
     case 'done':
-      return 'à jour';
+      return t.done;
     case 'downloading':
-      return `téléchargement en cours, ${formatCount(status.keptPhotos)} sur ${formatCount(status.photos)}`;
+      return t.downloading(formatCount(status.keptPhotos), formatCount(status.photos));
     case 'error':
-      return `${photos(status.failedPhotos)} non gardée${status.failedPhotos > 1 ? 's' : ''}`;
+      return t.notKept(photos(status.failedPhotos), status.failedPhotos);
     case 'waiting':
-      return pause === 'offline'
-        ? 'en pause, hors connexion'
-        : pause === 'mobile-data'
-          ? 'en attente du Wi-Fi'
-          : 'en attente';
+      return pause === 'offline' ? t.paused : pause === 'mobile-data' ? t.wifi : t.waiting;
   }
 }
 
@@ -57,7 +104,7 @@ export function KeptBadge({ albumId, name }: { albumId: string; name: string }) 
         type="button"
         className={styles.badge}
         data-phase={status.phase}
-        aria-label={`Hors connexion : ${text}. Voir les détails`}
+        aria-label={t.badge(text)}
         onClick={() => setOpen(true)}
       >
         <span className={styles.disc}>
@@ -133,32 +180,24 @@ function KeptDetails({
             data-phase={status.phase}
             role={status.phase === 'downloading' ? undefined : 'status'}
           >
-            Gardé hors connexion : {text}
+            {t.kept(text)}
           </p>
           <dl className={styles.facts}>
-            <dt>Sur l’appareil</dt>
+            <dt>{t.onDevice}</dt>
             <dd>{formatBytes(status.bytes)}</dd>
-            <dt>Photos gardées</dt>
-            <dd>
-              {formatCount(status.keptPhotos)} sur {formatCount(status.photos)}
-            </dd>
+            <dt>{t.keptPhotos}</dt>
+            <dd>{t.of(formatCount(status.keptPhotos), formatCount(status.photos))}</dd>
           </dl>
-          {status.phase === 'error' && (
-            <p>
-              {status.failedPhotos > 1 ? 'Elles n’ont' : 'Elle n’a'} pas pu être gardée
-              {status.failedPhotos > 1 ? 's' : ''} : {reasons}. Nouvel essai au retour du réseau ou
-              dans l’application.
-            </p>
-          )}
+          {status.phase === 'error' && <p>{t.failed(status.failedPhotos, reasons)}</p>}
         </div>
         {canRetry && (
           <button type="button" className={menu.cancel} onClick={offline.retry}>
-            Réessayer maintenant
+            {t.retry}
           </button>
         )}
         {offline.state.pause === 'mobile-data' && status.phase !== 'done' && (
           <button type="button" className={menu.cancel} onClick={offline.allowMobileData}>
-            Télécharger quand même
+            {t.anyway}
           </button>
         )}
         <button
@@ -169,10 +208,10 @@ function KeptDetails({
             onClose();
           }}
         >
-          Ne plus garder
+          {t.unkeep}
         </button>
         <button type="button" className={menu.cancel} onClick={onClose} autoFocus>
-          Fermer
+          {t.close}
         </button>
       </div>
     </dialog>

@@ -6,6 +6,12 @@ import { CloseIcon } from '../../ui/icons.tsx';
 import { Thumbnail } from '../../ui/Thumbnail.tsx';
 import styles from './MemoriesSection.module.css';
 import { useMemories, useMemoriesSeen } from './useMemories.ts';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: { title: 'Souvenirs', seeAll: 'Tout voir', close: 'Fermer les souvenirs jusqu’à demain' },
+  en: { title: 'Memories', seeAll: 'See all', close: 'Close the memories until tomorrow' },
+});
 
 /** The photo that stands for a year: its most recent photo, a video when there is none. */
 const coverOf = (memory: MemoryYear) =>
@@ -50,15 +56,15 @@ export function MemoriesSection() {
     <section ref={section} className={styles.section} aria-labelledby="memories-title">
       <div className={styles.header}>
         <h2 id="memories-title" className={styles.title}>
-          Souvenirs
+          {t.title}
         </h2>
         <Link href="/souvenirs" className={styles.all}>
-          Tout voir
+          {t.seeAll}
         </Link>
         <button
           type="button"
           className={styles.close}
-          aria-label="Fermer les souvenirs jusqu’à demain"
+          aria-label={t.close}
           onClick={closeAndMoveOn}
         >
           <CloseIcon width={20} height={20} />

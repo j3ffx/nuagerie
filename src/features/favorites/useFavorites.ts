@@ -3,6 +3,12 @@ import type { Album } from '../../data/albums.ts';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { useSync } from '../../data/sync/syncContext.ts';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: { favorites: 'Favoris' },
+  en: { favorites: 'Favourites' },
+});
 
 /** Id of the Favoris album (its tile, its map), never a OneDrive folder's. */
 export const FAVORITES_ALBUM_ID = 'favoris';
@@ -38,7 +44,7 @@ export function useFavoritesAlbum(): Album | null {
     const dated = items.filter((item) => item.takenAt !== null);
     return {
       id: FAVORITES_ALBUM_ID,
-      name: 'Favoris',
+      name: t.favorites,
       parentId: null,
       subAlbumIds: [],
       subAlbumCount: 0,

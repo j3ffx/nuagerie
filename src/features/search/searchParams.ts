@@ -1,5 +1,11 @@
 import { normalize, parseQuery } from '../../data/search/query.ts';
 import type { PlaceKey, SearchIndex } from '../../data/search/search.ts';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: { place: 'Lieu' },
+  en: { place: 'Place' },
+});
 
 /** A search as it is in the URL: `/recherche?q=…&album=…&lieu=…`. */
 export interface SearchTarget {
@@ -48,7 +54,7 @@ export function describeTarget(search: SearchIndex, target: SearchTarget): strin
   }
   if (target.place) {
     const place = search.places.get(target.place);
-    parts.push(place ? place.name : 'Lieu');
+    parts.push(place ? place.name : t.place);
   }
   if (target.q) {
     const query = parseQuery(target.q);

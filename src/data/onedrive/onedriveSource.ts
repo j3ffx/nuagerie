@@ -16,11 +16,75 @@ import type { DataSource, DriveFolder } from '../source.ts';
 import { childPath, readRootPaths } from '../roots.ts';
 import { IndexStore, type IndexMeta, type RootSyncState } from '../store.ts';
 import { snapshotDue, usableSnapshot, type IndexSnapshots } from '../sync/indexSnapshot.ts';
+import { locale, localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    offline: 'Hors connexion, et aucune photo n’est encore enregistrée sur cet appareil.',
+    error: (detail: string) => `erreur ${detail}`,
+    rootDelta: 'delta sur le dossier racine',
+    yes: 'oui',
+    driveDelta: 'non (delta du drive entier)',
+    firstPage: 'taille de la 1re page delta ($top=1000)',
+    items: (count: number) => `${count} éléments`,
+    expand: 'miniatures via $expand=thumbnails dans delta',
+    withThumbnails: (some: number, all: number) => `${some}/${all} fichiers avec miniatures`,
+    readable: (status: number, type: string, kb: number) =>
+      `oui (${status}, ${type}, ${kb} Ko lus)`,
+    unknownType: 'type inconnu',
+    csp: 'non (hôte bloqué par la CSP)',
+    no: (detail: string) => `non (${detail})`,
+    originalUrl: 'URL de l’original',
+    missing: 'absente',
+    originalHost: 'hôte des originaux',
+    originalRead: 'lecture de l’original (CORS, partage)',
+    batch: (count: number) => `miniatures par $batch (${count} éléments)`,
+    batchResult: (urls: number, ids: number, ms: number, statuses: string) =>
+      `${urls}/${ids} URL en ${ms} ms (statuts ${statuses})`,
+    batchCheck: 'miniatures par $batch',
+    thumbnailHost: 'hôte des miniatures',
+    bytes: 'lecture des octets (CORS)',
+    cache: 'cache des miniatures',
+    unused: 'pas encore utilisé',
+    active: 'actif',
+    inactive: 'inactif (URL directes)',
+  },
+  en: {
+    offline: 'Offline, and no photo is saved on this device yet.',
+    error: (detail: string) => `error ${detail}`,
+    rootDelta: 'delta on the root folder',
+    yes: 'yes',
+    driveDelta: 'no (delta of the whole drive)',
+    firstPage: 'size of the first delta page ($top=1000)',
+    items: (count: number) => `${count} items`,
+    expand: 'thumbnails through $expand=thumbnails in delta',
+    withThumbnails: (some: number, all: number) => `${some}/${all} files with thumbnails`,
+    readable: (status: number, type: string, kb: number) =>
+      `yes (${status}, ${type}, ${kb} kB read)`,
+    unknownType: 'unknown type',
+    csp: 'no (host blocked by the CSP)',
+    no: (detail: string) => `no (${detail})`,
+    originalUrl: 'URL of the original',
+    missing: 'missing',
+    originalHost: 'host of the originals',
+    originalRead: 'reading the original (CORS, sharing)',
+    batch: (count: number) => `thumbnails through $batch (${count} items)`,
+    batchResult: (urls: number, ids: number, ms: number, statuses: string) =>
+      `${urls}/${ids} URLs in ${ms} ms (statuses ${statuses})`,
+    batchCheck: 'thumbnails through $batch',
+    thumbnailHost: 'host of the thumbnails',
+    bytes: 'reading the bytes (CORS)',
+    cache: 'thumbnail cache',
+    unused: 'not used yet',
+    active: 'active',
+    inactive: 'inactive (direct URLs)',
+  },
+});
 
 /** Started offline, with no index kept on the device yet. */
 export class OfflineError extends Error {
   constructor() {
-    super('Hors connexion, et aucune photo n’est encore enregistrée sur cet appareil.');
+    super(t.offline);
     this.name = 'OfflineError';
   }
 }
@@ -48,27 +112,29 @@ async function checkApi(
     } catch (error) {
       return {
         check,
-        result: `erreur ${error instanceof GraphError ? `${error.status} ${error.code}` : String(error)}`,
+        result: t.error(
+          error instanceof GraphError ? `${error.status} ${error.code}` : String(error),
+        ),
       };
     }
   };
 
   return [
     {
-      check: 'delta sur le dossier racine',
-      result: meta.channels[0]?.scope === 'folder' ? 'oui' : 'non (delta du drive entier)',
+      check: t.rootDelta,
+      result: meta.channels[0]?.scope === 'folder' ? t.yes : t.driveDelta,
     },
-    await run('taille de la 1re page delta ($top=1000)', async () => {
+    await run(t.firstPage, async () => {
       const page = await client.getJson<{ value: unknown[] }>(folderDelta('$select=id&$top=1000'));
-      return `${page.value.length} éléments`;
+      return t.items(page.value.length);
     }),
-    await run('miniatures via $expand=thumbnails dans delta', async () => {
+    await run(t.expand, async () => {
       const page = await client.getJson<{ value: (GraphDriveItem & { thumbnails?: unknown[] })[] }>(
         folderDelta('$select=id,file&$expand=thumbnails&$top=50'),
       );
       const files = page.value.filter((item) => item.file);
       const withThumbs = files.filter((item) => (item.thumbnails ?? []).length > 0);
-      return `${withThumbs.length}/${files.length} fichiers avec miniatures`;
+      return t.withThumbnails(withThumbs.length, files.length);
     }),
     ...(await checkThumbnails(client, sampleIds, thumbnails)),
     ...(await checkOriginal(client, sampleIds[0])),
@@ -92,10 +158,10 @@ async function probeRead(url: string): Promise<string> {
   try {
     const response = await fetch(url, { credentials: 'omit', headers: { Range: 'bytes=0-65535' } });
     const blob = await response.blob();
-    return `oui (${response.status}, ${blob.type || 'type inconnu'}, ${Math.round(blob.size / 1024)} Ko lus)`;
+    return t.readable(response.status, blob.type || t.unknownType, Math.round(blob.size / 1024));
   } catch (error) {
     await new Promise((resolve) => setTimeout(resolve, 0)); // the violation event comes after
-    return cspBlocked ? 'non (hôte bloqué par la CSP)' : `non (${String(error)})`;
+    return cspBlocked ? t.csp : t.no(String(error));
   } finally {
     document.removeEventListener('securitypolicyviolation', onViolation);
   }
@@ -109,16 +175,18 @@ async function checkOriginal(client: GraphClient, id: string | undefined) {
       `/me/drive/items/${encodeURIComponent(id)}`,
     );
     const url = item['@microsoft.graph.downloadUrl'];
-    if (!url) return [{ check: 'URL de l’original', result: 'absente' }];
+    if (!url) return [{ check: t.originalUrl, result: t.missing }];
     return [
-      { check: 'hôte des originaux', result: maskedHost(url) },
-      { check: 'lecture de l’original (CORS, partage)', result: await probeRead(url) },
+      { check: t.originalHost, result: maskedHost(url) },
+      { check: t.originalRead, result: await probeRead(url) },
     ];
   } catch (error) {
     return [
       {
-        check: 'URL de l’original',
-        result: `erreur ${error instanceof GraphError ? `${error.status} ${error.code}` : String(error)}`,
+        check: t.originalUrl,
+        result: t.error(
+          error instanceof GraphError ? `${error.status} ${error.code}` : String(error),
+        ),
       },
     ];
   }
@@ -144,25 +212,31 @@ async function checkThumbnails(
     }
     const statuses = [...new Set(responses.map((r) => r.status))].join(', ');
     checks.push({
-      check: `miniatures par $batch (${ids.length} éléments)`,
-      result: `${urls.length}/${ids.length} URL en ${Math.round(performance.now() - startedAt)} ms (statuts ${statuses})`,
+      check: t.batch(ids.length),
+      result: t.batchResult(
+        urls.length,
+        ids.length,
+        Math.round(performance.now() - startedAt),
+        statuses,
+      ),
     });
   } catch (error) {
     checks.push({
-      check: 'miniatures par $batch',
-      result: `erreur ${error instanceof GraphError ? `${error.status} ${error.code}` : String(error)}`,
+      check: t.batchCheck,
+      result: t.error(
+        error instanceof GraphError ? `${error.status} ${error.code}` : String(error),
+      ),
     });
   }
   const url = urls[0];
   if (!url) return checks;
   const hosts = [...new Set(urls.map(maskedHost))];
-  checks.push({ check: 'hôte des miniatures', result: hosts.join(', ') });
-  checks.push({ check: 'lecture des octets (CORS)', result: await probeRead(url) });
+  checks.push({ check: t.thumbnailHost, result: hosts.join(', ') });
+  checks.push({ check: t.bytes, result: await probeRead(url) });
   const readable = thumbnails.bytesReadable();
   checks.push({
-    check: 'cache des miniatures',
-    result:
-      readable === null ? 'pas encore utilisé' : readable ? 'actif' : 'inactif (URL directes)',
+    check: t.cache,
+    result: readable === null ? t.unused : readable ? t.active : t.inactive,
   });
   return checks;
 }
@@ -438,7 +512,7 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
         url = page['@odata.nextLink'] ?? null;
       }
       return folders.sort((a, b) =>
-        a.name.localeCompare(b.name, 'fr', { sensitivity: 'base', numeric: true }),
+        a.name.localeCompare(b.name, locale, { sensitivity: 'base', numeric: true }),
       );
     },
 

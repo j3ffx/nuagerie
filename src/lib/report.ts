@@ -1,3 +1,37 @@
+import { localized } from './i18n.ts';
+
+const t = localized({
+  fr: {
+    unknownSystem: 'système inconnu',
+    unknownBrowser: 'navigateur inconnu',
+    happened: '**Ce qui s’est passé**',
+    expected: '**Ce qui était attendu**',
+    steps: '**Pour reproduire**',
+    version: 'Version',
+    data: 'Données',
+    demo: 'démo',
+    device: 'Appareil',
+    installed: 'application installée',
+    tab: 'onglet du navigateur',
+    screen: (width: number) => `écran de ${width} px`,
+    colon: ' : ',
+  },
+  en: {
+    unknownSystem: 'unknown system',
+    unknownBrowser: 'unknown browser',
+    happened: '**What happened**',
+    expected: '**What was expected**',
+    steps: '**To reproduce**',
+    version: 'Version',
+    data: 'Data',
+    demo: 'demo',
+    device: 'Device',
+    installed: 'installed app',
+    tab: 'browser tab',
+    screen: (width: number) => `${width} px screen`,
+    colon: ': ',
+  },
+});
 /** Public home of the project, where problems are reported. */
 export const REPOSITORY_URL = 'https://github.com/j3ffx/nuagerie';
 
@@ -20,7 +54,7 @@ function systemOf(ua: string): string {
   if (/Windows/.test(ua)) return 'Windows';
   if (/Mac OS X/.test(ua)) return 'macOS';
   if (/Linux/.test(ua)) return 'Linux';
-  return 'système inconnu';
+  return t.unknownSystem;
 }
 
 /** "Chrome 141", "Samsung Internet 28", "Firefox 143"…: the browser and its major version. */
@@ -36,7 +70,7 @@ function browserOf(ua: string): string {
     const match = pattern.exec(ua);
     if (match) return `${name} ${match[1]}`;
   }
-  return 'navigateur inconnu';
+  return t.unknownBrowser;
 }
 
 /**
@@ -46,21 +80,21 @@ function browserOf(ua: string): string {
  */
 export function issueUrl(context: ReportContext): string {
   const body = [
-    '**Ce qui s’est passé**',
+    t.happened,
     '',
     '',
-    '**Ce qui était attendu**',
+    t.expected,
     '',
     '',
-    '**Pour reproduire**',
+    t.steps,
     '1. ',
     '',
     '---',
-    `Version : ${context.version}${context.commit ? ` (${context.commit})` : ''}`,
-    `Données : ${context.mode === 'demo' ? 'démo' : 'OneDrive'}`,
-    `Appareil : ${systemOf(context.userAgent)} · ${browserOf(context.userAgent)} · ${
-      context.installed ? 'application installée' : 'onglet du navigateur'
-    } · écran de ${context.screenWidth} px`,
+    `${t.version}${t.colon}${context.version}${context.commit ? ` (${context.commit})` : ''}`,
+    `${t.data}${t.colon}${context.mode === 'demo' ? t.demo : 'OneDrive'}`,
+    `${t.device}${t.colon}${systemOf(context.userAgent)} · ${browserOf(context.userAgent)} · ${
+      context.installed ? t.installed : t.tab
+    } · ${t.screen(context.screenWidth)}`,
   ].join('\n');
   return `${REPOSITORY_URL}/issues/new?${new URLSearchParams({ body }).toString()}`;
 }

@@ -41,6 +41,12 @@ import { NavBar } from './NavBar.tsx';
 import { UpdateBanner } from './UpdateBanner.tsx';
 import { WhatsNewBanner } from './WhatsNewBanner.tsx';
 import { scrollToTopOnNewScreen } from './navigation.ts';
+import { localized } from '../lib/i18n.ts';
+
+const t = localized({
+  fr: { skip: 'Aller au contenu' },
+  en: { skip: 'Skip to content' },
+});
 
 export function App({
   mode,
@@ -129,7 +135,7 @@ function ShellContent() {
   return (
     <div className={styles.shell}>
       <a className={styles.skipLink} href="#main">
-        Aller au contenu
+        {t.skip}
       </a>
       <NavBar />
       <div className={banners.stack}>

@@ -43,6 +43,46 @@ import { useViewer } from './useViewer.ts';
 import { usePlaceName } from './usePlaceName.ts';
 import { ViewerSlide } from './ViewerSlide.tsx';
 import styles from './Viewer.module.css';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    unfavorite: 'Retirer des favoris',
+    favorite: 'Ajouter aux favoris',
+    downloadOffline: 'Télécharger (hors connexion)',
+    download: 'Télécharger',
+    syncTitle: 'Activer la synchronisation ?',
+    syncConfirm: 'Activer',
+    viewer: 'Visionneuse',
+    previous: 'Photo précédente',
+    next: 'Photo suivante',
+    syncMessage:
+      'Les favoris se rangent dans ton OneDrive, avec tes préférences, dans un dossier à part (Applis/Nuagerie) : ils ne se perdent jamais et te suivent sur tes autres appareils. Nuagerie va demander à Microsoft le droit d’écrire dans ce seul dossier : tes photos restent en lecture seule.',
+    undated: 'Sans date',
+    showInfo: 'voir les infos',
+    hideInfo: 'masquer les infos',
+    close: 'Fermer',
+    onMap: (place: string) => `${place}, voir sur la carte`,
+  },
+  en: {
+    unfavorite: 'Remove from favourites',
+    favorite: 'Add to favourites',
+    downloadOffline: 'Download (offline)',
+    download: 'Download',
+    syncTitle: 'Turn on the sync?',
+    syncConfirm: 'Turn on',
+    viewer: 'Viewer',
+    previous: 'Previous photo',
+    next: 'Next photo',
+    syncMessage:
+      'Favourites are kept in your OneDrive, with your preferences, in a folder of their own (Apps/Nuagerie): they are never lost and follow you on your other devices. Nuagerie will ask Microsoft for the right to write in that one folder: your photos stay read-only.',
+    undated: 'Undated',
+    showInfo: 'see the info',
+    hideInfo: 'hide the info',
+    close: 'Close',
+    onMap: (place: string) => `${place}, see on the map`,
+  },
+});
 
 const TAP_MOVE = 10;
 const DOUBLE_TAP_MS = 300;
@@ -465,7 +505,7 @@ export function Viewer({
       className={styles.viewer}
       role="dialog"
       aria-modal="true"
-      aria-label="Visionneuse"
+      aria-label={t.viewer}
       data-chrome={chrome || undefined}
       data-info-beside={infoBeside || undefined}
       data-info-below={infoBelow || undefined}
@@ -508,7 +548,7 @@ export function Viewer({
           type="button"
           className={`${styles.step} ${styles.stepPrevious}`}
           onClick={() => go(-1)}
-          aria-label="Photo précédente"
+          aria-label={t.previous}
         >
           <ChevronIcon />
         </button>
@@ -518,7 +558,7 @@ export function Viewer({
           type="button"
           className={`${styles.step} ${styles.stepNext}`}
           onClick={() => go(1)}
-          aria-label="Photo suivante"
+          aria-label={t.next}
         >
           <ChevronIcon />
         </button>
@@ -558,10 +598,9 @@ function ViewerBar({
       return;
     }
     const answer = await confirm({
-      title: 'Activer la synchronisation ?',
-      message:
-        'Les favoris se rangent dans ton OneDrive, avec tes préférences, dans un dossier à part (Applis/Nuagerie) : ils ne se perdent jamais et te suivent sur tes autres appareils. Nuagerie va demander à Microsoft le droit d’écrire dans ce seul dossier : tes photos restent en lecture seule.',
-      confirmLabel: 'Activer',
+      title: t.syncTitle,
+      message: t.syncMessage,
+      confirmLabel: t.syncConfirm,
     });
     if (answer) await sync.enable(item.id);
   };
@@ -569,10 +608,10 @@ function ViewerBar({
     item.takenAt === null
       ? null
       : formatTakenTime({ takenAt: item.takenAt, dateSource: item.dateSource });
-  const day = item.takenAt === null ? 'Sans date' : formatLongDate(item.takenAt);
+  const day = item.takenAt === null ? t.undated : formatLongDate(item.takenAt);
   // The caption names its button (no aria-label: it must say what is seen), what it does last.
   // The hidden commas sit inside the lines: between them, a space would come before each.
-  const action = <span className="hidden-inline">, {infoOpen ? 'masquer' : 'voir'} les infos</span>;
+  const action = <span className="hidden-inline">, {infoOpen ? t.hideInfo : t.showInfo}</span>;
   const details = [time, album].filter(Boolean).join(' · ');
   const caption = (
     <>
@@ -617,7 +656,7 @@ function ViewerBar({
           type="button"
           className={styles.icon}
           onClick={onClose}
-          aria-label="Fermer"
+          aria-label={t.close}
           autoFocus
         >
           <BackIcon />
@@ -634,8 +673,8 @@ function ViewerBar({
             onClick={() => void onHeart()}
             disabled={!sync.favoritesOn && offline}
             aria-pressed={favorite}
-            aria-label={favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-            title={favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            aria-label={favorite ? t.unfavorite : t.favorite}
+            title={favorite ? t.unfavorite : t.favorite}
             data-favorite={favorite || undefined}
           >
             <HeartIcon filled={favorite} />
@@ -651,8 +690,8 @@ function ViewerBar({
             onClick={() => void download()}
             disabled={downloading || offline}
             data-offline={offline || undefined}
-            aria-label={offline ? 'Télécharger (hors connexion)' : 'Télécharger'}
-            title={offline ? 'Télécharger (hors connexion)' : 'Télécharger'}
+            aria-label={offline ? t.downloadOffline : t.download}
+            title={offline ? t.downloadOffline : t.download}
           >
             <DownloadIcon />
           </button>
@@ -663,7 +702,7 @@ function ViewerBar({
           <Link
             href={`/carte?focus=${encodeURIComponent(item.id)}`}
             className={styles.place}
-            aria-label={`${place}, voir sur la carte`}
+            aria-label={t.onMap(place)}
           >
             <MapIcon width={18} height={18} />
             <span>{place}</span>

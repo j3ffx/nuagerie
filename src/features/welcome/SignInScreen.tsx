@@ -5,6 +5,34 @@ import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
 import { Logo } from '../../ui/Logo.tsx';
 import styles from './SignInScreen.module.css';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    welcome: 'Bienvenue sur Nuagerie',
+    pitch:
+      'Les photos et vidéos de OneDrive, rangées par albums, par date et par lieu. Lecture seule : Nuagerie ne modifie jamais rien.',
+    offline: 'Hors connexion : la connexion à Microsoft attend le réseau.',
+    elsewhere: 'Réessaie sur un autre réseau, ou essaie la démo.',
+    failed: 'La connexion n’a pas abouti. Réessayer devrait suffire.',
+    connecting: 'Connexion…',
+    signIn: 'Se connecter avec Microsoft',
+    demo: 'Essayer la démo',
+    restoring: 'Connexion à OneDrive…',
+  },
+  en: {
+    welcome: 'Welcome to Nuagerie',
+    pitch:
+      'Your OneDrive photos and videos, sorted by album, date and place. Read-only: Nuagerie never changes anything.',
+    offline: 'Offline: signing in to Microsoft waits for the network.',
+    elsewhere: 'Try again on another network, or try the demo.',
+    failed: 'Signing in did not go through. Trying again should do.',
+    connecting: 'Connecting…',
+    signIn: 'Sign in with Microsoft',
+    demo: 'Try the demo',
+    restoring: 'Connecting to OneDrive…',
+  },
+});
 
 /** OneDrive mode without a signed-in account. */
 export function SignInScreen({ error }: { error: string | null }) {
@@ -16,23 +44,20 @@ export function SignInScreen({ error }: { error: string | null }) {
   return (
     <main className={styles.welcome}>
       <Logo size={96} />
-      <h1 className={styles.title}>Bienvenue sur Nuagerie</h1>
-      <p className={common.muted}>
-        Les photos et vidéos de OneDrive, rangées par albums, par date et par lieu. Lecture seule :
-        Nuagerie ne modifie jamais rien.
-      </p>
+      <h1 className={styles.title}>{t.welcome}</h1>
+      <p className={common.muted}>{t.pitch}</p>
       {!online ? (
         <p className={styles.error} role="status">
-          Hors connexion : la connexion à Microsoft attend le réseau.
+          {t.offline}
         </p>
       ) : signIn.unreachable ? (
         <p className={styles.error} role="status">
-          {UNREACHABLE_MESSAGE} Réessaie sur un autre réseau, ou essaie la démo.
+          {UNREACHABLE_MESSAGE} {t.elsewhere}
         </p>
       ) : (
         error && (
           <p className={styles.error} role="alert">
-            La connexion n’a pas abouti. Réessayer devrait suffire.
+            {t.failed}
           </p>
         )
       )}
@@ -44,10 +69,10 @@ export function SignInScreen({ error }: { error: string | null }) {
           disabled={busy || !online}
           aria-busy={signIn.checking}
         >
-          {signIn.checking ? 'Connexion…' : 'Se connecter avec Microsoft'}
+          {signIn.checking ? t.connecting : t.signIn}
         </button>
         <button type="button" className={common.buttonSoft} onClick={enterDemoMode}>
-          Essayer la démo
+          {t.demo}
         </button>
       </div>
     </main>
@@ -64,7 +89,7 @@ export function ConnectingScreen() {
     <main className={`${styles.welcome} ${styles.connecting}`}>
       <Logo size={96} />
       <p className={common.muted} role="status">
-        Connexion à OneDrive…
+        {t.restoring}
       </p>
     </main>
   );

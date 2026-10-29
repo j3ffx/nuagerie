@@ -1,12 +1,26 @@
-import changelog from '../../CHANGELOG.md?raw';
-import { parseChangelog, parseUpcoming, releasesSince, type Release } from '../lib/changelog.ts';
+import changelogEn from '../../CHANGELOG.en.md?raw';
+import changelogFr from '../../CHANGELOG.md?raw';
+import {
+  parseChangelog,
+  parseUpcoming,
+  releasesSince,
+  UPCOMING_HEADING,
+  UPCOMING_HEADING_EN,
+  type Release,
+} from '../lib/changelog.ts';
+import { localized } from '../lib/i18n.ts';
 import { readPersistent, usePersistentState, writePersistent } from '../lib/persistent.ts';
 
+const notes = localized({
+  fr: { changelog: changelogFr, upcoming: UPCOMING_HEADING },
+  en: { changelog: changelogEn, upcoming: UPCOMING_HEADING_EN },
+});
+
 /** Every version's notes, most recent first (CHANGELOG.md, bundled at build time). */
-export const RELEASES: readonly Release[] = parseChangelog(changelog);
+export const RELEASES: readonly Release[] = parseChangelog(notes.changelog);
 
 /** Small changes live since the last release, with no number of their own (no banner for them). */
-export const UPCOMING: readonly string[] = parseUpcoming(changelog);
+export const UPCOMING: readonly string[] = parseUpcoming(notes.changelog, notes.upcoming);
 
 /** Last version whose news the user has seen (or that was installed first). */
 const SEEN_KEY = 'seenVersion';

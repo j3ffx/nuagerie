@@ -3,6 +3,12 @@ import { withinFolder } from '../../data/albums.ts';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { FAVORITES_ALBUM_ID, useFavoriteItems } from '../favorites/useFavorites.ts';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: { favorites: 'Favoris' },
+  en: { favorites: 'Favourites' },
+});
 
 /**
  * An album by id, with its photos and its sub-albums' (the Favoris album
@@ -16,7 +22,7 @@ export function useAlbumPhotos(
   const favorites = useFavoriteItems();
   return useMemo(() => {
     if (!albumId || !index) return null;
-    if (albumId === FAVORITES_ALBUM_ID) return { id: albumId, name: 'Favoris', items: favorites };
+    if (albumId === FAVORITES_ALBUM_ID) return { id: albumId, name: t.favorites, items: favorites };
     const folder = index.folders.get(albumId);
     return folder
       ? { id: folder.id, name: folder.name, items: withinFolder(index, folder.id) }

@@ -6,6 +6,22 @@ import { useOnline } from '../../lib/online.ts';
 import { useThumbnailUrl } from '../../ui/useThumbnailUrl.ts';
 import { fitSize, itemAspect, type Size } from './gestures.ts';
 import styles from './Viewer.module.css';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    demo: 'Lecture des vidéos indisponible en démo',
+    unavailable: 'Vidéo inaccessible pour le moment',
+    offline: 'Hors connexion : la vidéo se lira au retour du réseau',
+    failed: 'Lecture impossible',
+  },
+  en: {
+    demo: 'Videos do not play in the demo',
+    unavailable: 'Video unavailable for now',
+    offline: 'Offline: the video will play when the network is back',
+    failed: 'Cannot play',
+  },
+});
 
 /**
  * One picture of the viewer: the grid thumbnail at once (already cached),
@@ -85,13 +101,8 @@ function VideoPlayer({ item, active }: { item: MediaItem; active: boolean }) {
   >({ status: 'waiting' });
 
   const ready = (url: string | null, retried: boolean) =>
-    setState(
-      url
-        ? { status: 'ready', url, retried }
-        : { status: 'unavailable', message: 'Lecture des vidéos indisponible en démo' },
-    );
-  const failed = () =>
-    setState({ status: 'unavailable', message: 'Vidéo inaccessible pour le moment' });
+    setState(url ? { status: 'ready', url, retried } : { status: 'unavailable', message: t.demo });
+  const failed = () => setState({ status: 'unavailable', message: t.unavailable });
 
   // Offline, the video waits for the network, then starts again by itself.
   const online = useOnline();
@@ -123,9 +134,7 @@ function VideoPlayer({ item, active }: { item: MediaItem; active: boolean }) {
     return (
       <div className={styles.videoCover}>
         <p className={styles.notice} role="status">
-          {online && state.status === 'unavailable'
-            ? state.message
-            : 'Hors connexion : la vidéo se lira au retour du réseau'}
+          {online && state.status === 'unavailable' ? state.message : t.offline}
         </p>
       </div>
     );
@@ -147,7 +156,7 @@ function VideoPlayer({ item, active }: { item: MediaItem; active: boolean }) {
       autoPlay
       playsInline
       onError={() => {
-        if (state.retried) setState({ status: 'unavailable', message: 'Lecture impossible' });
+        if (state.retried) setState({ status: 'unavailable', message: t.failed });
         // The download URL may have expired: ask for it once more.
         else source.getOriginalUrl(item).then((url) => ready(url, true), failed);
       }}

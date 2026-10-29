@@ -1,4 +1,5 @@
 import type { Folder, MediaIndex, MediaItem } from './model.ts';
+import { locale } from '../lib/i18n.ts';
 
 /**
  * Album model (CLAUDE.md → Invariants → Albums).
@@ -56,7 +57,7 @@ export interface FolderNode {
 }
 
 const byName = (a: { name: string }, b: { name: string }) =>
-  a.name.localeCompare(b.name, 'fr', { sensitivity: 'base', numeric: true });
+  a.name.localeCompare(b.name, locale, { sensitivity: 'base', numeric: true });
 
 /** Non-technical child folders of each folder. */
 function childrenMap(index: MediaIndex): Map<string, Folder[]> {

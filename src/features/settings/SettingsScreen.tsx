@@ -4,6 +4,8 @@ import { isDemoForced, leaveDemoMode } from '../../data/mode.ts';
 import { folderName, useRootPaths } from '../../data/roots.ts';
 import { formatCount, formatDateTime } from '../../lib/format.ts';
 import { useOnline } from '../../lib/online.ts';
+import { localized, type LanguagePreference } from '../../lib/i18n.ts';
+import { useLanguagePreference } from '../../lib/languagePreference.ts';
 import { useThemePreference, type ThemePreference } from '../../lib/theme.ts';
 import common from '../../ui/common.module.css';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
@@ -17,14 +19,89 @@ import { PermissionsSection } from './PermissionsSection.tsx';
 import { SyncSection } from './SyncSection.tsx';
 import { ThumbnailCacheSection } from './ThumbnailCacheSection.tsx';
 
+const t = localized({
+  fr: {
+    auto: 'Automatique',
+    light: 'Clair',
+    dark: 'Sombre',
+    resetTitle: 'Tout réindexer ?',
+    resetMessage:
+      'Nuagerie relit tout le contenu de OneDrive, ce qui prend environ une minute. Les miniatures déjà gardées restent.',
+    resetConfirm: 'Réindexer',
+    title: 'Réglages',
+    appearance: 'Apparence',
+    theme: 'Thème',
+    language: 'Langue',
+    photos: 'Photos',
+    folders: 'Dossiers',
+    folder: 'Dossier',
+    chooseFolders: 'Choisir les dossiers',
+    chooseAlbums: 'Choisir les albums',
+    data: 'Données',
+    source: 'Source',
+    demo: 'Démo (photos factices)',
+    items: 'Éléments',
+    shownIn: 'Affiché en',
+    update: 'Mise à jour',
+    offline: 'hors connexion',
+    paused: 'en pause',
+    running: (progress: string) => `en cours${progress}`,
+    failed: 'échec',
+    updateNow: 'Mettre à jour maintenant',
+    reindex: 'Relancer l’indexation complète',
+    diagnostic: 'Diagnostic de l’index',
+    leaveDemo: 'Quitter la démo',
+  },
+  en: {
+    auto: 'Automatic',
+    light: 'Light',
+    dark: 'Dark',
+    resetTitle: 'Reindex everything?',
+    resetMessage:
+      'Nuagerie reads all of OneDrive again, which takes about a minute. The thumbnails already kept stay.',
+    resetConfirm: 'Reindex',
+    title: 'Settings',
+    appearance: 'Appearance',
+    theme: 'Theme',
+    language: 'Language',
+    photos: 'Photos',
+    folders: 'Folders',
+    folder: 'Folder',
+    chooseFolders: 'Choose the folders',
+    chooseAlbums: 'Choose the albums',
+    data: 'Data',
+    source: 'Source',
+    demo: 'Demo (made-up photos)',
+    items: 'Items',
+    shownIn: 'Shown in',
+    update: 'Update',
+    offline: 'offline',
+    paused: 'paused',
+    running: (progress: string) => `in progress${progress}`,
+    failed: 'failed',
+    updateNow: 'Update now',
+    reindex: 'Run the full indexing again',
+    diagnostic: 'Index diagnostic',
+    leaveDemo: 'Leave the demo',
+  },
+});
+
 const THEMES: { value: ThemePreference; label: string }[] = [
-  { value: 'auto', label: 'Automatique' },
-  { value: 'light', label: 'Clair' },
-  { value: 'dark', label: 'Sombre' },
+  { value: 'auto', label: t.auto },
+  { value: 'light', label: t.light },
+  { value: 'dark', label: t.dark },
+];
+
+/** Each language in its own words: whoever does not read this one finds theirs. */
+const LANGUAGES: { value: LanguagePreference; label: string; lang?: string }[] = [
+  { value: 'auto', label: t.auto },
+  { value: 'fr', label: 'Français', lang: 'fr' },
+  { value: 'en', label: 'English', lang: 'en' },
 ];
 
 export function SettingsScreen() {
   const [theme, setTheme] = useThemePreference();
+  const [language, setLanguage] = useLanguagePreference();
   const { mode, signedIn, state, sync, refresh, resetIndex } = useData();
   const online = useOnline();
   const roots = useRootPaths();
@@ -33,25 +110,24 @@ export function SettingsScreen() {
 
   const confirmReset = async () => {
     const answer = await confirm({
-      title: 'Tout réindexer ?',
-      message:
-        'Nuagerie relit tout le contenu de OneDrive, ce qui prend environ une minute. Les miniatures déjà gardées restent.',
-      confirmLabel: 'Réindexer',
+      title: t.resetTitle,
+      message: t.resetMessage,
+      confirmLabel: t.resetConfirm,
     });
     if (answer) void resetIndex();
   };
 
   return (
     <>
-      <ScreenHeader title="Réglages" />
+      <ScreenHeader title={t.title} />
       <div className={common.page}>
         <section className={common.section} aria-labelledby="settings-appearance">
           <h2 id="settings-appearance" className={common.sectionTitle}>
-            Apparence
+            {t.appearance}
           </h2>
-          <div className={common.card}>
+          <div className={`${common.card} ${common.stack}`}>
             <fieldset className={common.segmented}>
-              <legend className="visually-hidden">Thème</legend>
+              <legend className="visually-hidden">{t.theme}</legend>
               {THEMES.map(({ value, label }) => (
                 <label key={value}>
                   <input
@@ -65,6 +141,21 @@ export function SettingsScreen() {
                 </label>
               ))}
             </fieldset>
+            <fieldset className={common.segmented}>
+              <legend className="visually-hidden">{t.language}</legend>
+              {LANGUAGES.map(({ value, label, lang }) => (
+                <label key={value} lang={lang}>
+                  <input
+                    type="radio"
+                    name="language"
+                    value={value}
+                    checked={language === value}
+                    onChange={() => setLanguage(value)}
+                  />
+                  {label}
+                </label>
+              ))}
+            </fieldset>
           </div>
         </section>
 
@@ -73,18 +164,18 @@ export function SettingsScreen() {
 
         <section className={common.section} aria-labelledby="settings-photos">
           <h2 id="settings-photos" className={common.sectionTitle}>
-            Photos
+            {t.photos}
           </h2>
           <div className={`${common.card} ${common.stack}`}>
             <dl className={common.definitionList}>
-              <dt>{roots.length > 1 ? 'Dossiers' : 'Dossier'}</dt>
+              <dt>{roots.length > 1 ? t.folders : t.folder}</dt>
               <dd>{roots.map(folderName).join(', ')}</dd>
             </dl>
             <Link href="/reglages/dossiers" className={common.buttonSoft}>
-              Choisir les dossiers
+              {t.chooseFolders}
             </Link>
             <Link href="/albums/choisir?retour=reglages" className={common.buttonSoft}>
-              Choisir les albums
+              {t.chooseAlbums}
             </Link>
           </div>
         </section>
@@ -95,39 +186,41 @@ export function SettingsScreen() {
 
         <section className={common.section} aria-labelledby="settings-data">
           <h2 id="settings-data" className={common.sectionTitle}>
-            Données
+            {t.data}
           </h2>
           <div className={`${common.card} ${common.stack}`}>
             <dl className={common.definitionList}>
-              <dt>Source</dt>
-              <dd>{mode === 'demo' ? 'Démo (photos factices)' : 'OneDrive'}</dd>
+              <dt>{t.source}</dt>
+              <dd>{mode === 'demo' ? t.demo : 'OneDrive'}</dd>
               {index && (
                 <>
-                  <dt>Éléments</dt>
+                  <dt>{t.items}</dt>
                   <dd>{formatCount(index.items.length)}</dd>
-                  <dt>Dossiers</dt>
+                  <dt>{t.folders}</dt>
                   <dd>{formatCount(index.folders.size)}</dd>
                 </>
               )}
               {state.status === 'ready' && (
                 <>
-                  <dt>Affiché en</dt>
+                  <dt>{t.shownIn}</dt>
                   <dd>{formatCount(Math.round(state.loadedInMs))} ms</dd>
                 </>
               )}
               {mode === 'onedrive' && (
                 <>
-                  <dt>Mise à jour</dt>
+                  <dt>{t.update}</dt>
                   <dd>
                     <span role="status">
                       {!online
-                        ? 'hors connexion'
+                        ? t.offline
                         : !signedIn
-                          ? 'en pause'
+                          ? t.paused
                           : sync.status === 'running'
-                            ? `en cours${sync.progress ? ` (${formatCount(sync.progress.loaded)})` : '…'}`
+                            ? t.running(
+                                sync.progress ? ` (${formatCount(sync.progress.loaded)})` : '…',
+                              )
                             : sync.status === 'error'
-                              ? 'échec'
+                              ? t.failed
                               : sync.lastSyncAt
                                 ? formatDateTime(sync.lastSyncAt)
                                 : '—'}
@@ -150,7 +243,7 @@ export function SettingsScreen() {
                   }}
                   disabled={!online || sync.status === 'running' || state.status !== 'ready'}
                 >
-                  Mettre à jour maintenant
+                  {t.updateNow}
                 </button>
                 <button
                   type="button"
@@ -158,16 +251,16 @@ export function SettingsScreen() {
                   onClick={() => void confirmReset()}
                   disabled={!online}
                 >
-                  Relancer l’indexation complète
+                  {t.reindex}
                 </button>
                 <Link href="/diagnostic" className={common.buttonSoft}>
-                  Diagnostic de l’index
+                  {t.diagnostic}
                 </Link>
               </>
             )}
             {mode === 'demo' && !isDemoForced() && (
               <button type="button" className={common.buttonSoft} onClick={leaveDemoMode}>
-                Quitter la démo
+                {t.leaveDemo}
               </button>
             )}
           </div>

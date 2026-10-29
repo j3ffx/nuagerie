@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import changelogEn from '../../CHANGELOG.en.md?raw';
 import changelog from '../../CHANGELOG.md?raw';
 import packageJson from '../../package.json?raw';
-import { compareVersions, parseChangelog, parseUpcoming, releasesSince } from './changelog.ts';
+import {
+  compareVersions,
+  parseChangelog,
+  parseUpcoming,
+  releasesSince,
+  UPCOMING_HEADING,
+  UPCOMING_HEADING_EN,
+} from './changelog.ts';
 
 const SAMPLE = `# Nouveautés
 
@@ -94,5 +102,28 @@ describe('CHANGELOG.md', () => {
     // Most recent first.
     const versions = releases.map((r) => r.version);
     expect([...versions].sort((a, b) => compareVersions(b, a))).toEqual(versions);
+  });
+});
+
+describe('CHANGELOG.en.md', () => {
+  it('says what CHANGELOG.md says: same versions, dates, sections and number of items', () => {
+    const shape = (markdown: string) =>
+      parseChangelog(markdown).map(({ version, date, intro, sections }) => ({
+        version,
+        date,
+        intro: intro !== '',
+        sections: sections.map((section) => section.items.length),
+      }));
+    expect(shape(changelogEn)).toEqual(shape(changelog));
+    expect(parseUpcoming(changelogEn, UPCOMING_HEADING_EN).length).toBe(
+      parseUpcoming(changelog, UPCOMING_HEADING).length,
+    );
+  });
+
+  it('names its sections in English', () => {
+    const titles = new Set(
+      parseChangelog(changelogEn).flatMap((release) => release.sections.map((s) => s.title)),
+    );
+    expect([...titles].sort()).toEqual(['Fixes', 'New']);
   });
 });

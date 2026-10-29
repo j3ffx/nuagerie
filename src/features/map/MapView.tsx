@@ -16,6 +16,23 @@ import {
   type Bounds,
 } from './clusters.ts';
 import styles from './MapScreen.module.css';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    marker: (count: string, expands: boolean) =>
+      `${count} éléments, ${expands ? 'agrandir' : 'ouvrir'}`,
+    zoomIn: 'Zoomer',
+    zoomOut: 'Dézoomer',
+    credit: 'contributeurs OpenStreetMap',
+  },
+  en: {
+    marker: (count: string, expands: boolean) => `${count} items, ${expands ? 'zoom in' : 'open'}`,
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
+    credit: 'OpenStreetMap contributors',
+  },
+});
 
 export interface MapViewState {
   latitude: number;
@@ -109,7 +126,7 @@ export default function MapView({
           focus !== null && photosOf(clusters, marker.id).some((p) => p.id === focus.id);
         L.marker(position, {
           icon: icon(marker.cover, marker.count, focused),
-          title: `${formatCount(marker.count)} éléments, ${expands ? 'agrandir' : 'ouvrir'}`,
+          title: t.marker(formatCount(marker.count), expands),
           keyboard: true,
         })
           .on('click', () => {
@@ -165,7 +182,7 @@ export default function MapView({
     if (!reduced) addPinchMomentum(map);
     map.attributionControl.setPrefix(false);
     L.control
-      .zoom({ position: 'topright', zoomInTitle: 'Zoomer', zoomOutTitle: 'Dézoomer' })
+      .zoom({ position: 'topright', zoomInTitle: t.zoomIn, zoomOutTitle: t.zoomOut })
       .addTo(map);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxNativeZoom: 19,
@@ -180,8 +197,7 @@ export default function MapView({
       keepBuffer: 4,
       // OpenStreetMap asks for a Referer, which the site's policy withholds otherwise.
       referrerPolicy: 'strict-origin-when-cross-origin',
-      attribution:
-        '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">contributeurs OpenStreetMap</a>',
+      attribution: `© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">${t.credit}</a>`,
     }).addTo(map);
     markersRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;

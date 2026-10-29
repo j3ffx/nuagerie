@@ -12,6 +12,24 @@ import styles from './AlbumsScreen.module.css';
 import { useFavoritesAlbum } from '../favorites/useFavorites.ts';
 import { MemoriesSection } from '../memories/MemoriesSection.tsx';
 import { useAlbumModel, useAlbumSort } from './useAlbums.ts';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    title: 'Albums',
+    choose: 'Choisir les albums',
+    chooseShort: 'Choisir',
+    sortBy: 'Trier les albums par',
+    none: 'Aucun album n’est affiché pour l’instant.',
+  },
+  en: {
+    title: 'Albums',
+    choose: 'Choose the albums',
+    chooseShort: 'Choose',
+    sortBy: 'Sort the albums by',
+    none: 'No album is shown yet.',
+  },
+});
 
 export function AlbumsScreen() {
   const model = useAlbumModel();
@@ -23,11 +41,11 @@ export function AlbumsScreen() {
   return (
     <>
       <ScreenHeader
-        title="Albums"
+        title={t.title}
         leading={<Logo size={32} />}
         actions={
-          <Link href="/albums/choisir" className={common.chip} aria-label="Choisir les albums">
-            Choisir
+          <Link href="/albums/choisir" className={common.chip} aria-label={t.choose}>
+            {t.chooseShort}
           </Link>
         }
       />
@@ -36,17 +54,17 @@ export function AlbumsScreen() {
         {model && (
           <>
             <MemoriesSection />
-            <AlbumSortControls sort={sort} onChange={setSort} label="Trier les albums par" />
+            <AlbumSortControls sort={sort} onChange={setSort} label={t.sortBy} />
 
             {albums.length === 0 && !favorites ? (
               <div className={`${common.card} ${styles.empty}`}>
-                <p>Aucun album n’est affiché pour l’instant.</p>
+                <p>{t.none}</p>
                 <Link href="/albums/choisir" className={common.button}>
-                  Choisir les albums
+                  {t.choose}
                 </Link>
               </div>
             ) : (
-              <ul className={tiles.grid} aria-label="Albums">
+              <ul className={tiles.grid} aria-label={t.title}>
                 {favorites && (
                   <li>
                     <AlbumTile album={favorites} href="/favoris" menu="favorites" />

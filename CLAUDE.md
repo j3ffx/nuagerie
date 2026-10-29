@@ -35,7 +35,8 @@ Body explaining *why* (the diff already shows what).
 - **Types:** `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`, `style`, `revert`.
 - **Scope** is optional; `scripts/check-commits.mjs` holds the authoritative list of types and scopes.
 - Header of 72 characters or fewer. One logical change and one type per commit.
-- Code, comments and commit messages are in English; the UI and the user docs are in French.
+- Code, comments and commit messages are in English. The UI is in French and English (see
+  Languages); the user docs are in French, the changelog in both.
 
 ## Privacy of the public repository
 
@@ -98,6 +99,13 @@ commit metadata.
   non-technical parent (`src/data/technical.ts`). An album shows only its own files, not its sub-albums'.
   A root of the perimeter (`/Pictures`, or a folder added in the settings) is an album only when it has
   files of its own; its subfolders stay first-level albums.
+- **Languages** (`src/lib/i18n.ts`): French and English, the device's by default or chosen in
+  Réglages → Apparence (per device). The language is settled as the app starts (a change reloads
+  it); each file keeps its texts next to its code in `localized({ fr, en })`, and the English ones
+  must have the French ones' shape, so a missing text does not compile. Unit tests run in French
+  (`src/test/setup.ts`), `e2e/english.spec.ts` in English. The search reads dates typed in either
+  language. The memories notification follows the app's language (kept in IndexedDB for the
+  service worker).
 - **Grids show Graph thumbnails only**, never the original file. They are kept on the device
   (`src/data/thumbnails/`: Cache Storage, keyed by id + size + eTag, size-capped), and grids are
   virtualized (`src/ui/grid/`): only the rows near the screen exist in the DOM. The viewer shows the
@@ -139,15 +147,17 @@ Semantic versioning: `0.x.0` for a milestone of features, `0.x.y` for a batch of
 fix that matters between milestones, `1.0.0` once the app is considered complete. Small fixes and
 touches get no version of their own: they go live as a new build of the current version (the app then
 shows "0.x.y (commit)") and are listed under `## Depuis la dernière version` at the top of
-`CHANGELOG.md`, which the app's news screen shows first. A published version's entry never changes. `CHANGELOG.md` (in French, for users) says what each version brings: the app
-shows it after an update ("Nouveautés"), and a unit test requires an entry for the version in
-`package.json`.
+`CHANGELOG.md` (`## Since the last version` in `CHANGELOG.en.md`), which the app's news screen shows
+first. A published version's entry never changes. `CHANGELOG.md` (in French, for users) says what
+each version brings, and `CHANGELOG.en.md` the same in English: the app shows the one of its language
+after an update ("Nouveautés"). Unit tests require an entry for the version in `package.json`, and the
+same versions, sections and number of items in both files.
 
 1. Write the version's entry at the top of `CHANGELOG.md` (`## x.y.z — YYYY-MM-DD`, then
    `### Nouveautés` / `### Corrections` lists), taking in the items of `## Depuis la dernière version`
-   and removing that section.
+   and removing that section; then the same in `CHANGELOG.en.md` (`### New` / `### Fixes`).
 2. `npm version x.y.z --no-git-tag-version`, then commit `package.json`, `package-lock.json` and
-   `CHANGELOG.md` as `chore(release): x.y.z`.
+   both changelogs as `chore(release): x.y.z`.
 3. `git tag vx.y.z`: a lightweight tag, as an annotated one would record the time (see Privacy).
 4. `git push && git push origin vx.y.z`: `.github/workflows/release.yml` checks the tag against
    `package.json` and publishes the GitHub release with that version's notes.

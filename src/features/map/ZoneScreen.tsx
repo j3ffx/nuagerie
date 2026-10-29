@@ -13,6 +13,12 @@ import allStyles from '../all/AllScreen.module.css';
 import { useAllFilter } from '../all/useAllFilter.ts';
 import { PhotoBrowser } from '../viewer/PhotoBrowser.tsx';
 import { itemsInBounds, parseBounds } from './clusters.ts';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: { title: 'Photos de la zone', back: 'Retour à la carte' },
+  en: { title: 'Photos of the area', back: 'Back to the map' },
+});
 
 /** Every photo of a map zone (`?b=west,south,east,north`), in a grid by month. */
 export function ZoneScreen() {
@@ -32,12 +38,12 @@ export function ZoneScreen() {
   return (
     <>
       <ScreenHeader
-        title="Photos de la zone"
+        title={t.title}
         leading={
           <Link
             href={albumId ? `/carte?album=${encodeURIComponent(albumId)}` : '/carte'}
             className={albumStyles.back}
-            aria-label="Retour à la carte"
+            aria-label={t.back}
           >
             <BackIcon />
           </Link>
@@ -47,11 +53,7 @@ export function ZoneScreen() {
       {index && (
         <>
           <p className={`${common.muted} ${allStyles.summary}`}>{formatItemCount(items.length)}</p>
-          <PhotoBrowser
-            key={`${zone ?? ''} ${albumId ?? ''}`}
-            items={items}
-            label="Photos de la zone"
-          />
+          <PhotoBrowser key={`${zone ?? ''} ${albumId ?? ''}`} items={items} label={t.title} />
         </>
       )}
     </>

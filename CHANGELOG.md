@@ -4,6 +4,14 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## Depuis la dernière version
+
+### Nouveautés
+
+- Nuagerie parle anglais : elle suit la langue du téléphone, ou se choisit dans Réglages →
+  Apparence. La recherche comprend les dates dans les deux langues (« juillet 2024 », « July
+  2024 »), et la notification des souvenirs suit la langue choisie.
+
 ## 0.6.0 — 2026-10-29
 
 Tes albums, même sans réseau.

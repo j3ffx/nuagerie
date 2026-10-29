@@ -8,9 +8,33 @@ import { FilterIcon, SortDownIcon, SortUpIcon } from '../../ui/icons.tsx';
 import { IndexStatus } from '../../ui/IndexStatus.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import albumStyles from '../albums/AlbumScreen.module.css';
+import { orderToggleLabel } from '../albums/albumSortLabels.ts';
 import { PhotoBrowser } from '../viewer/PhotoBrowser.tsx';
 import styles from './AllScreen.module.css';
 import { useAllFilter, useAllOrder } from './useAllFilter.ts';
+import { localized, plural } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    title: 'Tout',
+    filterHidden: (count: string, n: number) =>
+      `Filtrer par albums (${count} ${plural(n, 'masqué', 'masqués')})`,
+    filterBy: 'Filtrer par albums',
+    filter: 'Filtrer',
+    hiddenFolders: (count: string, n: number) =>
+      ` · ${count} ${plural(n, 'dossier masqué', 'dossiers masqués')}`,
+    photos: 'Photos et vidéos',
+  },
+  en: {
+    title: 'All',
+    filterHidden: (count: string) => `Filter by album (${count} hidden)`,
+    filterBy: 'Filter by album',
+    filter: 'Filter',
+    hiddenFolders: (count: string, n: number) =>
+      ` · ${count} ${plural(n, 'hidden folder', 'hidden folders')}`,
+    photos: 'Photos and videos',
+  },
+});
 
 /**
  * Every photo and video of the perimeter, "Sans date" last, in either date
@@ -30,14 +54,14 @@ export function AllScreen() {
   return (
     <>
       <ScreenHeader
-        title="Tout"
+        title={t.title}
         actions={
           <>
             <button
               type="button"
               className={albumStyles.order}
               onClick={() => setOrder(order === 'desc' ? 'asc' : 'desc')}
-              aria-label={`Ordre : ${order === 'desc' ? 'récent d’abord' : 'ancien d’abord'}. Inverser`}
+              aria-label={orderToggleLabel(order)}
             >
               {order === 'desc' ? <SortDownIcon /> : <SortUpIcon />}
             </button>
@@ -45,13 +69,11 @@ export function AllScreen() {
               href="/tout/filtre"
               className={`${common.chip} ${styles.filter}`}
               aria-label={
-                hiddenCount > 0
-                  ? `Filtrer par albums (${formatCount(hiddenCount)} masqué${hiddenCount > 1 ? 's' : ''})`
-                  : 'Filtrer par albums'
+                hiddenCount > 0 ? t.filterHidden(formatCount(hiddenCount), hiddenCount) : t.filterBy
               }
             >
               <FilterIcon width={18} height={18} />
-              {hiddenCount > 0 ? formatCount(hiddenCount) : 'Filtrer'}
+              {hiddenCount > 0 ? formatCount(hiddenCount) : t.filter}
             </Link>
           </>
         }
@@ -61,10 +83,9 @@ export function AllScreen() {
         <>
           <p className={`${common.muted} ${styles.summary}`}>
             {formatItemCount(items.length)}
-            {hiddenCount > 0 &&
-              ` · ${formatCount(hiddenCount)} dossier${hiddenCount > 1 ? 's' : ''} masqué${hiddenCount > 1 ? 's' : ''}`}
+            {hiddenCount > 0 && t.hiddenFolders(formatCount(hiddenCount), hiddenCount)}
           </p>
-          <PhotoBrowser items={items} label="Photos et vidéos" />
+          <PhotoBrowser items={items} label={t.photos} />
         </>
       )}
     </>

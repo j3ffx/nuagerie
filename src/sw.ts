@@ -16,6 +16,7 @@ import {
   MEMORIES_URL,
   notifyMemories,
   openMemoryState,
+  readLanguage,
   readToldOn,
   writeToldOn,
   type NavigateMessage,
@@ -86,6 +87,7 @@ async function tellMemories(): Promise<void> {
     await notifyMemories({
       loadIndex: loadStoredIndex,
       now: () => currentDateContext().nowWallClock,
+      language: (await readLanguage(state)) ?? undefined,
       readNotifiedOn: () => readToldOn(state),
       writeNotifiedOn: (day) => writeToldOn(state, day),
       show: async (title, body, cover) =>

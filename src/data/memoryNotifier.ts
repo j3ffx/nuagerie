@@ -1,4 +1,5 @@
 import { openDB, type IDBPDatabase } from 'idb';
+import type { Language } from '../lib/i18n.ts';
 import { currentDateContext, resolveCaptureDate } from './dates.ts';
 import { dayKey, memoryNotification, NOTIFY_FROM_HOUR } from './memories.ts';
 import type { MediaIndex, MediaItem } from './model.ts';
@@ -56,6 +57,24 @@ export async function writeToldOn(state: IDBPDatabase, day: string): Promise<voi
   await state.put('state', day, TOLD_KEY);
 }
 
+const LANGUAGE_KEY = 'language';
+
+/** The app's language, for the service worker's notification (it reads no localStorage). */
+export async function readLanguage(state: IDBPDatabase): Promise<Language | null> {
+  const value: unknown = await state.get('state', LANGUAGE_KEY);
+  return value === 'fr' || value === 'en' ? value : null;
+}
+
+/** Remembers the app's language for the notification; any failure is harmless. */
+export async function rememberLanguage(language: Language): Promise<void> {
+  const state = await openMemoryState();
+  try {
+    if ((await readLanguage(state)) !== language) await state.put('state', language, LANGUAGE_KEY);
+  } finally {
+    state.close();
+  }
+}
+
 /**
  * Today's memories were seen in the app, or closed: no notification about
  * them today, and the one already shown goes.
@@ -80,6 +99,8 @@ export interface NotifierDeps {
   now(): number;
   readNotifiedOn(): Promise<string | null>;
   writeNotifiedOn(day: string): Promise<void>;
+  /** The app's language; the device's when the app never told it. */
+  language?: Language;
   /** `cover`: a photo of the memories, for beside the text. */
   show(title: string, body: string, cover: MediaItem | null): Promise<void>;
 }
@@ -94,7 +115,7 @@ export async function notifyMemories(deps: NotifierDeps): Promise<boolean> {
   if (notifiedOn === dayKey(now)) return false;
   const index = await deps.loadIndex();
   if (!index) return false;
-  const notification = memoryNotification(index.items, now, notifiedOn);
+  const notification = memoryNotification(index.items, now, notifiedOn, deps.language);
   if (!notification) return false;
   await deps.show(notification.title, notification.body, notification.cover);
   await deps.writeNotifiedOn(notification.day);

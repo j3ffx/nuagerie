@@ -9,6 +9,62 @@ import { CloseIcon, DownloadIcon, HeartIcon, ShareIcon } from '../../ui/icons.ts
 import { canShareFiles, shareableFile } from '../viewer/share.ts';
 import { beyondShareLimit, SHARE_LIMIT, selectedLabel } from './selection.ts';
 import styles from './SelectionBar.module.css';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    shareOffline: 'Partager (hors connexion)',
+    shareReady: 'Partager (prêt, toucher à nouveau)',
+    share: 'Partager',
+    shareFailed: 'Partage impossible pour l’instant, réessaie.',
+    unfavorite: 'Retirer des favoris',
+    favorite: 'Ajouter aux favoris',
+    downloadOffline: 'Télécharger (hors connexion)',
+    download: 'Télécharger',
+    syncTitle: 'Activer la synchronisation ?',
+    syncConfirm: 'Activer',
+    shareMany: (count: string) => `Partager ${count} éléments ?`,
+    shareManyMessage: (bytes: string, items: number, limit: string) =>
+      `Il faut d’abord télécharger ${bytes} : ça peut être très long, ou échouer. Au-delà de ${items} éléments ou ${limit}, mieux vaut partager en plusieurs fois.`,
+    shareAnyway: 'Partager quand même',
+    cannotShare: 'Ces fichiers ne peuvent pas être partagés.',
+    syncMessage:
+      'Les favoris se rangent dans ton OneDrive, avec tes préférences, dans un dossier à part (Applis/Nuagerie). Nuagerie va demander à Microsoft le droit d’écrire dans ce seul dossier : tes photos restent en lecture seule.',
+    downloadMany: (count: string) => `Télécharger ${count} fichiers ?`,
+    downloadManyMessage: (bytes: string) =>
+      `Soit ${bytes}. Le navigateur peut te demander d’autoriser plusieurs téléchargements.`,
+    preparing: 'Préparation du partage',
+    downloading: 'Téléchargement',
+    selection: 'Sélection',
+    cancel: 'Annuler la sélection',
+  },
+  en: {
+    shareOffline: 'Share (offline)',
+    shareReady: 'Share (ready, tap again)',
+    share: 'Share',
+    shareFailed: 'Sharing is not possible right now, try again.',
+    unfavorite: 'Remove from favourites',
+    favorite: 'Add to favourites',
+    downloadOffline: 'Download (offline)',
+    download: 'Download',
+    syncTitle: 'Turn on the sync?',
+    syncConfirm: 'Turn on',
+    shareMany: (count: string) => `Share ${count} items?`,
+    shareManyMessage: (bytes: string, items: number, limit: string) =>
+      `${bytes} must be downloaded first: it may take very long, or fail. Beyond ${items} items or ${limit}, better share in several goes.`,
+    shareAnyway: 'Share anyway',
+    cannotShare: 'These files cannot be shared.',
+    syncMessage:
+      'Favourites are kept in your OneDrive, with your preferences, in a folder of their own (Apps/Nuagerie). Nuagerie will ask Microsoft for the right to write in that one folder: your photos stay read-only.',
+    downloadMany: (count: string) => `Download ${count} files?`,
+    downloadManyMessage: (bytes: string) =>
+      `That is ${bytes}. The browser may ask you to allow several downloads.`,
+    preparing: 'Preparing to share',
+    downloading: 'Downloading',
+    selection: 'Selection',
+    cancel: 'Cancel the selection',
+  },
+});
 
 type ShareState = { for: string } & (
   | { status: 'idle' }
@@ -81,7 +137,7 @@ export function SelectionBar({
         setShare({
           for: picked,
           status: 'failed',
-          message: 'Partage impossible pour l’instant, réessaie.',
+          message: t.shareFailed,
         });
     }
   };
@@ -95,9 +151,13 @@ export function SelectionBar({
     if (
       beyondShareLimit(items) &&
       !(await confirm({
-        title: `Partager ${formatCount(items.length)} éléments ?`,
-        message: `Il faut d’abord télécharger ${formatBytes(bytes)} : ça peut être très long, ou échouer. Au-delà de ${SHARE_LIMIT.items} éléments ou ${formatBytes(SHARE_LIMIT.bytes)}, mieux vaut partager en plusieurs fois.`,
-        confirmLabel: 'Partager quand même',
+        title: t.shareMany(formatCount(items.length)),
+        message: t.shareManyMessage(
+          formatBytes(bytes),
+          SHARE_LIMIT.items,
+          formatBytes(SHARE_LIMIT.bytes),
+        ),
+        confirmLabel: t.shareAnyway,
       }))
     ) {
       return;
@@ -120,7 +180,7 @@ export function SelectionBar({
       setShare({
         for: picked,
         status: 'failed',
-        message: 'Ces fichiers ne peuvent pas être partagés.',
+        message: t.cannotShare,
       });
       return;
     }
@@ -131,10 +191,9 @@ export function SelectionBar({
   const onFavorite = async () => {
     if (!sync.favoritesOn) {
       const answer = await confirm({
-        title: 'Activer la synchronisation ?',
-        message:
-          'Les favoris se rangent dans ton OneDrive, avec tes préférences, dans un dossier à part (Applis/Nuagerie). Nuagerie va demander à Microsoft le droit d’écrire dans ce seul dossier : tes photos restent en lecture seule.',
-        confirmLabel: 'Activer',
+        title: t.syncTitle,
+        message: t.syncMessage,
+        confirmLabel: t.syncConfirm,
       });
       // These photos become favourites once it is on, even after Microsoft's page.
       if (answer) await sync.enable(items.map((item) => item.id));
@@ -151,9 +210,9 @@ export function SelectionBar({
     if (
       items.length > SHARE_LIMIT.items &&
       !(await confirm({
-        title: `Télécharger ${formatCount(items.length)} fichiers ?`,
-        message: `Soit ${formatBytes(bytes)}. Le navigateur peut te demander d’autoriser plusieurs téléchargements.`,
-        confirmLabel: 'Télécharger',
+        title: t.downloadMany(formatCount(items.length)),
+        message: t.downloadManyMessage(formatBytes(bytes)),
+        confirmLabel: t.download,
       }))
     ) {
       return;
@@ -184,29 +243,20 @@ export function SelectionBar({
     }
   };
 
-  const shareLabel = offline
-    ? 'Partager (hors connexion)'
-    : share.status === 'ready'
-      ? 'Partager (prêt, toucher à nouveau)'
-      : 'Partager';
-  const favoriteLabel = allFavorites ? 'Retirer des favoris' : 'Ajouter aux favoris';
-  const downloadLabel = offline ? 'Télécharger (hors connexion)' : 'Télécharger';
+  const shareLabel = offline ? t.shareOffline : share.status === 'ready' ? t.shareReady : t.share;
+  const favoriteLabel = allFavorites ? t.unfavorite : t.favorite;
+  const downloadLabel = offline ? t.downloadOffline : t.download;
   // Short enough for 360 px beside four buttons; the full words for screen readers.
   const progress =
     share.status === 'preparing'
-      ? { label: 'Préparation du partage', done: share.done, total: share.total }
+      ? { label: t.preparing, done: share.done, total: share.total }
       : downloading
-        ? { label: 'Téléchargement', done: downloading.done, total: downloading.total }
+        ? { label: t.downloading, done: downloading.done, total: downloading.total }
         : null;
 
   return (
-    <div className={styles.bar} role="toolbar" aria-label="Sélection">
-      <button
-        type="button"
-        className={styles.icon}
-        onClick={close}
-        aria-label="Annuler la sélection"
-      >
+    <div className={styles.bar} role="toolbar" aria-label={t.selection}>
+      <button type="button" className={styles.icon} onClick={close} aria-label={t.cancel}>
         <CloseIcon />
       </button>
       <p className={styles.count} role="status">

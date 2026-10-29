@@ -1,5 +1,11 @@
 import { formatMonthYear } from '../lib/format.ts';
 import type { MediaItem } from './model.ts';
+import { localized } from '../lib/i18n.ts';
+
+const t = localized({
+  fr: { undated: 'Sans date' },
+  en: { undated: 'Undated' },
+});
 
 export interface MonthSection {
   /** "2026-10", or "undated". */
@@ -26,7 +32,7 @@ export function groupByMonth(items: readonly MediaItem[]): MonthSection[] {
     } else {
       sections.push({
         key,
-        title: item.takenAt === null ? 'Sans date' : formatMonthYear(item.takenAt),
+        title: item.takenAt === null ? t.undated : formatMonthYear(item.takenAt),
         items: [item],
       });
     }

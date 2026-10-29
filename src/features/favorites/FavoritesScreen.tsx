@@ -4,6 +4,7 @@ import { orderItems } from '../../data/albums.ts';
 import type { MediaItem } from '../../data/model.ts';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import { formatItemCount } from '../../lib/format.ts';
+import { orderToggleLabel } from '../albums/albumSortLabels.ts';
 import common from '../../ui/common.module.css';
 import { BackIcon, SortDownIcon, SortUpIcon } from '../../ui/icons.tsx';
 import { IndexStatus } from '../../ui/IndexStatus.tsx';
@@ -13,6 +14,24 @@ import { usePhotoOrder } from '../albums/useAlbums.ts';
 import { PhotoBrowser } from '../viewer/PhotoBrowser.tsx';
 import { useViewer } from '../viewer/useViewer.ts';
 import { useFavoriteItems } from './useFavorites.ts';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    title: 'Favoris',
+    back: 'Retour aux albums',
+    none: 'Aucun favori pour l’instant.',
+    how: 'Dans une photo, touche le cœur pour l’ajouter ici.',
+    photos: 'Photos et vidéos favorites',
+  },
+  en: {
+    title: 'Favourites',
+    back: 'Back to the albums',
+    none: 'No favourite yet.',
+    how: 'In a photo, tap the heart to add it here.',
+    photos: 'Favourite photos and videos',
+  },
+});
 
 /** The favourite photos and videos, wherever they are on the drive, in one grid. */
 export function FavoritesScreen() {
@@ -36,9 +55,9 @@ export function FavoritesScreen() {
   return (
     <>
       <ScreenHeader
-        title="Favoris"
+        title={t.title}
         leading={
-          <Link href="/" className={styles.back} aria-label="Retour aux albums">
+          <Link href="/" className={styles.back} aria-label={t.back}>
             <BackIcon />
           </Link>
         }
@@ -48,7 +67,7 @@ export function FavoritesScreen() {
               type="button"
               className={styles.order}
               onClick={() => setOrder(order === 'desc' ? 'asc' : 'desc')}
-              aria-label={`Ordre : ${order === 'desc' ? 'récent d’abord' : 'ancien d’abord'}. Inverser`}
+              aria-label={orderToggleLabel(order)}
             >
               {order === 'desc' ? <SortDownIcon /> : <SortUpIcon />}
             </button>
@@ -60,14 +79,14 @@ export function FavoritesScreen() {
         (items.length === 0 ? (
           <div className={common.page}>
             <div className={`${common.card} ${common.stack}`}>
-              <p>Aucun favori pour l’instant.</p>
-              <p className={common.muted}>Dans une photo, touche le cœur pour l’ajouter ici.</p>
+              <p>{t.none}</p>
+              <p className={common.muted}>{t.how}</p>
             </div>
           </div>
         ) : (
           <>
             <p className={`${common.muted} ${styles.summary}`}>{formatItemCount(items.length)}</p>
-            <PhotoBrowser items={items} label="Photos et vidéos favorites" />
+            <PhotoBrowser items={items} label={t.photos} />
           </>
         ))}
     </>

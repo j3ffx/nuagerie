@@ -20,6 +20,12 @@ import {
   type ScrubberMark,
 } from './scrubber.ts';
 import styles from './DateScrubber.module.css';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: { label: 'Frise des dates' },
+  en: { label: 'Timeline' },
+});
 
 const HIDE_AFTER_MS = 1500;
 const THUMB_SIZE = 52;
@@ -182,7 +188,7 @@ export const DateScrubber = memo(function DateScrubber({
         className={styles.thumb}
         role="slider"
         tabIndex={0}
-        aria-label="Frise des dates"
+        aria-label={t.label}
         aria-orientation="vertical"
         aria-valuemin={0}
         aria-valuemax={100}

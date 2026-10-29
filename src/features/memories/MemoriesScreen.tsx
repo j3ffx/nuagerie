@@ -10,8 +10,24 @@ import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import albumStyles from '../albums/AlbumScreen.module.css';
 import { PhotoBrowser } from '../viewer/PhotoBrowser.tsx';
 import { useMemories, useMemoriesSeen } from './useMemories.ts';
+import { locale, localized } from '../../lib/i18n.ts';
 
-const dayMonth = new Intl.DateTimeFormat('fr-FR', {
+const t = localized({
+  fr: {
+    title: 'Souvenirs',
+    back: 'Retour aux albums',
+    none: 'Pas de souvenir aujourd’hui.',
+    what: (day: string) => `Ici reviennent les photos prises un ${day}, les années passées.`,
+  },
+  en: {
+    title: 'Memories',
+    back: 'Back to the albums',
+    none: 'No memories today.',
+    what: (day: string) => `Photos taken on ${day} in earlier years come back here.`,
+  },
+});
+
+const dayMonth = new Intl.DateTimeFormat(locale, {
   day: 'numeric',
   month: 'long',
   timeZone: 'UTC',
@@ -37,14 +53,14 @@ export function MemoriesScreen() {
   const title =
     year !== null && shown.length === 1 && shown[0]?.year === year
       ? yearsAgoLabel(shown[0].yearsAgo)
-      : 'Souvenirs';
+      : t.title;
 
   return (
     <>
       <ScreenHeader
         title={title}
         leading={
-          <Link href="/" className={albumStyles.back} aria-label="Retour aux albums">
+          <Link href="/" className={albumStyles.back} aria-label={t.back}>
             <BackIcon />
           </Link>
         }
@@ -54,10 +70,8 @@ export function MemoriesScreen() {
         (items.length === 0 ? (
           <div className={common.page}>
             <div className={`${common.card} ${common.stack}`}>
-              <p>Pas de souvenir aujourd’hui.</p>
-              <p className={common.muted}>
-                Ici reviennent les photos prises un {dayMonth.format(today)}, les années passées.
-              </p>
+              <p>{t.none}</p>
+              <p className={common.muted}>{t.what(dayMonth.format(today))}</p>
             </div>
           </div>
         ) : (
@@ -65,7 +79,7 @@ export function MemoriesScreen() {
             <p className={`${common.muted} ${albumStyles.summary}`}>
               {dayMonth.format(today)} · {formatItemCount(items.length)}
             </p>
-            <PhotoBrowser items={items} label="Souvenirs" />
+            <PhotoBrowser items={items} label={t.title} />
           </>
         ))}
     </>

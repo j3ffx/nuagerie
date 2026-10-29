@@ -11,14 +11,58 @@ import { useConfirm } from '../../ui/confirmContext.ts';
 import albumStyles from './AlbumScreen.module.css';
 import styles from './ChooseAlbumsScreen.module.css';
 import { useAlbumSelection } from './useAlbums.ts';
+import { localized, plural } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    folders: (count: string, n: number) => `${count} ${plural(n, 'dossier', 'dossiers')}`,
+    items: (count: string, n: number) => `${count} ${plural(n, 'élément', 'éléments')}`,
+    title: 'Choisir les albums',
+    backToSettings: 'Retour aux réglages',
+    backToAlbums: 'Retour aux albums',
+    help: 'Un dossier coché devient un album. Ses sous-dossiers deviennent ses sous-albums : ils s’affichent dans sa page, et chacun peut être masqué.',
+    find: 'Rechercher un dossier',
+    list: 'Dossiers',
+    fold: (name: string) => `Replier ${name}`,
+    unfold: (name: string) => `Déplier ${name}`,
+    subAlbumOf: (name: string, hidden: boolean) =>
+      `sous-album de ${name}${hidden ? ' · masqué' : ''}`,
+    noMatch: 'Aucun dossier ne correspond.',
+    resetTitle: 'Revenir à la sélection par défaut ?',
+    resetMessage:
+      'Les dossiers de premier niveau redeviennent les albums de l’accueil, et plus aucun sous-album n’est masqué.',
+    resetConfirm: 'Revenir au défaut',
+    reset: 'Revenir à la sélection par défaut',
+  },
+  en: {
+    folders: (count: string, n: number) => `${count} ${plural(n, 'folder', 'folders')}`,
+    items: (count: string, n: number) => `${count} ${plural(n, 'item', 'items')}`,
+    title: 'Choose the albums',
+    backToSettings: 'Back to the settings',
+    backToAlbums: 'Back to the albums',
+    help: 'A ticked folder becomes an album. Its subfolders become its sub-albums: they show on its page, and each can be hidden.',
+    find: 'Find a folder',
+    list: 'Folders',
+    fold: (name: string) => `Fold ${name}`,
+    unfold: (name: string) => `Unfold ${name}`,
+    subAlbumOf: (name: string, hidden: boolean) =>
+      `sub-album of ${name}${hidden ? ' · hidden' : ''}`,
+    noMatch: 'No folder matches.',
+    resetTitle: 'Back to the default selection?',
+    resetMessage:
+      'The top-level folders become the home screen’s albums again, and no sub-album is hidden any more.',
+    resetConfirm: 'Back to the default',
+    reset: 'Back to the default selection',
+  },
+});
 
 /** Lowercase, without accents: "Événements" matches "evene". */
 const normalize = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
 /** "1 234 éléments", or "7 dossiers" for a folder holding only subfolders. */
 function contentLabel(count: number, folders: number): string {
-  if (count === 0 && folders > 0) return `${formatCount(folders)} dossier${folders > 1 ? 's' : ''}`;
-  return `${formatCount(count)} élément${count > 1 ? 's' : ''}`;
+  if (count === 0 && folders > 0) return t.folders(formatCount(folders), folders);
+  return t.items(formatCount(count), count);
 }
 
 interface Row {
@@ -80,12 +124,12 @@ export function ChooseAlbumsScreen() {
   return (
     <>
       <ScreenHeader
-        title="Choisir les albums"
+        title={t.title}
         leading={
           <Link
             href={fromSettings ? '/reglages' : '/'}
             className={albumStyles.back}
-            aria-label={fromSettings ? 'Retour aux réglages' : 'Retour aux albums'}
+            aria-label={fromSettings ? t.backToSettings : t.backToAlbums}
           >
             <BackIcon />
           </Link>
@@ -95,21 +139,18 @@ export function ChooseAlbumsScreen() {
         <IndexStatus />
         {index && (
           <>
-            <p className={`${common.muted} ${styles.help}`}>
-              Un dossier coché devient un album. Ses sous-dossiers deviennent ses sous-albums : ils
-              s’affichent dans sa page, et chacun peut être masqué.
-            </p>
+            <p className={`${common.muted} ${styles.help}`}>{t.help}</p>
             <label className={styles.search}>
-              <span className="visually-hidden">Rechercher un dossier</span>
+              <span className="visually-hidden">{t.find}</span>
               <input
                 type="search"
-                placeholder="Rechercher un dossier"
+                placeholder={t.find}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
             </label>
 
-            <ul className={styles.list} aria-label="Dossiers">
+            <ul className={styles.list} aria-label={t.list}>
               {rows.map(({ node, depth, parentAlbum, path }) => {
                 const { id, name } = node.folder;
                 const isSubAlbum = parentAlbum !== null;
@@ -122,7 +163,7 @@ export function ChooseAlbumsScreen() {
                         type="button"
                         className={styles.expand}
                         aria-expanded={expanded.has(id)}
-                        aria-label={`${expanded.has(id) ? 'Replier' : 'Déplier'} ${name}`}
+                        aria-label={expanded.has(id) ? t.fold(name) : t.unfold(name)}
                         onClick={() => toggleOpen(id)}
                       >
                         <ChevronIcon />
@@ -145,7 +186,7 @@ export function ChooseAlbumsScreen() {
                         <span className={styles.meta}>
                           {searching && path.length > 0 && `${path.join(' › ')} · `}
                           {isSubAlbum
-                            ? `sous-album de ${parentAlbum.folder.name}${on ? '' : ' · masqué'}`
+                            ? t.subAlbumOf(parentAlbum.folder.name, !on)
                             : contentLabel(count, node.children.length)}
                         </span>
                       </span>
@@ -154,7 +195,7 @@ export function ChooseAlbumsScreen() {
                 );
               })}
             </ul>
-            {rows.length === 0 && <p className={common.muted}>Aucun dossier ne correspond.</p>}
+            {rows.length === 0 && <p className={common.muted}>{t.noMatch}</p>}
 
             {selection.checked !== null && (
               <button
@@ -162,14 +203,13 @@ export function ChooseAlbumsScreen() {
                 className={`${common.buttonSoft} ${styles.reset}`}
                 onClick={() =>
                   void confirm({
-                    title: 'Revenir à la sélection par défaut ?',
-                    message:
-                      'Les dossiers de premier niveau redeviennent les albums de l’accueil, et plus aucun sous-album n’est masqué.',
-                    confirmLabel: 'Revenir au défaut',
+                    title: t.resetTitle,
+                    message: t.resetMessage,
+                    confirmLabel: t.resetConfirm,
                   }).then((answer) => answer && reset())
                 }
               >
-                Revenir à la sélection par défaut
+                {t.reset}
               </button>
             )}
           </>

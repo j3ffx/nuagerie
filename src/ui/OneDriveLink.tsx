@@ -1,6 +1,20 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useData } from '../data/dataContext.ts';
 import { useOnline } from '../lib/online.ts';
+import { localized } from '../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    open: 'Ouvrir dans OneDrive',
+    finding: 'Ouvrir dans OneDrive…',
+    offline: 'Ouvrir dans OneDrive (hors connexion)',
+  },
+  en: {
+    open: 'Open in OneDrive',
+    finding: 'Open in OneDrive…',
+    offline: 'Open in OneDrive (offline)',
+  },
+});
 
 /**
  * A file or folder (by id) on OneDrive's website, in a new tab (the OneDrive
@@ -43,12 +57,12 @@ export function OneDriveLink({
   return url && online ? (
     <a className={className} href={url} target="_blank" rel="noopener noreferrer">
       {children}
-      <span>Ouvrir dans OneDrive</span>
+      <span>{t.open}</span>
     </a>
   ) : (
     <span className={className} aria-disabled="true" data-disabled="">
       {children}
-      <span>{online ? 'Ouvrir dans OneDrive…' : 'Ouvrir dans OneDrive (hors connexion)'}</span>
+      <span>{online ? t.finding : t.offline}</span>
     </span>
   );
 }

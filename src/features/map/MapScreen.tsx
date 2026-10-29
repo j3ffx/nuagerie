@@ -19,6 +19,39 @@ import { Viewer } from '../viewer/Viewer.tsx';
 import { boundsOf, formatBounds, itemsInBounds, mapsHref, type Bounds } from './clusters.ts';
 import type { MapViewState } from './MapView.tsx';
 import styles from './MapScreen.module.css';
+import { localized, plural } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    title: 'Carte',
+    onlyAlbum: (name: string) => `Album ${name} seulement : voir toutes les photos`,
+    filterHidden: (count: string, n: number) =>
+      `Filtrer par albums (${count} ${plural(n, 'masqué', 'masqués')})`,
+    filterBy: 'Filtrer par albums',
+    filter: 'Filtrer',
+    offline: 'Hors connexion · carte incomplète',
+    noPlace: 'Aucune photo géolocalisée',
+    nothingHere: 'Rien dans cette zone',
+    inZone: (count: string) => `${count} dans cette zone`,
+    seeAll: 'Tout voir',
+    move: 'Déplace la carte ou dézoome pour voir des photos.',
+    openInMaps: 'Ouvrir ce lieu dans Maps',
+  },
+  en: {
+    title: 'Map',
+    onlyAlbum: (name: string) => `Album ${name} only: see every photo`,
+    filterHidden: (count: string) => `Filter by album (${count} hidden)`,
+    filterBy: 'Filter by album',
+    filter: 'Filter',
+    offline: 'Offline · incomplete map',
+    noPlace: 'No photo with a place',
+    nothingHere: 'Nothing in this area',
+    inZone: (count: string) => `${count} in this area`,
+    seeAll: 'See all',
+    move: 'Move the map or zoom out to see photos.',
+    openInMaps: 'Open this place in Maps',
+  },
+});
 
 const MapView = lazy(() => import('./MapView.tsx'));
 
@@ -87,13 +120,13 @@ export function MapScreen() {
   return (
     <>
       <ScreenHeader
-        title="Carte"
+        title={t.title}
         actions={
           album ? (
             <Link
               href="/carte"
               className={`${common.chip} ${styles.albumChip}`}
-              aria-label={`Album ${album.name} seulement : voir toutes les photos`}
+              aria-label={t.onlyAlbum(album.name)}
             >
               <span className={styles.albumName}>{album.name}</span>
               <CloseIcon width={16} height={16} />
@@ -103,13 +136,11 @@ export function MapScreen() {
               href="/tout/filtre?retour=carte"
               className={`${common.chip} ${allStyles.filter}`}
               aria-label={
-                hiddenCount > 0
-                  ? `Filtrer par albums (${formatCount(hiddenCount)} masqué${hiddenCount > 1 ? 's' : ''})`
-                  : 'Filtrer par albums'
+                hiddenCount > 0 ? t.filterHidden(formatCount(hiddenCount), hiddenCount) : t.filterBy
               }
             >
               <FilterIcon width={18} height={18} />
-              {hiddenCount > 0 ? formatCount(hiddenCount) : 'Filtrer'}
+              {hiddenCount > 0 ? formatCount(hiddenCount) : t.filter}
             </Link>
           )
         }
@@ -130,7 +161,7 @@ export function MapScreen() {
             // Tiles seen lately may come from the browser's cache: the rest stays blank.
             <p className={styles.offline} role="status">
               <CloudOffIcon width={18} height={18} />
-              Hors connexion · carte incomplète
+              {t.offline}
             </p>
           )}
           <ZonePanel
@@ -188,17 +219,17 @@ function ZonePanel({
       <div className={styles.panelHeader}>
         <h2 id="map-zone" className={styles.panelTitle}>
           {total === 0
-            ? 'Aucune photo géolocalisée'
+            ? t.noPlace
             : items.length === 0
-              ? 'Rien dans cette zone'
-              : `${formatItemCount(items.length)} dans cette zone`}
+              ? t.nothingHere
+              : t.inZone(formatItemCount(items.length))}
         </h2>
         {zone && items.length > 0 && (
           <Link
             href={`/carte/zone?b=${formatBounds(zone)}${albumId ? `&album=${encodeURIComponent(albumId)}` : ''}`}
             className={common.chip}
           >
-            Tout voir
+            {t.seeAll}
           </Link>
         )}
       </div>
@@ -208,9 +239,7 @@ function ZonePanel({
         out of the zone again and again.
       */}
       {total > 0 && items.length === 0 && (
-        <p className={`${common.muted} ${styles.stripEmpty}`}>
-          Déplace la carte ou dézoome pour voir des photos.
-        </p>
+        <p className={`${common.muted} ${styles.stripEmpty}`}>{t.move}</p>
       )}
       {items.length > 0 && (
         <ul className={styles.strip}>
@@ -240,7 +269,7 @@ function ZonePanel({
           inert={!focusShown}
           aria-hidden={!focusShown || undefined}
         >
-          Ouvrir ce lieu dans Maps
+          {t.openInMaps}
         </a>
       )}
     </section>

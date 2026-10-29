@@ -32,16 +32,29 @@ import {
   syncStateKey,
   type SyncStatus,
 } from './syncContext.ts';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    declined:
+      'Microsoft n’a pas donné la permission : sans elle, Nuagerie ne peut rien ranger dans ton OneDrive, ni tes favoris ni tes préférences. Tu peux réessayer quand tu veux.',
+    failed: (detail: string) =>
+      `La synchronisation n’a pas pu démarrer (${detail}). Réessaie dans un moment.`,
+  },
+  en: {
+    declined:
+      'Microsoft did not give the permission: without it, Nuagerie cannot keep anything in your OneDrive, neither your favourites nor your preferences. You can try again whenever you like.',
+    failed: (detail: string) => `The sync could not start (${detail}). Try again in a moment.`,
+  },
+});
 
 const LAST_SYNC_KEY = 'sync.lastSyncAt';
 const PENDING_FAVORITE_KEY = 'sync.pendingFavorite';
 /** Set while the user is on Microsoft's page for the permission, to know what they answered. */
 const ASKING_KEY = 'sync.asking';
 
-const DECLINED_NOTICE =
-  'Microsoft n’a pas donné la permission : sans elle, Nuagerie ne peut rien ranger dans ton OneDrive, ni tes favoris ni tes préférences. Tu peux réessayer quand tu veux.';
-const failedNotice = (detail: string) =>
-  `La synchronisation n’a pas pu démarrer (${detail}). Réessaie dans un moment.`;
+const DECLINED_NOTICE = t.declined;
+const failedNotice = t.failed;
 /** A change goes out after this pause, so a few taps make one write. */
 const SYNC_DELAY_MS = 1500;
 /** While the app is on screen, another device's changes come in within this time. */

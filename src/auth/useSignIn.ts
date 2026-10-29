@@ -1,8 +1,14 @@
 import { useCallback, useState } from 'react';
 import { microsoftReachable, signIn, startedUnreachable } from './msal.ts';
+import { localized } from '../lib/i18n.ts';
+
+const t = localized({
+  fr: { unreachable: 'Microsoft ne répond pas sur ce réseau.' },
+  en: { unreachable: 'Microsoft does not answer on this network.' },
+});
 
 /** Said when Microsoft does not answer on this network (a plane's Wi-Fi, a portal). */
-export const UNREACHABLE_MESSAGE = 'Microsoft ne répond pas sur ce réseau.';
+export const UNREACHABLE_MESSAGE = t.unreachable;
 
 /**
  * "Se connecter", wherever it is: Microsoft's page only if Microsoft answers,

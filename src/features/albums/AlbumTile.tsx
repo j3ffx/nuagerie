@@ -8,6 +8,12 @@ import { useOffline } from '../offline/offlineContext.ts';
 import { useLongPress } from '../../ui/useLongPress.ts';
 import { AlbumMenu, type AlbumPlace } from './AlbumMenu.tsx';
 import styles from './AlbumTile.module.css';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: { kept: ', gardé hors connexion' },
+  en: { kept: ', kept offline' },
+});
 
 /** "1 234 éléments", or "12 albums" for an album made only of sub-albums. */
 function albumCountLabel(album: Album): string {
@@ -74,7 +80,7 @@ export function AlbumTile({
             {period && <span className="hidden-inline">, </span>}
           </span>
           {period && <span className={styles.meta}>{period}</span>}
-          {kept && <span className="visually-hidden">, gardé hors connexion</span>}
+          {kept && <span className="visually-hidden">{t.kept}</span>}
         </span>
       </Link>
       {/* Beside the link, over the corner of the cover: a tap on it tells, without opening. */}

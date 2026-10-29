@@ -19,17 +19,83 @@ import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import { useConfirm } from '../../ui/confirmContext.ts';
 import albumStyles from '../albums/AlbumScreen.module.css';
 import styles from './FoldersScreen.module.css';
+import { localized, plural } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    empty: 'vide',
+    files: (count: string, n: number) => `${count} ${plural(n, 'fichier', 'fichiers')}`,
+    saveTitle: 'Enregistrer ces dossiers ?',
+    demoReload: 'Les photos de la démo seront rechargées.',
+    reindex: (synced: boolean) =>
+      `Nuagerie va réindexer les photos, ce qui prend environ une minute.${synced ? ' Tes autres appareils synchronisés suivront.' : ''}`,
+    save: 'Enregistrer',
+    title: 'Dossiers',
+    back: 'Retour aux réglages',
+    help: 'Nuagerie montre les photos et vidéos de ces dossiers OneDrive, et de tout ce qu’ils contiennent.',
+    current: 'Dossiers parcourus',
+    remove: (name: string) => `Retirer ${name}`,
+    removeShort: 'Retirer',
+    willReindex: 'Les photos seront réindexées à l’enregistrement.',
+    offline: 'Hors connexion : enregistrement impossible pour l’instant.',
+    cancel: 'Annuler',
+    add: 'Ajouter un dossier',
+    backTo: (name: string) => `Revenir à ${name}`,
+    loading: 'Chargement…',
+    failed: 'Impossible de lister les dossiers.',
+    retry: 'Réessayer',
+    noSub: (content: string) => `Aucun sous-dossier : ${content}.`,
+    emptyFolder: 'Dossier vide.',
+    foldersOf: (name: string) => `Dossiers de ${name}`,
+    covered: 'parcouru',
+    within: (name: string) => `inclus dans ${name}`,
+    open: 'Ouvrir',
+    addNamed: (name: string) => `Ajouter ${name}`,
+    addShort: 'Ajouter',
+  },
+  en: {
+    empty: 'empty',
+    files: (count: string, n: number) => `${count} ${plural(n, 'file', 'files')}`,
+    saveTitle: 'Save these folders?',
+    demoReload: 'The demo photos will be loaded again.',
+    reindex: (synced: boolean) =>
+      `Nuagerie will index the photos again, which takes about a minute.${synced ? ' Your other synced devices will follow.' : ''}`,
+    save: 'Save',
+    title: 'Folders',
+    back: 'Back to the settings',
+    help: 'Nuagerie shows the photos and videos of these OneDrive folders, and of everything they hold.',
+    current: 'Folders looked through',
+    remove: (name: string) => `Remove ${name}`,
+    removeShort: 'Remove',
+    willReindex: 'The photos will be indexed again on saving.',
+    offline: 'Offline: saving is not possible for now.',
+    cancel: 'Cancel',
+    add: 'Add a folder',
+    backTo: (name: string) => `Back to ${name}`,
+    loading: 'Loading…',
+    failed: 'Could not list the folders.',
+    retry: 'Try again',
+    noSub: (content: string) => `No subfolder: ${content}.`,
+    emptyFolder: 'Empty folder.',
+    foldersOf: (name: string) => `Folders of ${name}`,
+    covered: 'looked through',
+    within: (name: string) => `included in ${name}`,
+    open: 'Open',
+    addNamed: (name: string) => `Add ${name}`,
+    addShort: 'Add',
+  },
+});
 
 /** "41 éléments · 3,2 Go": what is right inside, and the weight of it all. */
 function folderContent(folder: DriveFolder): string {
-  if (folder.childCount === 0) return 'vide';
+  if (folder.childCount === 0) return t.empty;
   const count = formatItemCount(folder.childCount);
   return folder.size ? `${count} · ${formatBytes(folder.size)}` : count;
 }
 
 /** "40 fichiers · 120 Mo": the content of a folder that holds no subfolder. */
 function filesContent(folder: DriveFolder): string {
-  const count = `${formatCount(folder.childCount)} fichier${folder.childCount > 1 ? 's' : ''}`;
+  const count = t.files(formatCount(folder.childCount), folder.childCount);
   return folder.size ? `${count} · ${formatBytes(folder.size)}` : count;
 }
 
@@ -55,14 +121,9 @@ export function FoldersScreen() {
 
   const save = async () => {
     const answer = await confirm({
-      title: 'Enregistrer ces dossiers ?',
-      message:
-        mode === 'demo'
-          ? 'Les photos de la démo seront rechargées.'
-          : `Nuagerie va réindexer les photos, ce qui prend environ une minute.${
-              synced ? ' Tes autres appareils synchronisés suivront.' : ''
-            }`,
-      confirmLabel: 'Enregistrer',
+      title: t.saveTitle,
+      message: mode === 'demo' ? t.demoReload : t.reindex(synced),
+      confirmLabel: t.save,
     });
     if (!answer) return;
     writeRootPaths(draft);
@@ -73,22 +134,19 @@ export function FoldersScreen() {
   return (
     <>
       <ScreenHeader
-        title="Dossiers"
+        title={t.title}
         leading={
-          <Link href="/reglages" className={albumStyles.back} aria-label="Retour aux réglages">
+          <Link href="/reglages" className={albumStyles.back} aria-label={t.back}>
             <BackIcon />
           </Link>
         }
       />
       <div className={common.page}>
-        <p className={`${common.muted} ${styles.help}`}>
-          Nuagerie montre les photos et vidéos de ces dossiers OneDrive, et de tout ce qu’ils
-          contiennent.
-        </p>
+        <p className={`${common.muted} ${styles.help}`}>{t.help}</p>
 
         <section aria-labelledby="folders-current">
           <h2 id="folders-current" className={common.sectionTitle}>
-            Dossiers parcourus
+            {t.current}
           </h2>
           <ul className={styles.list}>
             {draft.map((path) => (
@@ -102,9 +160,9 @@ export function FoldersScreen() {
                     type="button"
                     className={styles.action}
                     onClick={() => setDraft(withoutRoot(draft, path))}
-                    aria-label={`Retirer ${folderName(path)}`}
+                    aria-label={t.remove(folderName(path))}
                   >
-                    Retirer
+                    {t.removeShort}
                   </button>
                 )}
               </li>
@@ -112,11 +170,7 @@ export function FoldersScreen() {
           </ul>
           {changed && (
             <div className={`${common.stack} ${styles.save}`}>
-              <p className={common.muted}>
-                {online
-                  ? 'Les photos seront réindexées à l’enregistrement.'
-                  : 'Hors connexion : enregistrement impossible pour l’instant.'}
-              </p>
+              <p className={common.muted}>{online ? t.willReindex : t.offline}</p>
               <div className={styles.buttons}>
                 <button
                   type="button"
@@ -124,10 +178,10 @@ export function FoldersScreen() {
                   onClick={() => void save()}
                   disabled={!online}
                 >
-                  Enregistrer
+                  {t.save}
                 </button>
                 <button type="button" className={common.buttonSoft} onClick={() => setDraft(saved)}>
-                  Annuler
+                  {t.cancel}
                 </button>
               </div>
             </div>
@@ -185,7 +239,7 @@ function FolderBrowser({
   return (
     <section className={common.section} aria-labelledby="folders-add">
       <h2 id="folders-add" className={common.sectionTitle}>
-        Ajouter un dossier
+        {t.add}
       </h2>
       <div className={styles.list}>
         <div className={styles.location}>
@@ -194,7 +248,7 @@ function FolderBrowser({
               type="button"
               className={styles.up}
               onClick={() => setTrail(trail.slice(0, -1))}
-              aria-label={`Revenir à ${folderName(parentOf(path))}`}
+              aria-label={t.backTo(folderName(parentOf(path)))}
             >
               <BackIcon />
             </button>
@@ -211,33 +265,30 @@ function FolderBrowser({
 
         {loading ? (
           <p className={`${common.muted} ${styles.state}`} role="status">
-            Chargement…
+            {t.loading}
           </p>
         ) : listing.folders === null ? (
           <div className={`${styles.state} ${common.stack}`} role="alert">
-            <p className={common.muted}>Impossible de lister les dossiers.</p>
+            <p className={common.muted}>{t.failed}</p>
             <button
               type="button"
               className={common.buttonSoft}
               onClick={() => setAttempt(attempt + 1)}
             >
-              Réessayer
+              {t.retry}
             </button>
           </div>
         ) : listing.folders.length === 0 ? (
           <p className={`${common.muted} ${styles.state}`}>
-            {current && current.childCount > 0
-              ? `Aucun sous-dossier : ${filesContent(current)}.`
-              : 'Dossier vide.'}
+            {current && current.childCount > 0 ? t.noSub(filesContent(current)) : t.emptyFolder}
           </p>
         ) : (
-          <ul aria-label={`Dossiers de ${folderName(path)}`}>
+          <ul aria-label={t.foldersOf(folderName(path))}>
             {listing.folders.map((folder) => {
               const covering = rootCovering(roots, folder.path);
               const opens = folder.childCount > 0;
               const details = [
-                covering &&
-                  (covering === folder.path ? 'parcouru' : `inclus dans ${folderName(covering)}`),
+                covering && (covering === folder.path ? t.covered : t.within(folderName(covering))),
                 folderContent(folder),
               ]
                 .filter(Boolean)
@@ -254,7 +305,7 @@ function FolderBrowser({
                         words and commas for screen readers. */}
                     <span className={styles.text}>
                       <span className={styles.name}>
-                        {opens && <span className="hidden-inline">Ouvrir&nbsp;</span>}
+                        {opens && <span className="hidden-inline">{t.open}&nbsp;</span>}
                         {folder.name}
                         <span className="hidden-inline">, </span>
                       </span>
@@ -267,9 +318,9 @@ function FolderBrowser({
                       type="button"
                       className={styles.action}
                       onClick={() => onAdd(folder.path)}
-                      aria-label={`Ajouter ${folder.name}`}
+                      aria-label={t.addNamed(folder.name)}
                     >
-                      Ajouter
+                      {t.addShort}
                     </button>
                   )}
                 </li>

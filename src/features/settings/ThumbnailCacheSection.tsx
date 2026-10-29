@@ -10,6 +10,26 @@ import { formatMegabytes } from '../../lib/format.ts';
 import { usePersistentState } from '../../lib/persistent.ts';
 import common from '../../ui/common.module.css';
 import styles from './SettingsScreen.module.css';
+import { localized } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    title: 'Miniatures',
+    onDevice: 'Sur l’appareil',
+    of: (used: string, max: string) => `${used} sur ${max}`,
+    max: 'Taille maximale',
+    cleared: 'Miniatures effacées',
+    clear: 'Effacer les miniatures',
+  },
+  en: {
+    title: 'Thumbnails',
+    onDevice: 'On the device',
+    of: (used: string, max: string) => `${used} of ${max}`,
+    max: 'Largest size',
+    cleared: 'Thumbnails cleared',
+    clear: 'Clear the thumbnails',
+  },
+});
 
 /** Thumbnails kept on the device: space used, maximum size, emptying. */
 export function ThumbnailCacheSection() {
@@ -30,19 +50,17 @@ export function ThumbnailCacheSection() {
   return (
     <section className={common.section} aria-labelledby="settings-thumbnails">
       <h2 id="settings-thumbnails" className={common.sectionTitle}>
-        Miniatures
+        {t.title}
       </h2>
       <div className={`${common.card} ${common.stack}`}>
         <dl className={common.definitionList}>
-          <dt>Sur l’appareil</dt>
+          <dt>{t.onDevice}</dt>
           <dd>
-            <span role="status">
-              {formatMegabytes(usage / MB)} sur {formatMegabytes(sizeMb)}
-            </span>
+            <span role="status">{t.of(formatMegabytes(usage / MB), formatMegabytes(sizeMb))}</span>
           </dd>
         </dl>
         <label className={styles.field}>
-          <span>Taille maximale</span>
+          <span>{t.max}</span>
           <select
             className={styles.select}
             value={sizeMb}
@@ -61,7 +79,7 @@ export function ThumbnailCacheSection() {
           onClick={() => void clear()}
           disabled={usage === 0}
         >
-          {cleared && usage === 0 ? 'Miniatures effacées' : 'Effacer les miniatures'}
+          {cleared && usage === 0 ? t.cleared : t.clear}
         </button>
       </div>
     </section>

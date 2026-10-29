@@ -6,6 +6,32 @@ import common from '../ui/common.module.css';
 import { CloudOffIcon } from '../ui/icons.tsx';
 import { Logo } from '../ui/Logo.tsx';
 import styles from './Banner.module.css';
+import { localized } from '../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    stale: 'Pas à jour',
+    offline: 'Hors connexion',
+    fromDevice: 'Photos de cet appareil',
+    noMap: 'La carte n’a pas de fond',
+    seenOnly: 'Photos déjà vues seulement',
+    connecting: 'Connexion…',
+    retry: 'Réessayer',
+    signIn: 'Se connecter',
+    hide: 'Masquer',
+  },
+  en: {
+    stale: 'Not up to date',
+    offline: 'Offline',
+    fromDevice: 'Photos on this device',
+    noMap: 'The map has no background',
+    seenOnly: 'Photos already seen only',
+    connecting: 'Connecting…',
+    retry: 'Try again',
+    signIn: 'Sign in',
+    hide: 'Hide',
+  },
+});
 
 /**
  * Says when the device is offline (only the thumbnails kept on the device
@@ -38,15 +64,15 @@ export function ConnectionBanner() {
         </span>
       )}
       <span className={styles.text}>
-        <span className={styles.title}>{online ? 'Pas à jour' : 'Hors connexion'}</span>
+        <span className={styles.title}>{online ? t.stale : t.offline}</span>
         <span className={styles.subtitle}>
           {online
             ? unreachable
               ? UNREACHABLE_MESSAGE.replace(/\.$/, '')
-              : 'Photos de cet appareil'
+              : t.fromDevice
             : mode === 'demo'
-              ? 'La carte n’a pas de fond'
-              : 'Photos déjà vues seulement'}
+              ? t.noMap
+              : t.seenOnly}
         </span>
       </span>
       {reconnect && (
@@ -57,14 +83,14 @@ export function ConnectionBanner() {
           aria-busy={checking}
           onClick={() => void start()}
         >
-          {checking ? 'Connexion…' : unreachable ? 'Réessayer' : 'Se connecter'}
+          {checking ? t.connecting : unreachable ? t.retry : t.signIn}
         </button>
       )}
       <button
         type="button"
         className={styles.close}
         onClick={() => setDismissed(true)}
-        aria-label="Masquer"
+        aria-label={t.hide}
       >
         ×
       </button>

@@ -1,25 +1,52 @@
 /**
- * Formatting helpers (French UI).
+ * Formatting helpers, in the interface's language (src/lib/i18n.ts).
  *
  * Capture dates are stored as "wall-clock time encoded as UTC" (see
  * MediaItem.takenAt), so they are always formatted in the UTC time zone:
  * a photo taken at 08:47 shows 08:47 wherever the viewer is.
  */
 
-const numberFormat = new Intl.NumberFormat('fr-FR');
-const monthYearFormat = new Intl.DateTimeFormat('fr-FR', {
+import { locale, localized, plural } from './i18n.ts';
+
+const t = localized({
+  fr: {
+    near: (name: string) => `Près de ${name}`,
+    undated: (video: boolean) => (video ? 'Vidéo sans date' : 'Photo sans date'),
+    dated: (video: boolean, date: string) => `${video ? 'Vidéo' : 'Photo'} du ${date}`,
+    kb: 'Ko',
+    mb: 'Mo',
+    gb: 'Go',
+    item: 'élément',
+    items: 'éléments',
+    megapixels: 'Mpx',
+  },
+  en: {
+    near: (name: string) => `Near ${name}`,
+    undated: (video: boolean) => (video ? 'Undated video' : 'Undated photo'),
+    dated: (video: boolean, date: string) => `${video ? 'Video' : 'Photo'} of ${date}`,
+    kb: 'kB',
+    mb: 'MB',
+    gb: 'GB',
+    item: 'item',
+    items: 'items',
+    megapixels: 'MP',
+  },
+});
+
+const numberFormat = new Intl.NumberFormat(locale);
+const monthYearFormat = new Intl.DateTimeFormat(locale, {
   month: 'long',
   year: 'numeric',
   timeZone: 'UTC',
 });
-const shortDateFormat = new Intl.DateTimeFormat('fr-FR', {
+const shortDateFormat = new Intl.DateTimeFormat(locale, {
   day: '2-digit',
   month: '2-digit',
   year: '2-digit',
   timeZone: 'UTC',
 });
-const yearFormat = new Intl.DateTimeFormat('fr-FR', { year: 'numeric', timeZone: 'UTC' });
-const longDateFormat = new Intl.DateTimeFormat('fr-FR', {
+const yearFormat = new Intl.DateTimeFormat(locale, { year: 'numeric', timeZone: 'UTC' });
+const longDateFormat = new Intl.DateTimeFormat(locale, {
   day: 'numeric',
   month: 'long',
   year: 'numeric',
@@ -30,13 +57,13 @@ export function formatCount(value: number): string {
   return numberFormat.format(value);
 }
 
-/** "Octobre 2026" */
+/** "Octobre 2026", "October 2026" */
 export function formatMonthYear(takenAt: number): string {
   const text = monthYearFormat.format(takenAt);
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', {
+const dateTimeFormat = new Intl.DateTimeFormat(locale, {
   day: 'numeric',
   month: 'short',
   hour: '2-digit',
@@ -53,7 +80,7 @@ export function formatLongDate(takenAt: number): string {
   return longDateFormat.format(takenAt);
 }
 
-const timeFormat = new Intl.DateTimeFormat('fr-FR', {
+const timeFormat = new Intl.DateTimeFormat(locale, {
   hour: '2-digit',
   minute: '2-digit',
   timeZone: 'UTC',
@@ -68,7 +95,7 @@ export function formatTakenTime(item: {
   return item.dateSource === 'filename' && midnight ? null : timeFormat.format(item.takenAt);
 }
 
-const countryNames = new Intl.DisplayNames(['fr'], { type: 'region' });
+const countryNames = new Intl.DisplayNames([locale], { type: 'region' });
 
 /**
  * "Annecy, France"; "Près de Chamonix, France" when the photo is a fair
@@ -81,7 +108,7 @@ export function formatPlace(place: { name: string; country: string; km: number }
   } catch {
     // Unknown code: keep it as is.
   }
-  return `${place.km > 15 ? `Près de ${place.name}` : place.name}, ${country}`;
+  return `${place.km > 15 ? t.near(place.name) : place.name}, ${country}`;
 }
 
 /** "06/10/26" */
@@ -98,27 +125,27 @@ export function formatYearRange(first: number, last: number): string {
 
 /** Accessible description of a thumbnail: "Photo du 6 octobre 2026", "Vidéo sans date". */
 export function describeItem(item: { kind: 'image' | 'video'; takenAt: number | null }): string {
-  const kind = item.kind === 'video' ? 'Vidéo' : 'Photo';
-  return item.takenAt === null ? `${kind} sans date` : `${kind} du ${formatLongDate(item.takenAt)}`;
+  const video = item.kind === 'video';
+  return item.takenAt === null ? t.undated(video) : t.dated(video, formatLongDate(item.takenAt));
 }
 
-const decimalFormat = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
+const decimalFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
 
-/** Storage size from megabytes: "0 Mo", "12,4 Mo", "500 Mo", "1 Go", "1,5 Go". */
+/** Storage size from megabytes: "0 Mo", "12,4 Mo", "500 Mo", "1 Go", "1,5 Go" (MB, GB in English). */
 export function formatMegabytes(megabytes: number): string {
-  if (megabytes >= 1000) return `${decimalFormat.format(megabytes / 1000)} Go`;
-  return `${decimalFormat.format(megabytes >= 10 ? Math.round(megabytes) : megabytes)} Mo`;
+  if (megabytes >= 1000) return `${decimalFormat.format(megabytes / 1000)} ${t.gb}`;
+  return `${decimalFormat.format(megabytes >= 10 ? Math.round(megabytes) : megabytes)} ${t.mb}`;
 }
 
 /** A size in bytes: "820 Ko", "3,2 Mo", "12 Go" (decimal units, as OneDrive shows them). */
 export function formatBytes(bytes: number): string {
-  if (bytes < 1_000_000) return `${formatCount(Math.max(1, Math.round(bytes / 1000)))} Ko`;
+  if (bytes < 1_000_000) return `${formatCount(Math.max(1, Math.round(bytes / 1000)))} ${t.kb}`;
   return formatMegabytes(bytes / 1_000_000);
 }
 
-/** "1 élément", "12 éléments" */
+/** "1 élément", "12 éléments"; "1 item", "12 items" */
 export function formatItemCount(count: number): string {
-  return `${formatCount(count)} ${count > 1 ? 'éléments' : 'élément'}`;
+  return `${formatCount(count)} ${plural(count, t.item, t.items)}`;
 }
 
 /** A video's length: "42 s", "3 min 05 s", "1 h 02 min". */
@@ -138,6 +165,6 @@ export function formatDimensions(width: number, height: number): string {
   const megapixels = (width * height) / 1_000_000;
   const size = `${formatCount(width)} × ${formatCount(height)}`;
   return megapixels >= 1
-    ? `${size} · ${decimalFormat.format(Math.round(megapixels * 10) / 10)} Mpx`
+    ? `${size} · ${decimalFormat.format(Math.round(megapixels * 10) / 10)} ${t.megapixels}`
     : size;
 }

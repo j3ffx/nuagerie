@@ -38,6 +38,68 @@ import {
   type SearchTarget,
 } from './searchParams.ts';
 import { useSearchIndex } from './useSearchIndex.ts';
+import { localized, plural } from '../../lib/i18n.ts';
+
+const t = localized({
+  fr: {
+    title: 'Recherche',
+    label: 'Rechercher un album, un lieu ou une date',
+    placeholder: 'Album, lieu, date…',
+    clear: 'Effacer la recherche',
+    finding: 'Recherche des lieux de tes photos…',
+    offline: 'Lieux indisponibles hors connexion : les albums et les dates marchent quand même.',
+    items: (n: number) => plural(n, 'élément', 'éléments'),
+    recent: 'Récentes',
+    forget: 'Effacer',
+    recentSearch: 'Recherche récente',
+    hint: 'Cherche un album, une ville, un pays ou une date : « Lyon », « juillet 2024 », « été 2023 »… Tu peux les combiner.',
+    places: 'Lieux',
+    countries: 'Pays',
+    years: 'Années',
+    nothing: (text: string) =>
+      `Rien ne correspond à « ${text} ». Essaie un album, une ville, un pays ou une date (« juillet 2024 », « été 2023 »).`,
+    everything: (text: string) => `Tout pour « ${text} »`,
+    albums: 'Albums',
+    countriesHere: 'Pays dans ces résultats',
+    placesHere: 'Lieux dans ces résultats',
+    filters: 'Filtres de la recherche',
+    removeAlbum: (name: string) => `Retirer l’album ${name}`,
+    removePlace: (name: string) => `Retirer le lieu ${name}`,
+    place: 'Lieu',
+    noPhoto: 'Aucune photo ne correspond.',
+    tryOther: 'Retire un filtre ou essaie d’autres mots.',
+    results: 'Résultats de la recherche',
+  },
+  en: {
+    title: 'Search',
+    label: 'Search for an album, a place or a date',
+    placeholder: 'Album, place, date…',
+    clear: 'Clear the search',
+    finding: 'Finding the places of your photos…',
+    offline: 'Places unavailable offline: albums and dates still work.',
+    items: (n: number) => plural(n, 'item', 'items'),
+    recent: 'Recent',
+    forget: 'Clear',
+    recentSearch: 'Recent search',
+    hint: 'Search for an album, a town, a country or a date: “London”, “July 2024”, “summer 2023”… You can combine them.',
+    places: 'Places',
+    countries: 'Countries',
+    years: 'Years',
+    nothing: (text: string) =>
+      `Nothing matches “${text}”. Try an album, a town, a country or a date (“July 2024”, “summer 2023”).`,
+    everything: (text: string) => `Everything for “${text}”`,
+    albums: 'Albums',
+    countriesHere: 'Countries in these results',
+    placesHere: 'Places in these results',
+    filters: 'Search filters',
+    removeAlbum: (name: string) => `Remove the album ${name}`,
+    removePlace: (name: string) => `Remove the place ${name}`,
+    place: 'Place',
+    noPhoto: 'No photo matches.',
+    tryOther: 'Remove a filter or try other words.',
+    results: 'Search results',
+  },
+});
 
 type Go = (target: SearchTarget) => void;
 
@@ -81,7 +143,7 @@ export function SearchScreen() {
 
   return (
     <>
-      <ScreenHeader title="Recherche" />
+      <ScreenHeader title={t.title} />
       <IndexStatus />
       {index && search && (
         <>
@@ -104,8 +166,8 @@ export function SearchScreen() {
               spellCheck={false}
               // Opened from the bar to search: the keyboard comes up at once.
               autoFocus={isEmptyTarget(target)}
-              aria-label="Rechercher un album, un lieu ou une date"
-              placeholder="Album, lieu, date…"
+              aria-label={t.label}
+              placeholder={t.placeholder}
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
             />
@@ -113,7 +175,7 @@ export function SearchScreen() {
               <button
                 type="button"
                 className={styles.clear}
-                aria-label="Effacer la recherche"
+                aria-label={t.clear}
                 onClick={() => {
                   setDraft('');
                   input.current?.focus();
@@ -142,14 +204,14 @@ function PlacesStatus({ places, items }: { places: PhotoPlaces; items: readonly 
   if (places.pending) {
     return (
       <p className={`${common.muted} ${styles.status}`} role="status">
-        Recherche des lieux de tes photos…
+        {t.finding}
       </p>
     );
   }
   if (places.failed && places.known.size === 0 && items.some((item) => item.latitude !== null)) {
     return (
       <p className={`${common.muted} ${styles.status}`} role="status">
-        Lieux indisponibles hors connexion : les albums et les dates marchent quand même.
+        {t.offline}
       </p>
     );
   }
@@ -249,7 +311,7 @@ function Chip({
         </span>
         <span className={styles.chipCount}>
           {formatCount(count)}
-          <span className="hidden-inline"> {count > 1 ? 'éléments' : 'élément'}</span>
+          <span className="hidden-inline"> {t.items(count)}</span>
         </span>
       </TargetLink>
     </li>
@@ -316,10 +378,10 @@ function Start({
         <section className={styles.section} aria-labelledby="search-recent">
           <div className={styles.sectionHeader}>
             <h2 id="search-recent" className={styles.sectionTitle}>
-              Récentes
+              {t.recent}
             </h2>
             <button type="button" className={styles.forget} onClick={forget}>
-              Effacer
+              {t.forget}
             </button>
           </div>
           <ul className={styles.rows}>
@@ -330,22 +392,19 @@ function Start({
                 go={go}
                 icon={<ClockIcon />}
                 title={label}
-                detail="Recherche récente"
+                detail={t.recentSearch}
               />
             ))}
           </ul>
         </section>
       ) : (
-        <p className={`${common.muted} ${styles.hint}`}>
-          Cherche un album, une ville, un pays ou une date : « Lyon », « juillet 2024 », « été 2023
-          »… Tu peux les combiner.
-        </p>
+        <p className={`${common.muted} ${styles.hint}`}>{t.hint}</p>
       )}
-      <PlaceChips hits={towns} go={go} base={none} title="Lieux" scroll={false} />
-      <PlaceChips hits={countries} go={go} base={none} title="Pays" scroll={false} />
+      <PlaceChips hits={towns} go={go} base={none} title={t.places} scroll={false} />
+      <PlaceChips hits={countries} go={go} base={none} title={t.countries} scroll={false} />
       {years.length > 0 && (
-        <section className={styles.section} aria-label="Années">
-          <h2 className={styles.sectionTitle}>Années</h2>
+        <section className={styles.section} aria-label={t.years}>
+          <h2 className={styles.sectionTitle}>{t.years}</h2>
           <ul className={styles.chips}>
             {years.map(({ year, count }) => (
               <Chip
@@ -378,8 +437,7 @@ function Suggestions({ search, text, go }: { search: SearchIndex; text: string; 
     return (
       <div className={styles.start}>
         <p className={`${common.muted} ${styles.hint}`} role="status">
-          Rien ne correspond à « {text} ». Essaie un album, une ville, un pays ou une date («
-          juillet 2024 », « été 2023 »).
+          {t.nothing(text)}
         </p>
       </div>
     );
@@ -393,7 +451,7 @@ function Suggestions({ search, text, go }: { search: SearchIndex; text: string; 
             target={{ q: text, album: null, place: null }}
             go={go}
             icon={onlyDate ? <CalendarIcon /> : <SearchIcon />}
-            title={onlyDate && query.date ? query.date.label : `Tout pour « ${text} »`}
+            title={onlyDate && query.date ? query.date.label : t.everything(text)}
             detail={formatItemCount(total.length)}
           />
         </ul>
@@ -401,7 +459,7 @@ function Suggestions({ search, text, go }: { search: SearchIndex; text: string; 
       {found.albums.length > 0 && (
         <section className={styles.section} aria-labelledby="search-albums">
           <h2 id="search-albums" className={styles.sectionTitle}>
-            Albums
+            {t.albums}
           </h2>
           <ul className={styles.rows}>
             {found.albums.map((hit) => (
@@ -424,7 +482,7 @@ function Suggestions({ search, text, go }: { search: SearchIndex; text: string; 
       {places.length > 0 && (
         <section className={styles.section} aria-labelledby="search-places">
           <h2 id="search-places" className={styles.sectionTitle}>
-            Lieux
+            {t.places}
           </h2>
           <ul className={styles.rows}>
             {places.map((hit) => (
@@ -457,22 +515,22 @@ function Results({ search, target, go }: { search: SearchIndex; target: SearchTa
   // Countries when the results span several, then the towns of the one chosen.
   const narrowing =
     !target.place && inside.countries.length > 1
-      ? { hits: inside.countries, title: 'Pays dans ces résultats' }
+      ? { hits: inside.countries, title: t.countriesHere }
       : !target.place || (target.place.startsWith('p:') && inside.towns.length > 1)
-        ? { hits: inside.towns, title: 'Lieux dans ces résultats' }
+        ? { hits: inside.towns, title: t.placesHere }
         : null;
 
   return (
     <>
       {(albumName || target.place) && (
-        <ul className={styles.filters} aria-label="Filtres de la recherche">
+        <ul className={styles.filters} aria-label={t.filters}>
           {albumName && (
             <li>
               <TargetLink
                 target={{ ...target, album: null }}
                 go={go}
                 className={styles.filter}
-                label={`Retirer l’album ${albumName}`}
+                label={t.removeAlbum(albumName)}
               >
                 <span className={styles.filterText}>{albumName}</span>
                 <CloseIcon width={16} height={16} />
@@ -485,10 +543,10 @@ function Results({ search, target, go }: { search: SearchIndex; target: SearchTa
                 target={{ ...target, place: null }}
                 go={go}
                 className={styles.filter}
-                label={`Retirer le lieu ${place ? placeLabel(place) : ''}`}
+                label={t.removePlace(place ? placeLabel(place) : '')}
               >
                 <MapIcon width={16} height={16} />
-                <span className={styles.filterText}>{place ? placeLabel(place) : 'Lieu'}</span>
+                <span className={styles.filterText}>{place ? placeLabel(place) : t.place}</span>
                 <CloseIcon width={16} height={16} />
               </TargetLink>
             </li>
@@ -505,12 +563,12 @@ function Results({ search, target, go }: { search: SearchIndex; target: SearchTa
       {items.length === 0 ? (
         <div className={common.page}>
           <div className={`${common.card} ${common.stack}`}>
-            <p>Aucune photo ne correspond.</p>
-            <p className={common.muted}>Retire un filtre ou essaie d’autres mots.</p>
+            <p>{t.noPhoto}</p>
+            <p className={common.muted}>{t.tryOther}</p>
           </div>
         </div>
       ) : (
-        <PhotoBrowser items={items} label="Résultats de la recherche" />
+        <PhotoBrowser items={items} label={t.results} />
       )}
     </>
   );

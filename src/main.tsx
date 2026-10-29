@@ -5,14 +5,26 @@ import { App } from './app/App.tsx';
 import { initUpdates } from './app/updates.ts';
 import { initTouch } from './app/touch.ts';
 import { initWhatsNew } from './app/whatsNew.ts';
+import { language, localized } from './lib/i18n.ts';
 import { applyStoredTheme } from './lib/theme.ts';
+import { rememberLanguage } from './data/memoryNotifier.ts';
 import { hasSignedInBefore, initAuth, REDIRECT_PATH } from './auth/msal.ts';
 import { resolveDataMode } from './data/mode.ts';
 import { ConnectingScreen } from './features/welcome/SignInScreen.tsx';
 
+const t = localized({
+  fr: {
+    description:
+      'Nuagerie, la galerie de tes photos OneDrive, rangées par albums, par date et par lieu.',
+  },
+  en: { description: 'Nuagerie, the gallery of your OneDrive photos, by album, date and place.' },
+});
+
 async function start() {
-  // The chosen theme from the first screen (the redirect bridge included).
+  // The chosen theme and language from the first screen (the redirect bridge included).
   applyStoredTheme();
+  document.documentElement.lang = language;
+  document.querySelector('meta[name="description"]')?.setAttribute('content', t.description);
   // MSAL v5 redirect bridge: hands the sign-in response back to the app, renders nothing.
   if (window.location.pathname === REDIRECT_PATH) {
     const { broadcastResponseToMainFrame } = await import('@azure/msal-browser/redirect-bridge');
@@ -28,6 +40,8 @@ async function start() {
   initUpdates();
   initWhatsNew();
   initTouch();
+  // The memories notification speaks the app's language (src/sw.ts).
+  rememberLanguage(language).catch(() => undefined);
 
   const element = document.getElementById('root');
   if (!element) throw new Error('Missing #root element');

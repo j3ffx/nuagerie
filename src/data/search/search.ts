@@ -2,6 +2,7 @@ import type { Place } from '../places/placeIndex.ts';
 import { coordinateKey } from '../places/places.ts';
 import type { MediaIndex, MediaItem } from '../model.ts';
 import { fitsWords, inPeriod, nameWords, type ParsedQuery } from './query.ts';
+import { locale } from '../../lib/i18n.ts';
 
 /**
  * Search over the whole perimeter (hidden albums included: searching is how
@@ -47,7 +48,7 @@ export interface SearchFilters {
   place?: PlaceKey | null;
 }
 
-const countryNames = new Intl.DisplayNames(['fr'], { type: 'region' });
+const countryNames = new Intl.DisplayNames([locale], { type: 'region' });
 function countryName(code: string): string {
   try {
     return countryNames.of(code) ?? code;

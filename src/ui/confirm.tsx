@@ -2,6 +2,12 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import common from './common.module.css';
 import { ConfirmContext, type Confirm, type ConfirmOptions } from './confirmContext.ts';
 import styles from './confirm.module.css';
+import { localized } from '../lib/i18n.ts';
+
+const t = localized({
+  fr: { cancel: 'Annuler' },
+  en: { cancel: 'Cancel' },
+});
 
 interface Pending extends ConfirmOptions {
   resolve: (answer: boolean) => void;
@@ -85,7 +91,7 @@ function ConfirmDialog({
             onClick={() => onAnswer(false)}
             autoFocus
           >
-            {options.cancelLabel ?? 'Annuler'}
+            {options.cancelLabel ?? t.cancel}
           </button>
           <button
             type="button"
