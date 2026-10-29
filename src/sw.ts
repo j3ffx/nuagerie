@@ -6,14 +6,18 @@ import {
   precacheAndRoute,
   type PrecacheEntry,
 } from 'workbox-precaching';
-import { openDB } from 'idb';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 import { currentDateContext } from './data/dates.ts';
+import type { MediaItem } from './data/model.ts';
+import { thumbnailKey } from './data/thumbnails/thumbnailStore.ts';
 import {
   loadStoredIndex,
   MEMORIES_SYNC_TAG,
   MEMORIES_URL,
   notifyMemories,
+  openMemoryState,
+  readToldOn,
+  writeToldOn,
   type NavigateMessage,
 } from './data/memoryNotifier.ts';
 
@@ -44,12 +48,38 @@ interface PeriodicSyncEvent extends ExtendableEvent {
   readonly tag: string;
 }
 
-const openMemoryState = () =>
-  openDB('nuagerie-memories', 1, {
-    upgrade(database) {
-      database.createObjectStore('state');
-    },
-  });
+/**
+ * A photo of the memories for beside the text, from the thumbnails kept on the device (the
+ * offline images first, then the thumbnail cache), as a data URL: no network, and none of the
+ * letter Android draws when the icon does not load. The app icon when it is not there.
+ */
+async function coverIcon(cover: MediaItem | null): Promise<string> {
+  const fallback = '/pwa-192x192.png';
+  if (!cover) return fallback;
+  const key = thumbnailKey(cover, 'medium');
+  const names = await caches.keys();
+  const places = [
+    ...names
+      .filter((name) => name.startsWith('nuagerie-offline-'))
+      .map((name) => [name, 'offline']),
+    ...names
+      .filter((name) => name.startsWith('nuagerie-thumbnails-'))
+      .map((name) => [name, 'thumbnails']),
+  ];
+  for (const [name, path] of places) {
+    const hit = await (
+      await caches.open(name ?? '')
+    ).match(`${self.location.origin}/__${path}/${key}`);
+    if (!hit) continue;
+    const bytes = new Uint8Array(await hit.arrayBuffer());
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    }
+    return `data:${hit.headers.get('Content-Type') ?? 'image/jpeg'};base64,${btoa(binary)}`;
+  }
+  return fallback;
+}
 
 /** One connection per wake-up, closed at the end: an open one would block a later upgrade. */
 async function tellMemories(): Promise<void> {
@@ -58,16 +88,13 @@ async function tellMemories(): Promise<void> {
     await notifyMemories({
       loadIndex: loadStoredIndex,
       now: () => currentDateContext().nowWallClock,
-      readNotifiedOn: async () =>
-        ((await state.get('state', 'notifiedOn')) as string | undefined) ?? null,
-      writeNotifiedOn: async (day) => {
-        await state.put('state', day, 'notifiedOn');
-      },
+      readNotifiedOn: () => readToldOn(state),
+      writeNotifiedOn: (day) => writeToldOn(state, day),
       // No badge: Android draws it from the icon's transparency, and ours is full-bleed.
-      show: (title, body) =>
+      show: async (title, body, cover) =>
         self.registration.showNotification(title, {
           body,
-          icon: '/pwa-192x192.png',
+          icon: await coverIcon(cover).catch(() => '/pwa-192x192.png'),
           tag: MEMORIES_SYNC_TAG,
           data: { url: MEMORIES_URL },
         }),

@@ -1,6 +1,7 @@
+import { openDB, type IDBPDatabase } from 'idb';
 import { currentDateContext, resolveCaptureDate } from './dates.ts';
 import { dayKey, memoryNotification, NOTIFY_FROM_HOUR } from './memories.ts';
-import type { MediaIndex } from './model.ts';
+import type { MediaIndex, MediaItem } from './model.ts';
 import { buildIndex } from './normalize.ts';
 import { IndexStore } from './store.ts';
 
@@ -33,6 +34,45 @@ export function isNavigateMessage(data: unknown): data is NavigateMessage {
   );
 }
 
+/**
+ * The day whose memories need no notification any more: told by one, or seen
+ * in the app (or closed there, from any device) before the browser woke it.
+ * In IndexedDB, as the service worker reads no localStorage.
+ */
+export const openMemoryState = () =>
+  openDB('nuagerie-memories', 1, {
+    upgrade(database) {
+      database.createObjectStore('state');
+    },
+  });
+
+const TOLD_KEY = 'notifiedOn';
+
+export async function readToldOn(state: IDBPDatabase): Promise<string | null> {
+  return ((await state.get('state', TOLD_KEY)) as string | undefined) ?? null;
+}
+
+export async function writeToldOn(state: IDBPDatabase, day: string): Promise<void> {
+  await state.put('state', day, TOLD_KEY);
+}
+
+/**
+ * Today's memories were seen in the app, or closed: no notification about
+ * them today, and the one already shown goes.
+ */
+export async function markMemoriesSeen(day: string): Promise<void> {
+  const state = await openMemoryState();
+  try {
+    if ((await readToldOn(state)) !== day) await writeToldOn(state, day);
+  } finally {
+    state.close();
+  }
+  if (!('serviceWorker' in navigator)) return;
+  const registration = await navigator.serviceWorker.getRegistration();
+  const shown = (await registration?.getNotifications({ tag: MEMORIES_SYNC_TAG })) ?? [];
+  for (const notification of shown) notification.close();
+}
+
 export interface NotifierDeps {
   /** The index of the device, or null when there is none (demo, signed out). */
   loadIndex(): Promise<MediaIndex | null>;
@@ -40,7 +80,8 @@ export interface NotifierDeps {
   now(): number;
   readNotifiedOn(): Promise<string | null>;
   writeNotifiedOn(day: string): Promise<void>;
-  show(title: string, body: string): Promise<void>;
+  /** `cover`: a photo of the memories, for beside the text. */
+  show(title: string, body: string, cover: MediaItem | null): Promise<void>;
 }
 
 /** Tells the memories of the day if it is time; says whether it did. */
@@ -55,7 +96,7 @@ export async function notifyMemories(deps: NotifierDeps): Promise<boolean> {
   if (!index) return false;
   const notification = memoryNotification(index.items, now, notifiedOn);
   if (!notification) return false;
-  await deps.show(notification.title, notification.body);
+  await deps.show(notification.title, notification.body, notification.cover);
   await deps.writeNotifiedOn(notification.day);
   return true;
 }

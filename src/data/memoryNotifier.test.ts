@@ -50,6 +50,7 @@ describe('notifyMemories', () => {
     expect(show).toHaveBeenCalledWith(
       '2 souvenirs ce jour-là',
       'Il y a 3 ans, il y a 6 ans. Touche pour les revoir.',
+      index.items[0],
     );
     expect(await notifyMemories(all)).toBe(false);
     expect(show).toHaveBeenCalledTimes(1);

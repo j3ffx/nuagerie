@@ -144,3 +144,34 @@ test('renews at midnight on the day clocks go back, 25 hours long', async ({ bro
   await expect(cards(page).first()).toHaveAccessibleName(/, 26 octobre 20\d\d, /);
   await context.close();
 });
+
+/** The day the service worker will not tell about (src/data/memoryNotifier.ts). */
+const toldOn = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<unknown>((resolve) => {
+        const open = indexedDB.open('nuagerie-memories', 1);
+        open.onupgradeneeded = () => open.result.createObjectStore('state');
+        open.onsuccess = () => {
+          const get = open.result.transaction('state').objectStore('state').get('notifiedOn');
+          get.onsuccess = () => {
+            open.result.close();
+            resolve(get.result ?? null);
+          };
+        };
+      }),
+  );
+
+test('needs no notification once the memories were seen', async ({ page }) => {
+  // Shown on the albums: seen.
+  await expect(section(page)).toBeVisible();
+  await expect.poll(() => toldOn(page)).toBe('2026-10-28');
+});
+
+test('needs no notification once the memories were closed, even unseen', async ({ page }) => {
+  // Closed on another device (the sync brings the day) before this one showed them.
+  await page.evaluate(() => localStorage.setItem('nuagerie.memories.closedOn', '"2026-10-28"'));
+  await page.evaluate(() => indexedDB.deleteDatabase('nuagerie-memories'));
+  await page.goto('/reglages');
+  await expect.poll(() => toldOn(page)).toBe('2026-10-28');
+});

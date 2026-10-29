@@ -67,7 +67,7 @@ export function memoryNotification(
   items: readonly MediaItem[],
   today: number,
   notifiedOn: string | null,
-): { day: string; title: string; body: string } | null {
+): { day: string; title: string; body: string; cover: MediaItem | null } | null {
   if (new Date(today).getUTCHours() < NOTIFY_FROM_HOUR) return null;
   const day = dayKey(today);
   if (notifiedOn === day) return null;
@@ -77,8 +77,11 @@ export function memoryNotification(
   const years = memories
     .slice(0, 3)
     .map((memory) => yearsAgoLabel(memory.yearsAgo).replace(/^Il y a/, 'il y a'));
+  const latest = memories[0]?.items ?? [];
   return {
     day,
+    // A photo of the most recent year shows beside the text (a video when there is no photo).
+    cover: latest.find((item) => item.kind === 'image') ?? latest[0] ?? null,
     title: count > 1 ? `${count} souvenirs ce jour-là` : 'Un souvenir ce jour-là',
     body: `${capitalize(years.join(', '))}${memories.length > 3 ? '…' : '.'} Touche pour les revoir.`,
   };

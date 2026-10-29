@@ -1,11 +1,11 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'wouter';
-import { yearsAgoLabel, type MemoryYear } from '../../data/memories.ts';
+import { dayKey, yearsAgoLabel, type MemoryYear } from '../../data/memories.ts';
 import { formatItemCount, formatLongDate } from '../../lib/format.ts';
 import { CloseIcon } from '../../ui/icons.tsx';
 import { Thumbnail } from '../../ui/Thumbnail.tsx';
 import styles from './MemoriesSection.module.css';
-import { useMemories } from './useMemories.ts';
+import { useMemories, useMemoriesSeen } from './useMemories.ts';
 
 /** The photo that stands for a year: its most recent photo, a video when there is none. */
 const coverOf = (memory: MemoryYear) =>
@@ -17,9 +17,25 @@ const coverOf = (memory: MemoryYear) =>
  * device (the sync carries it).
  */
 export function MemoriesSection() {
-  const { memories, closed, close } = useMemories();
+  const { memories, today, closed, close } = useMemories();
   const section = useRef<HTMLElement>(null);
-  if (closed || memories.length === 0) return null;
+  const shown = !closed && memories.length > 0;
+  // Seen once half of it was on screen: no notification about them today.
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    const element = section.current;
+    if (!shown || !element || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setSeen(true);
+      },
+      { threshold: 0.5 },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [shown]);
+  useMemoriesSeen(seen, dayKey(today));
+  if (!shown) return null;
 
   // The section goes with the button that has the focus: the focus moves on to what follows
   // (the albums' sort), not back to the top of the page (screen readers, keyboard).

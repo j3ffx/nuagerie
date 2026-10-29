@@ -89,6 +89,7 @@ describe('memoryNotification', () => {
       day: '2026-10-28',
       title: '5 souvenirs ce jour-là',
       body: 'Il y a 1 an, il y a 3 ans, il y a 6 ans… Touche pour les revoir.',
+      cover: items[0],
     });
     expect(memoryNotification(items.slice(2, 3), at(2026, 10, 28, 9), null)).toMatchObject({
       title: 'Un souvenir ce jour-là',

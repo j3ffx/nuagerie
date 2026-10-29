@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'wouter';
-import { yearsAgoLabel } from '../../data/memories.ts';
+import { dayKey, yearsAgoLabel } from '../../data/memories.ts';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import { formatItemCount } from '../../lib/format.ts';
 import common from '../../ui/common.module.css';
@@ -9,7 +9,7 @@ import { IndexStatus } from '../../ui/IndexStatus.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import albumStyles from '../albums/AlbumScreen.module.css';
 import { PhotoBrowser } from '../viewer/PhotoBrowser.tsx';
-import { useMemories } from './useMemories.ts';
+import { useMemories, useMemoriesSeen } from './useMemories.ts';
 
 const dayMonth = new Intl.DateTimeFormat('fr-FR', {
   day: 'numeric',
@@ -33,6 +33,7 @@ export function MemoriesScreen() {
     return ofYear.length > 0 ? ofYear : memories;
   }, [memories, year]);
   const items = useMemo(() => shown.flatMap((memory) => memory.items), [shown]);
+  useMemoriesSeen(items.length > 0, dayKey(today));
   const title =
     year !== null && shown.length === 1 && shown[0]?.year === year
       ? yearsAgoLabel(shown[0].yearsAgo)

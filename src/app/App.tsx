@@ -23,6 +23,7 @@ import { DiagnosticScreen } from '../features/diagnostic/DiagnosticScreen.tsx';
 import { MapScreen } from '../features/map/MapScreen.tsx';
 import { ZoneScreen } from '../features/map/ZoneScreen.tsx';
 import { MemoriesScreen } from '../features/memories/MemoriesScreen.tsx';
+import { MemoriesClosedWatcher } from '../features/memories/useMemories.ts';
 import { SearchScreen } from '../features/search/SearchScreen.tsx';
 import { FoldersScreen } from '../features/settings/FoldersScreen.tsx';
 import { FavoritesScreen } from '../features/favorites/FavoritesScreen.tsx';
@@ -134,6 +135,7 @@ function ShellContent() {
         <ConnectionBanner />
       </div>
       <SyncNotice />
+      <MemoriesClosedWatcher />
       <main id="main" className={styles.main}>
         <Switch>
           <Route path="/" component={AlbumsScreen} />

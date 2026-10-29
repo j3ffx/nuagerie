@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import { currentDateContext } from '../../data/dates.ts';
 import { dayKey, memoriesOf } from '../../data/memories.ts';
+import { markMemoriesSeen } from '../../data/memoryNotifier.ts';
 import { usePersistentState } from '../../lib/persistent.ts';
 
 /** Synchronised (src/data/sync/state.ts): closed on one device, closed on all of them. */
@@ -59,5 +60,27 @@ export function useMemories() {
   // The latest closing wins, from any device: a device in another time zone, still on the day
   // before, would reopen the section here by closing its own day. Accepted (one user, one zone).
   const close = useCallback(() => setClosedOn(day), [day, setClosedOn]);
-  return { memories, today, closed: closedOn === day, close };
+  const closed = closedOn === day;
+  // Closed today, here or on another device: no notification about them any more.
+  useMemoriesSeen(closed && memories.length > 0, day);
+  return { memories, today, closed, close };
+}
+
+/**
+ * Always there (src/app/App.tsx): memories closed on another device count as
+ * seen here too, whatever the screen, before the browser wakes the app.
+ */
+export function MemoriesClosedWatcher() {
+  useMemories();
+  return null;
+}
+
+/**
+ * Today's memories were seen (on screen, or closed): the morning notification
+ * is not sent for them, and goes if it is already there.
+ */
+export function useMemoriesSeen(seen: boolean, day: string) {
+  useEffect(() => {
+    if (seen) void markMemoriesSeen(day).catch(() => undefined);
+  }, [seen, day]);
 }
