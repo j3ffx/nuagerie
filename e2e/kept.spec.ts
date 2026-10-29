@@ -117,6 +117,10 @@ test('marks a kept album green once all is there, and tells the details', async 
   await expect(details.getByText('288 sur 288')).toBeVisible();
   // The badge tells, it does not open the album.
   await expect(page).toHaveURL(/\/$/);
+  // Closed, the details give the focus back to the badge.
+  await details.getByRole('button', { name: 'Fermer' }).click();
+  await expect(badge(page)).toBeFocused();
+  await badge(page).click();
   await details.getByRole('button', { name: 'Ne plus garder' }).click();
   await expect(badge(page)).toHaveCount(0);
 });

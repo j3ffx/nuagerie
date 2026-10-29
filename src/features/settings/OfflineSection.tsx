@@ -146,7 +146,7 @@ function OfflineProgress({ left }: { left: number }) {
     return (
       <p role="status" className={common.muted}>
         {formatCount(state.failed)} image{state.failed > 1 ? 's n’ont' : ' n’a'} pas pu être gardée
-        {state.failed > 1 ? 's' : ''} : nouvel essai à la prochaine ouverture.
+        {state.failed > 1 ? 's' : ''} : nouvel essai au retour du réseau ou dans l’application.
       </p>
     );
   }

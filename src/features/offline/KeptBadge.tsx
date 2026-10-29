@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FailureReason, KeptStatus } from '../../data/offline/offline.ts';
 import { formatBytes, formatCount } from '../../lib/format.ts';
 import { useOnline } from '../../lib/online.ts';
@@ -42,14 +42,18 @@ function stateText(status: KeptStatus, pause: 'offline' | 'mobile-data' | null):
  */
 export function KeptBadge({ albumId, name }: { albumId: string; name: string }) {
   const offline = useOffline();
-  const items = useAlbumPhotos(albumId)?.items ?? [];
-  const status = offline.statusOf(items);
+  const items = useAlbumPhotos(albumId)?.items;
+  const { statusOf } = offline;
+  // Again only when the progress or the album changes (the progress comes 4 times a second).
+  const status = useMemo(() => statusOf(items ?? []), [statusOf, items]);
   const [open, setOpen] = useState(false);
+  const button = useRef<HTMLButtonElement>(null);
   const text = stateText(status, offline.state.pause);
 
   return (
     <>
       <button
+        ref={button}
         type="button"
         className={styles.badge}
         data-phase={status.phase}
@@ -70,7 +74,11 @@ export function KeptBadge({ albumId, name }: { albumId: string; name: string }) 
           albumId={albumId}
           status={status}
           text={text}
-          onClose={() => setOpen(false)}
+          onClose={() => {
+            setOpen(false);
+            // Closed, the details give the focus back to the badge (keyboard, screen readers).
+            requestAnimationFrame(() => button.current?.focus({ preventScroll: true }));
+          }}
         />
       )}
     </>
@@ -119,7 +127,12 @@ function KeptDetails({
           {name}
         </h2>
         <div className={styles.details}>
-          <p className={styles.state} data-phase={status.phase} role="status">
+          {/* Not a live region while downloading: it would read every photo kept. */}
+          <p
+            className={styles.state}
+            data-phase={status.phase}
+            role={status.phase === 'downloading' ? undefined : 'status'}
+          >
             Gardé hors connexion : {text}
           </p>
           <dl className={styles.facts}>
@@ -133,8 +146,8 @@ function KeptDetails({
           {status.phase === 'error' && (
             <p>
               {status.failedPhotos > 1 ? 'Elles n’ont' : 'Elle n’a'} pas pu être gardée
-              {status.failedPhotos > 1 ? 's' : ''} : {reasons}. Nouvel essai à la prochaine
-              ouverture.
+              {status.failedPhotos > 1 ? 's' : ''} : {reasons}. Nouvel essai au retour du réseau ou
+              dans l’application.
             </p>
           )}
         </div>
