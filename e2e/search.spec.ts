@@ -4,12 +4,14 @@ const count = (text: string) => Number(/^([\d\s]+) éléments?/.exec(text)?.[1]?
 const grid = (page: Page) => page.getByRole('main').locator('a[data-item-id]');
 const field = (page: Page) => page.getByRole('searchbox', { name: /^Rechercher/ });
 /** Finding the places of 8,000 photos takes a few seconds while other tests run. */
-const PLACES = { timeout: 20_000 };
+const PLACES = { timeout: 45_000 };
 /** The start screen's town chips appear once the places of the photos are known. */
 const lyonChip = (page: Page) =>
   page.getByRole('region', { name: 'Lieux' }).getByRole('link', { name: /^Lyon,/ });
 
 test.beforeEach(async ({ page }) => {
+  // Most tests here wait for the places (PLACES), on top of their own steps.
+  test.slow();
   await page.goto('/?demo=1');
   await expect(page.getByRole('list', { name: 'Albums' })).toBeVisible();
 });

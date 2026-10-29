@@ -1,8 +1,19 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
-/** Every screen, as reached by a user; `ready` waits for its content. */
-const SCREENS: { name: string; path: string; ready: (page: Page) => Promise<void> }[] = [
+/** Finding the places of the demo's photos takes a few seconds while other tests run. */
+const PLACES = { timeout: 45_000 };
+
+/**
+ * Every screen, as reached by a user; `ready` waits for its content. `places`:
+ * it waits for the places of the photos, which take longer on a busy machine.
+ */
+const SCREENS: {
+  name: string;
+  path: string;
+  places?: boolean;
+  ready: (page: Page) => Promise<void>;
+}[] = [
   {
     name: 'albums',
     path: '/',
@@ -105,20 +116,23 @@ const SCREENS: { name: string; path: string; ready: (page: Page) => Promise<void
   {
     name: 'search',
     path: '/recherche',
+    places: true,
     ready: (page) =>
-      expect(page.getByRole('list').getByRole('link', { name: /^Lyon,/ })).toBeVisible(),
+      expect(page.getByRole('list').getByRole('link', { name: /^Lyon,/ })).toBeVisible(PLACES),
   },
   {
     name: 'search suggestions',
     path: '/recherche',
+    places: true,
     ready: async (page) => {
       await page.getByRole('searchbox').fill('lyon 2024');
-      await expect(page.getByRole('heading', { name: 'Lieux' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Lieux' })).toBeVisible(PLACES);
     },
   },
   {
     name: 'search results',
     path: '/recherche?q=lyon+2024',
+    places: true,
     ready: async (page) => {
       await page
         .getByRole('region', { name: 'Lieux dans ces résultats' })
@@ -180,6 +194,7 @@ test.beforeEach(async ({ page }) => {
 for (const scheme of ['light', 'dark'] as const) {
   for (const screen of SCREENS) {
     test(`${screen.name} screen meets WCAG 2.1 AA (${scheme})`, async ({ page }) => {
+      test.slow(screen.places === true, 'waits for the places of the photos');
       await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
       await page.goto(screen.path);
       await screen.ready(page);

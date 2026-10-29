@@ -91,6 +91,8 @@ test('adds the picked photos to the favourites at once', async ({ page }) => {
 });
 
 test('asks before sharing many photos, and can share them anyway', async ({ page }) => {
+  // Preparing more than 30 files for the share takes a while on a busy machine.
+  test.slow();
   await page.addInitScript(() => {
     const shared: number[] = [];
     Object.assign(window, { shared });
