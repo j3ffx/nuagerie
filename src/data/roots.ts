@@ -9,10 +9,30 @@ import { readPersistent, usePersistentState, writePersistent } from '../lib/pers
 
 export const DEFAULT_ROOT_PATHS: readonly string[] = ['/Pictures'];
 const ROOT_PATHS_KEY = 'rootPaths';
+/**
+ * The drive's Photos folder, as found at the first indexing ("/Images",
+ * "/Bilder"… by the account's language): the default until folders are
+ * chosen. Per device and not synced, so a new device never overwrites the
+ * folders chosen on another one; erased on sign-out.
+ */
+export const DEFAULT_ROOT_PATH_KEY = 'rootPaths.default';
+
+/** Whether the user chose the folders (on this device or another, through the sync). */
+export function hasChosenRootPaths(): boolean {
+  const paths = readPersistent<string[] | null>(ROOT_PATHS_KEY, null);
+  return paths !== null && paths.length > 0;
+}
 
 export function readRootPaths(): string[] {
   const paths = readPersistent<string[] | null>(ROOT_PATHS_KEY, null);
-  return paths && paths.length > 0 ? paths : [...DEFAULT_ROOT_PATHS];
+  if (paths && paths.length > 0) return paths;
+  const found = readPersistent<string | null>(DEFAULT_ROOT_PATH_KEY, null);
+  return found ? [found] : [...DEFAULT_ROOT_PATHS];
+}
+
+/** Remembers where the drive's Photos folder is, for the default. */
+export function writeDefaultRootPath(path: string): void {
+  writePersistent(DEFAULT_ROOT_PATH_KEY, path);
 }
 
 export function writeRootPaths(paths: readonly string[]): void {
@@ -22,7 +42,9 @@ export function writeRootPaths(paths: readonly string[]): void {
 /** The root paths, updated when they change. */
 export function useRootPaths(): readonly string[] {
   const [paths] = usePersistentState<string[] | null>(ROOT_PATHS_KEY, null);
-  return paths && paths.length > 0 ? paths : DEFAULT_ROOT_PATHS;
+  const [found] = usePersistentState<string | null>(DEFAULT_ROOT_PATH_KEY, null);
+  if (paths && paths.length > 0) return paths;
+  return found ? [found] : DEFAULT_ROOT_PATHS;
 }
 
 const key = (path: string) => path.toLocaleLowerCase('en');

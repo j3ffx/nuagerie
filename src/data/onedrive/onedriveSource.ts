@@ -1,7 +1,7 @@
 import { currentDateContext, resolveCaptureDate } from '../dates.ts';
 import { summarize } from '../diagnostics.ts';
 import { createGraphClient, GraphError, type GraphClient } from '../graph/client.ts';
-import { detectScope, resolveFolder, syncRoot } from '../graph/sync.ts';
+import { detectScope, photosFolderPath, resolveFolder, syncRoot } from '../graph/sync.ts';
 import {
   createThumbnailFetcher,
   THUMBNAIL_SELECTORS,
@@ -13,7 +13,13 @@ import type { GraphDriveItem } from '../graph/types.ts';
 import type { IndexProgress, MediaIndex } from '../model.ts';
 import { buildIndex } from '../normalize.ts';
 import type { DataSource, DriveFolder } from '../source.ts';
-import { childPath, readRootPaths } from '../roots.ts';
+import {
+  childPath,
+  DEFAULT_ROOT_PATHS,
+  hasChosenRootPaths,
+  readRootPaths,
+  writeDefaultRootPath,
+} from '../roots.ts';
 import { IndexStore, type IndexMeta, type RootSyncState } from '../store.ts';
 import { snapshotDue, usableSnapshot, type IndexSnapshots } from '../sync/indexSnapshot.ts';
 import { locale, localized } from '../../lib/i18n.ts';
@@ -281,8 +287,9 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
 
   /** Meta matching the current account and root paths, created (with scope detection) if needed. */
   async function prepareMeta(store: IndexStore): Promise<IndexMeta> {
-    const paths = readRootPaths();
     const existing = await store.getMeta();
+    if (!hasChosenRootPaths() && options.accountId !== null) await findDefaultRoot(existing);
+    const paths = readRootPaths();
     const samePaths = existing?.rootFolders.map((r) => r.path).join('\n') === paths.join('\n');
     if (options.accountId === null) {
       if (existing && samePaths) return existing;
@@ -314,6 +321,20 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
     };
     await store.setMeta(meta);
     return meta;
+  }
+
+  /**
+   * No folders chosen: the drive's Photos folder, whatever its name. An index
+   * already kept for this account keeps its folders (it was made from the
+   * default of its time), so nothing is indexed again.
+   */
+  async function findDefaultRoot(existing: IndexMeta | null): Promise<void> {
+    const kept = existing?.accountId === options.accountId ? existing.rootFolders : null;
+    const path =
+      kept?.length === 1 && kept[0]
+        ? kept[0].path
+        : ((await photosFolderPath(client)) ?? DEFAULT_ROOT_PATHS[0] ?? '/Pictures');
+    if (path !== readRootPaths()[0]) writeDefaultRootPath(path);
   }
 
   /** Runs every channel; returns the number of changes. */

@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import { IndexStore, type RootSyncState } from '../store.ts';
 import { GraphError, type GraphClient } from './client.ts';
-import { detectScope, initialDeltaUrl, syncRoot } from './sync.ts';
+import { detectScope, initialDeltaUrl, photosFolderPath, syncRoot } from './sync.ts';
 import type { GraphDriveItem } from './types.ts';
 
 let counter = 0;
@@ -155,5 +155,39 @@ describe('detectScope', () => {
       '/me/drive/items/pics/delta': new GraphError(400, 'invalidRequest', 'Not supported'),
     });
     await expect(detectScope(client, 'pics')).resolves.toBe('drive');
+  });
+});
+
+describe('photosFolderPath', () => {
+  it('finds the Photos folder whatever its name, at the top of the drive or below', async () => {
+    const top = fakeGraph({
+      '/me/drive/special/photos': {
+        id: 'p',
+        name: 'Images',
+        parentReference: { path: '/drive/root:' },
+      },
+    });
+    expect(await photosFolderPath(top.client)).toBe('/Images');
+    expect(top.calls).toEqual(['/me/drive/special/photos?$select=id,name,parentReference']);
+
+    const below = fakeGraph({
+      '/me/drive/special/photos': {
+        id: 'p',
+        name: 'Bilder',
+        parentReference: { path: '/drive/root:/Mes%20documents' },
+      },
+    });
+    expect(await photosFolderPath(below.client)).toBe('/Mes documents/Bilder');
+  });
+
+  it('says there is none when the drive has no Photos folder, and lets other errors through', async () => {
+    const none = fakeGraph({
+      '/me/drive/special/photos': new GraphError(404, 'itemNotFound', 'Item not found'),
+    });
+    expect(await photosFolderPath(none.client)).toBeNull();
+    const down = fakeGraph({
+      '/me/drive/special/photos': new GraphError(503, 'serviceNotAvailable', 'Busy'),
+    });
+    await expect(photosFolderPath(down.client)).rejects.toThrow('Busy');
   });
 });

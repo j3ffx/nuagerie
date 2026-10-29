@@ -12,6 +12,8 @@ The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
   Appearance. The search understands dates in both languages (“July 2024”, “juillet 2024”), and
   the memories notification follows the chosen language.
 - Foreign towns have their French names in French: Londres, Bruxelles, Genève, Séville…
+- By default, Nuagerie looks through OneDrive's Pictures folder, whatever its name in the
+  account's language. Folders already chosen do not change.
 
 ## 0.6.0 — 2026-10-29
 

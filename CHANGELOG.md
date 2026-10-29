@@ -12,6 +12,8 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
   Apparence. La recherche comprend les dates dans les deux langues (« juillet 2024 », « July
   2024 »), et la notification des souvenirs suit la langue choisie.
 - Les villes étrangères ont leur nom français : Londres, Bruxelles, Genève, Séville…
+- Par défaut, Nuagerie parcourt le dossier Images de OneDrive, quel que soit son nom dans la
+  langue du compte. Les dossiers déjà choisis ne changent pas.
 
 ## 0.6.0 — 2026-10-29
 

@@ -61,6 +61,28 @@ export async function resolveFolder(
   return client.getJson(`/me/drive/root:/${encoded}?$select=id,name,folder`);
 }
 
+/**
+ * The path of the drive's Photos folder (OneDrive's special folder "photos"),
+ * whatever its name in the account's language ("/Pictures", "/Images",
+ * "/Bilder"…); null when the drive has none. Read only: unlike a write,
+ * asking never creates it.
+ */
+export async function photosFolderPath(client: GraphClient): Promise<string | null> {
+  try {
+    const folder = await client.getJson<{ name: string; parentReference?: { path?: string } }>(
+      '/me/drive/special/photos?$select=id,name,parentReference',
+    );
+    // "/drive/root:" for a folder at the top of the drive, "/drive/root:/Documents" below one.
+    const parent = decodeURIComponent(
+      (folder.parentReference?.path ?? '/drive/root:').replace(/^\/drive\/root:/, ''),
+    );
+    return `${parent}/${folder.name}`;
+  } catch (error) {
+    if (error instanceof GraphError && error.status === 404) return null;
+    throw error;
+  }
+}
+
 export function initialDeltaUrl(root: Pick<RootSyncState, 'id' | 'scope'>): string {
   const query = `?$select=${DELTA_SELECT}&$top=${PAGE_SIZE}`;
   return root.scope === 'folder'

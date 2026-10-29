@@ -3,6 +3,7 @@ import { signOut } from '../../auth/msal.ts';
 import { useSignIn } from '../../auth/useSignIn.ts';
 import { useData } from '../../data/dataContext.ts';
 import { photoPlaces } from '../../data/places/photoPlaces.ts';
+import { DEFAULT_ROOT_PATH_KEY } from '../../data/roots.ts';
 import {
   SYNC_ENABLED_KEY,
   SYNC_GRANTED_KEY,
@@ -82,6 +83,8 @@ export function AccountSection() {
     removePersistent(SYNC_GRANTED_KEY);
     removePersistent(SYNC_TURNED_OFF_KEY);
     removePersistent('search.recent.onedrive');
+    // Another account has its Photos folder elsewhere.
+    removePersistent(DEFAULT_ROOT_PATH_KEY);
     await signOut();
   };
 

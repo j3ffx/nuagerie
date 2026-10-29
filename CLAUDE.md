@@ -98,8 +98,10 @@ commit metadata.
 - **Albums:** a folder is a potential album. Technical folders are never albums: years (`^\d{4}$`),
   months under a year (`^(0[1-9]|1[0-2])$`) and `Sans date`; their files belong to the nearest
   non-technical parent (`src/data/technical.ts`). An album shows only its own files, not its sub-albums'.
-  A root of the perimeter (`/Pictures`, or a folder added in the settings) is an album only when it has
-  files of its own; its subfolders stay first-level albums.
+  A root of the perimeter (OneDrive's Photos folder, `special/photos`, whatever its name in the
+  account's language, or a folder added in the settings) is an album only when it has files of its
+  own; its subfolders stay first-level albums. The Photos folder found is kept per device
+  (`rootPaths.default`, not synced: a new device never overwrites folders chosen elsewhere).
 - **Languages** (`src/lib/i18n.ts`): French and English, the device's by default or chosen in
   Réglages → Apparence (per device). The language is settled as the app starts (a change reloads
   it); each file keeps its texts next to its code in `localized({ fr, en })`, and the English ones

@@ -1,7 +1,9 @@
 import 'fake-indexeddb/auto';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { removePersistent } from '../../lib/persistent.ts';
 import type { GraphClient } from '../graph/client.ts';
 import type { GraphDriveItem } from '../graph/types.ts';
+import { DEFAULT_ROOT_PATH_KEY, readRootPaths } from '../roots.ts';
 import { IndexStore } from '../store.ts';
 import type { IndexSnapshot, IndexSnapshots } from '../sync/indexSnapshot.ts';
 import { createOneDriveSource } from './onedriveSource.ts';
@@ -22,15 +24,22 @@ const photo = (id: string, name: string, parent: string): GraphDriveItem => ({
   parentReference: { id: parent },
 });
 
-/** Fake OneDrive with a folder-level delta, and a second batch of changes. */
-function fakeOneDrive() {
+/**
+ * Fake OneDrive with a folder-level delta, and a second batch of changes. Its
+ * Photos folder is "Pictures", or another name (the account's language).
+ */
+function fakeOneDrive(photosName = 'Pictures') {
   const calls: string[] = [];
   let changes: GraphDriveItem[] = [];
   const client: GraphClient = {
     batch: () => Promise.reject(new Error('unexpected batch')),
     async getJson<T>(url: string): Promise<T> {
       calls.push(url);
-      if (url.startsWith('/me/drive/root:/Pictures')) return { id: 'pics', name: 'Pictures' } as T;
+      if (url.startsWith('/me/drive/special/photos')) {
+        return { id: 'pics', name: photosName, parentReference: { path: '/drive/root:' } } as T;
+      }
+      if (url.startsWith(`/me/drive/root:/${photosName}`))
+        return { id: 'pics', name: photosName } as T;
       if (url.includes('$top=1') && !url.includes('$top=1000')) return { value: [] } as T;
       if (url.startsWith('/me/drive/items/pics/delta')) {
         return {
@@ -101,6 +110,26 @@ describe('createOneDriveSource', () => {
     ]);
     const updated = await s.refresh?.();
     expect(updated?.items.map((i) => i.id)).toEqual(['p1', 'p3']);
+  });
+
+  describe('with no folders chosen', () => {
+    afterEach(() => removePersistent(DEFAULT_ROOT_PATH_KEY));
+
+    it('indexes the drive’s Photos folder, whatever its name, and remembers it', async () => {
+      const graph = fakeOneDrive('Images');
+      const index = await source(graph.client).loadIndex();
+      expect(index.items).toHaveLength(2);
+      expect((await store.getMeta())?.rootFolders).toEqual([{ path: '/Images', id: 'pics' }]);
+      expect(readRootPaths()).toEqual(['/Images']);
+    });
+
+    it('keeps the folders of an index made before, without asking again', async () => {
+      await source(fakeOneDrive().client).loadIndex();
+      const graph = fakeOneDrive('Images');
+      await source(graph.client).loadIndex();
+      expect(graph.calls.some((url) => url.startsWith('/me/drive/special/photos'))).toBe(false);
+      expect(readRootPaths()).toEqual(['/Pictures']);
+    });
   });
 
   it('drops the local copy when another account signs in', async () => {
