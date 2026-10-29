@@ -13,7 +13,8 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
   2024 »), et la notification des souvenirs suit la langue choisie.
 - Les villes étrangères ont leur nom français : Londres, Bruxelles, Genève, Séville…
 - Par défaut, Nuagerie parcourt le dossier Images de OneDrive, quel que soit son nom dans la
-  langue du compte. Les dossiers déjà choisis ne changent pas.
+  langue du compte. Les dossiers déjà choisis ne changent pas. Un dossier « Undated » est rangé
+  comme « Sans date ».
 
 ## 0.6.0 — 2026-10-29
 

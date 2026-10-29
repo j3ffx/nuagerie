@@ -13,7 +13,8 @@ The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
   the memories notification follows the chosen language.
 - Foreign towns have their French names in French: Londres, Bruxelles, Genève, Séville…
 - By default, Nuagerie looks through OneDrive's Pictures folder, whatever its name in the
-  account's language. Folders already chosen do not change.
+  account's language. Folders already chosen do not change. A folder named “Undated” is treated
+  like “Sans date”.
 
 ## 0.6.0 — 2026-10-29
 

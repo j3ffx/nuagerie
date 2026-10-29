@@ -21,6 +21,12 @@ describe('isTechnicalFolderName', () => {
     expect(isTechnicalFolderName('sans date', '2026')).toBe(true);
   });
 
+  it('treats "Undated" (the same in English) as technical too', () => {
+    expect(isTechnicalFolderName('Undated', 'Camera Roll')).toBe(true);
+    expect(isTechnicalFolderName(' UNDATED ', null)).toBe(true);
+    expect(isTechnicalFolderName('Undated trip', null)).toBe(false);
+  });
+
   it('keeps named folders as albums', () => {
     expect(isTechnicalFolderName('Camera Roll', null)).toBe(false);
     expect(isTechnicalFolderName('2016-2019', 'Ancien téléphone')).toBe(false);

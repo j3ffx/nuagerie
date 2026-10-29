@@ -96,7 +96,7 @@ commit metadata.
   timestamps are UTC instants, shown in the device's time zone. Any new rule gets a unit test and a
   case in the demo generator, whose expected dates are checked for all 20,000 files.
 - **Albums:** a folder is a potential album. Technical folders are never albums: years (`^\d{4}$`),
-  months under a year (`^(0[1-9]|1[0-2])$`) and `Sans date`; their files belong to the nearest
+  months under a year (`^(0[1-9]|1[0-2])$`) and `Sans date` (or `Undated`); their files belong to the nearest
   non-technical parent (`src/data/technical.ts`). An album shows only its own files, not its sub-albums'.
   A root of the perimeter (OneDrive's Photos folder, `special/photos`, whatever its name in the
   account's language, or a folder added in the settings) is an album only when it has files of its
