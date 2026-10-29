@@ -37,3 +37,12 @@
     opacity: 0;
   }
 }
+
+/* A link, not a button: a 44 px target all the same. */
+.privacy {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  color: var(--color-text-muted);
+}

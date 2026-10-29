@@ -158,6 +158,10 @@ annuaire par défaut (**Default Directory**). L’inscription d’application es
    demande en plus, au moment où on l’active, `Files.ReadWrite.AppFolder` (écriture dans le seul dossier `Applis/Nuagerie`) : Microsoft
    accepte cette demande sans qu’elle soit déclarée ici, mais on peut l’ajouter à la liste pour la
    transparence. Aucune autre permission.
-9. Copier l’ID d’application dans `.env` : `VITE_MSAL_CLIENT_ID=…`.
+9. **Personnalisation et propriétés** (_Branding & properties_) → **URL de la déclaration de
+   confidentialité** : l’adresse de l’instance suivie de `/confidentialite`, par exemple
+   `https://nuagerie.pages.dev/confidentialite`. La page se lit sans être connecté, en français
+   ou en anglais selon la langue du navigateur.
+10. Copier l’ID d’application dans `.env` : `VITE_MSAL_CLIENT_ID=…`.
 
 Le Client ID n’est pas un secret, mais il reste hors du dépôt (`.env` est ignoré par git).

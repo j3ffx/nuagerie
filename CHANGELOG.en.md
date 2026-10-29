@@ -15,6 +15,8 @@ The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
 - By default, Nuagerie looks through OneDrive's Pictures folder, whatever its name in the
   account's language. Folders already chosen do not change. A folder named “Undated” is treated
   like “Sans date”.
+- A Privacy page (Settings → About) tells what Nuagerie does with your data; it can be read
+  without an account too.
 
 ## 0.6.0 — 2026-10-29
 

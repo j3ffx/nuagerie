@@ -4,6 +4,7 @@ import { enterDemoMode } from '../../data/mode.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
 import { Logo } from '../../ui/Logo.tsx';
+import { PRIVACY_PATH } from '../privacy/PrivacyScreen.tsx';
 import styles from './SignInScreen.module.css';
 import { localized } from '../../lib/i18n.ts';
 
@@ -18,6 +19,7 @@ const t = localized({
     connecting: 'Connexion…',
     signIn: 'Se connecter avec Microsoft',
     demo: 'Essayer la démo',
+    privacy: 'Confidentialité',
     restoring: 'Connexion à OneDrive…',
   },
   en: {
@@ -30,6 +32,7 @@ const t = localized({
     connecting: 'Connecting…',
     signIn: 'Sign in with Microsoft',
     demo: 'Try the demo',
+    privacy: 'Privacy',
     restoring: 'Connecting to OneDrive…',
   },
 });
@@ -75,6 +78,9 @@ export function SignInScreen({ error }: { error: string | null }) {
           {t.demo}
         </button>
       </div>
+      <a href={PRIVACY_PATH} className={styles.privacy}>
+        {t.privacy}
+      </a>
     </main>
   );
 }

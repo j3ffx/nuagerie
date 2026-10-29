@@ -192,6 +192,11 @@ const SCREENS: {
     ready: (page) => expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible(),
   },
   {
+    name: 'privacy',
+    path: '/confidentialite',
+    ready: (page) => expect(page.getByRole('heading', { name: 'Confidentialité' })).toBeVisible(),
+  },
+  {
     name: 'diagnostic',
     path: '/diagnostic',
     ready: (page) => expect(page.getByRole('heading', { level: 1 })).toBeVisible(),

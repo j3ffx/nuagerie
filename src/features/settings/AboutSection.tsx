@@ -9,6 +9,7 @@ import { latestLabel } from '../../app/latestVersion.ts';
 import { useData } from '../../data/dataContext.ts';
 import { issueUrl, REPOSITORY_URL } from '../../lib/report.ts';
 import common from '../../ui/common.module.css';
+import { PRIVACY_PATH } from '../privacy/PrivacyScreen.tsx';
 import { localized } from '../../lib/i18n.ts';
 
 const t = localized({
@@ -26,6 +27,7 @@ const t = localized({
     install: 'Installer la nouvelle version',
     check: 'Rechercher une mise à jour',
     news: 'Nouveautés',
+    privacy: 'Confidentialité',
     report: 'Signaler un problème',
     reportNote:
       'Ouvre GitHub (compte nécessaire), avec la version et le type d’appareil, rien de personnel.',
@@ -46,6 +48,7 @@ const t = localized({
     install: 'Install the new version',
     check: 'Check for an update',
     news: 'What’s new',
+    privacy: 'Privacy',
     report: 'Report a problem',
     reportNote:
       'Opens GitHub (an account is needed), with the version and the kind of device, nothing personal.',
@@ -116,6 +119,10 @@ export function AboutSection() {
         <Link href="/nouveautes?retour=%2Freglages" className={common.buttonSoft}>
           {t.news}
         </Link>
+        {/* A page of its own, readable signed out too (src/main.tsx). */}
+        <a href={PRIVACY_PATH} className={common.buttonSoft}>
+          {t.privacy}
+        </a>
         <a
           href={report()}
           target="_blank"

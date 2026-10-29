@@ -108,7 +108,8 @@ commit metadata.
   must have the French ones' shape, so a missing text does not compile. Unit tests run in French
   (`src/test/setup.ts`), `e2e/english.spec.ts` in English. The search reads dates typed in either
   language. The memories notification follows the app's language (kept in IndexedDB for the
-  service worker).
+  service worker). The privacy page (`/confidentialite`, `src/features/privacy/`) is readable
+  signed out: it is the privacy statement given to Microsoft, and says what this file promises.
 - **Grids show Graph thumbnails only**, never the original file. They are kept on the device
   (`src/data/thumbnails/`: Cache Storage, keyed by id + size + eTag, size-capped), and grids are
   virtualized (`src/ui/grid/`): only the rows near the screen exist in the DOM. The viewer shows the

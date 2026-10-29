@@ -15,6 +15,8 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 - Par défaut, Nuagerie parcourt le dossier Images de OneDrive, quel que soit son nom dans la
   langue du compte. Les dossiers déjà choisis ne changent pas. Un dossier « Undated » est rangé
   comme « Sans date ».
+- Une page Confidentialité (Réglages → À propos) dit ce que Nuagerie fait de tes données ; elle
+  se lit aussi sans compte.
 
 ## 0.6.0 — 2026-10-29
 

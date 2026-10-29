@@ -10,6 +10,7 @@ import { applyStoredTheme } from './lib/theme.ts';
 import { rememberLanguage } from './data/memoryNotifier.ts';
 import { hasSignedInBefore, initAuth, REDIRECT_PATH } from './auth/msal.ts';
 import { resolveDataMode } from './data/mode.ts';
+import { PRIVACY_PATH, PrivacyScreen } from './features/privacy/PrivacyScreen.tsx';
 import { ConnectingScreen } from './features/welcome/SignInScreen.tsx';
 
 const t = localized({
@@ -46,6 +47,16 @@ async function start() {
   const element = document.getElementById('root');
   if (!element) throw new Error('Missing #root element');
   const root = createRoot(element);
+
+  // Readable by anyone, signed in or not (the privacy statement given to Microsoft).
+  if (window.location.pathname === PRIVACY_PATH) {
+    root.render(
+      <StrictMode>
+        <PrivacyScreen />
+      </StrictMode>,
+    );
+    return;
+  }
 
   const mode = resolveDataMode();
   let account: AccountInfo | null = null;

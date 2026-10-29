@@ -82,6 +82,14 @@ test.describe('on a phone in English', () => {
       .click();
     await expect(page.getByRole('heading', { name: 'Settings', level: 1 })).toBeVisible();
   });
+
+  test('shows the privacy page, signed out, in English', async ({ page }) => {
+    await page.goto('/confidentialite');
+    await expect(page.getByRole('heading', { name: 'Privacy', level: 1 })).toBeVisible();
+    await expect(page.getByText(/its coordinates are sent nowhere/)).toBeVisible();
+    await page.getByRole('link', { name: 'Open Nuagerie' }).click();
+    await expect(page.getByRole('list', { name: 'Albums' })).toBeVisible();
+  });
 });
 
 test.describe('in French', () => {
@@ -97,5 +105,12 @@ test.describe('in French', () => {
         .getByRole('link', { name: /^Londres/ })
         .first(),
     ).toBeVisible();
+  });
+
+  test('shows the privacy page from the settings', async ({ page }) => {
+    await page.goto('/?demo=1');
+    await page.goto('/reglages');
+    await page.getByRole('link', { name: 'Confidentialité' }).click();
+    await expect(page.getByRole('heading', { name: 'Confidentialité', level: 1 })).toBeVisible();
   });
 });
