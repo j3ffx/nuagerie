@@ -11,6 +11,7 @@ The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
 - Nuagerie speaks English: it follows the phone's language, or is chosen in Settings →
   Appearance. The search understands dates in both languages (“July 2024”, “juillet 2024”), and
   the memories notification follows the chosen language.
+- Foreign towns have their French names in French: Londres, Bruxelles, Genève, Séville…
 
 ## 0.6.0 — 2026-10-29
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPlaceIndex, nearestPlace } from './placeIndex.ts';
+import { buildPlaceIndex, nearestPlace, parsePlaceNames } from './placeIndex.ts';
 
 const index = buildPlaceIndex(
   [
@@ -49,5 +49,36 @@ describe('nearestPlace', () => {
     const km = nearestPlace(index, 45.899, 6.229)?.km ?? 0;
     expect(km).toBeGreaterThan(7);
     expect(km).toBeLessThan(8.5);
+  });
+});
+
+describe('names in the interface’s language', () => {
+  // Lyon on line 0, Genève on line 2 ("Geneva" in English): the empty line still counts.
+  const list = [
+    'Lyon\t45.748\t4.847\tFR',
+    '',
+    'Genève\t46.202\t6.146\tCH',
+    'Lyon 08\t45.735\t4.869\tFR',
+  ].join('\n');
+
+  it('reads the names files, and leaves out what is not a name', () => {
+    expect(parsePlaceNames('2\tGeneva\n\nx\tNope\n3\t \n')).toEqual(new Map([[2, 'Geneva']]));
+  });
+
+  it('shows a place, and the town of a district, by their names in the language', () => {
+    const named = buildPlaceIndex(
+      list,
+      new Map([
+        [0, 'Lyons'],
+        [2, 'Geneva'],
+      ]),
+    );
+    expect(nearestPlace(named, 46.21, 6.15)).toMatchObject({ name: 'Geneva', town: 'Geneva' });
+    // The district is still known as part of Lyon (by the list's own names), shown as Lyons.
+    expect(nearestPlace(named, 45.735, 4.87)).toMatchObject({ name: 'Lyon 08', town: 'Lyons' });
+  });
+
+  it('keeps the list’s own name where the language has none', () => {
+    expect(nearestPlace(buildPlaceIndex(list), 46.21, 6.15)?.name).toBe('Genève');
   });
 });

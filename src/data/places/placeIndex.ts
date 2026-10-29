@@ -25,22 +25,53 @@ export interface PlaceIndex {
 }
 
 /** Versioned file name: a new list gets a new name, so caches never serve a stale one. */
-export const PLACES_URL = '/places/cities-v1.txt';
+export const PLACES_URL = '/places/cities-v2.txt';
+
+/**
+ * The names of the list's places in a language, where they differ from the
+ * list's own ("Londres", "Séville"): "line \t name" lines, lines counted from 0.
+ */
+export const placeNamesUrl = (language: string) => `/places/names-v2-${language}.txt`;
+
+/** Languages with a names file (scripts/build-places.mjs): the list's own names are English. */
+export const PLACE_NAME_LANGUAGES: readonly string[] = ['fr'];
+
+/** Reads a names file: line of the list → name in the language. */
+export function parsePlaceNames(text: string): Map<number, string> {
+  const names = new Map<number, string>();
+  for (const line of text.split('\n')) {
+    const tab = line.indexOf('\t');
+    if (tab <= 0) continue;
+    const name = line.slice(tab + 1).trim();
+    const at = Number(line.slice(0, tab));
+    if (name && Number.isInteger(at)) names.set(at, name);
+  }
+  return names;
+}
 
 const cellKey = (lat: number, lon: number) => Math.floor(lat) * 1000 + Math.floor(lon);
 
-/** Parses "name \t lat \t lon \t country" lines. */
-export function buildPlaceIndex(text: string): PlaceIndex {
+/**
+ * Parses "name \t lat \t lon \t country" lines; `localNames` (parsePlaceNames)
+ * names them in the interface's language where it has a name of its own.
+ */
+export function buildPlaceIndex(
+  text: string,
+  localNames: ReadonlyMap<number, string> = new Map(),
+): PlaceIndex {
   const lines = text.split('\n');
   const names: string[] = [];
   const countries: string[] = [];
   const lat = new Float32Array(lines.length);
   const lon = new Float32Array(lines.length);
   const cells = new Map<number, number[]>();
-  for (const line of lines) {
+  /** For each place, its line in the list (what the names files count). */
+  const lineOf: number[] = [];
+  for (const [at, line] of lines.entries()) {
     const [name, la, lo, country] = line.split('\t');
     if (!name || !country) continue;
     const i = names.length;
+    lineOf.push(at);
     names.push(name);
     countries.push(country);
     lat[i] = Number(la);
@@ -50,13 +81,16 @@ export function buildPlaceIndex(text: string): PlaceIndex {
     if (cell) cell.push(i);
     else cells.set(key, [i]);
   }
-  // "Lyon 08" is a district of "Lyon" when the list has both, in the same country.
-  const known = new Set(names.map((name, i) => `${name}\t${countries[i]}`));
+  const shown = names.map((name, i) => localNames.get(lineOf[i] ?? -1) ?? name);
+  // "Lyon 08" is a district of "Lyon" when the list has both, in the same country: read on the
+  // list's own names, then shown in the language.
+  const known = new Map(names.map((name, i) => [`${name}\t${countries[i]}`, i]));
   const towns = names.map((name, i) => {
     const base = / \d{1,2}$/.test(name) ? name.replace(/ \d{1,2}$/, '') : null;
-    return base && known.has(`${base}\t${countries[i]}`) ? base : name;
+    const town = base === null ? undefined : known.get(`${base}\t${countries[i]}`);
+    return (town === undefined ? shown[i] : shown[town]) ?? name;
   });
-  return { names, towns, countries, lat, lon, cells };
+  return { names: shown, towns, countries, lat, lon, cells };
 }
 
 /** Flat-earth distance: exact enough at the scale of a town. */

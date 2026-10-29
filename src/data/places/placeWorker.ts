@@ -1,6 +1,9 @@
 import {
   buildPlaceIndex,
   nearestPlace,
+  parsePlaceNames,
+  PLACE_NAME_LANGUAGES,
+  placeNamesUrl,
   PLACES_URL,
   type Place,
   type PlaceIndex,
@@ -20,15 +23,28 @@ export type PlaceResponse =
 
 // Typed by hand: the app is compiled with the DOM library, not the worker one.
 const scope = self as unknown as {
+  /** The interface's language, given as the worker's name (src/data/places/places.ts). */
+  name: string;
   onmessage: ((event: MessageEvent<PlaceRequest>) => void) | null;
   postMessage(message: PlaceResponse): void;
 };
 
+/** Names in the language; without them (English, offline), the list's own names. */
+const localNames = async (): Promise<Map<number, string>> => {
+  if (!PLACE_NAME_LANGUAGES.includes(scope.name)) return new Map();
+  try {
+    const response = await fetch(placeNamesUrl(scope.name));
+    return response.ok ? parsePlaceNames(await response.text()) : new Map();
+  } catch {
+    return new Map();
+  }
+};
+
 let index: Promise<PlaceIndex> | null = null;
 const load = () =>
-  (index ??= fetch(PLACES_URL).then(async (response) => {
+  (index ??= Promise.all([fetch(PLACES_URL), localNames()]).then(async ([response, names]) => {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return buildPlaceIndex(await response.text());
+    return buildPlaceIndex(await response.text(), names);
   }));
 
 scope.onmessage = (event) => {

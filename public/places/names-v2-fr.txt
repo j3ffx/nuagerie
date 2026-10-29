@@ -1,0 +1,1391 @@
+477	Bariloche
+577	Wanganui
+1082	Mont Gambier
+1339	Piguee
+2037	Colonel Brandsen
+2798	Floride
+2961	Port Elizabeth
+3020	Le Cap
+3368	Uitenhage
+3576	Carthagène
+3590	Trinité
+3630	Santiago du Chili
+3731	Makhanda
+3870	KuGompo City
+4005	Bisho
+5108	Epumalanga
+5658	San Fernando del Valle de Catamarca
+6861	Porto Rico
+6963	Côte du Soleil
+7179	Germinston
+7184	Johannesbourg
+7646	Fort-Dauphin
+7701	Cerrillos
+8431	Tuléar
+8956	Messina
+8959	Philadelphie
+9770	Mont Isa
+10049	Villes sœurs
+10558	Tananarive
+10581	Vohibinany
+10753	Tamatave
+10816	Chutes Victoria
+10871	Santa Cruz
+12184	Ono
+12574	Zambèze
+12583	Cuzco
+12931	Mamoutzou
+13191	Diego-Suarez
+14980	Liquiçá
+15066	Baucau
+16475	Dar es Salam
+16476	Kabupaten de Cianjur
+18353	Bandundu
+18389	El Guabo
+18648	General Villamil
+19043	Gosenyi
+19094	Jambi
+19149	Ruhengeri
+19402	Manta Ecuador
+19516	Kanyabayonga
+19677	Kismaayo
+19732	San Francisco de Quito
+20008	Nkan
+20310	Buale
+20389	Singapour
+20441	Tarawa-Sud
+20759	Mongbwalu
+20790	Mogadiscio
+20841	Melaka
+21058	Jawahar
+21164	Kelang
+21773	Arménie
+21810	Pleebo
+22015	Djouba
+22095	Sékondi
+22307	Banganté
+22470	Mankessim
+22750	Tchang
+22805	Befoussam
+22845	Foumbat
+22896	Agona Swedru
+23179	Fumban
+23619	Ramunka
+23787	El Carmen de Viboral
+23856	Kota Bahru
+24015	Avka
+25091	Yirgalem
+25286	Mount Lavinia
+26616	Tagum
+26914	Yekepa
+26999	Phattalung
+27251	Wenchi
+27957	Cap Comorin
+28234	Yeji
+28620	Garowe
+28772	Laascanood
+28998	Trinquemalay
+29152	Bebiya
+29430	Quilon
+29454	Metehara
+29455	Bedessa
+29589	Bénoye
+29606	Panamá
+29657	Addis-Abeba
+30128	Djidjiga
+30157	San Isidro de El General
+30420	Hargeisa
+30479	Abiyé
+30618	Debre Berhan
+30823	Valvettithurai
+31068	Thanh pho Tra Vinh
+31140	Kawthaung
+31152	Puerto Limón
+31377	Ocumare
+31624	Tejerias
+31739	Cebu
+31787	Cap-Saint-Jacques
+31875	Carthagène
+32049	Chumpon
+32113	Bago
+32369	Bacolod
+32370	Port-d'Espagne
+32580	Tanjavûr
+32645	Hô Chi Minh Ville
+32943	Kadougli
+33195	Ali Sabieh
+33398	Bosasso
+33474	Zeilah
+33748	Gjong Xoai
+33809	Assayta
+33848	Baher Dar
+34032	Thalassery
+34042	Gondelour
+34093	Tadjourah
+34102	Semera
+34185	Cannanore
+34238	Wereta
+34261	Pondichéry
+34273	Da Lat
+34436	Addis Zemen
+34626	Mysore
+34773	Mergui
+34826	Doïla
+34926	Sullia
+34977	Gondar
+34994	Mahâballipuram
+35074	En Nahud
+35322	Mangalore
+35414	Bangalore
+35617	Zinjebar
+35920	Mokha
+36144	El-Geneina
+36342	Kokolani
+36348	Taëz
+36480	Poipet
+36524	Salvador
+36530	Amphoe Aranyaprathet
+36704	Quy Nhơn
+37283	Tagaïtaï
+37332	Aksoum
+37385	Adoua
+37614	Ayutthaya
+37623	Poukham 1
+37660	Wad Madani
+37846	Al Mukalla
+37903	Mandaluyong
+37941	Manille
+37998	Guatemala
+38172	Sébikotane
+38194	Méril
+38202	Kbombole
+38254	Mbacké
+38429	Tapachula
+38573	Khashm El Girba
+38579	San Jose
+38977	Nioro-du-Sahel
+39168	Dahra
+39399	Panaji
+39462	Palayan
+39577	Ourossogui
+39583	Massaoua
+39639	Omdourman
+39644	Bahri
+39712	Hajja
+39909	Huatulco
+40276	Đà Nẵng
+40439	Bagalakote
+40469	Al Ghaydah
+40516	Timbedgha
+40805	Juchitán de Zaragoza
+40908	Moulmein
+41290	Chendi
+41428	Tuxtla Gutiérrez
+41478	Tombouctou
+41557	Rangoun
+41579	Dong Ha
+41596	Bîjâpur
+41644	Acapulco
+41714	Matías Romero
+41891	Sa'da
+42369	Sakhon Nakhon
+42421	Fort de Fada
+42665	Pégou
+43015	Tixla
+43126	Zihuatanejo
+43130	Henzada
+43246	Sainte-Croix
+43854	San Juan Bautista Tuxtepec
+44528	Caroline
+44633	Grand-Goâve
+44651	Petit-Goâve
+44779	Saint Domingue
+44934	Taxco
+45041	Higüey
+45400	Prome
+45705	Taungû
+45944	Amozoc
+46115	Amecameca de Juárez
+46359	Dombivli
+46374	Concepción de La Vega
+47115	Mexico
+47180	Les Gonaïves
+47361	Texcoco
+47400	Xalapa
+47656	Port-Soudan
+47936	Hongsa
+48018	Baie de Hilo
+48059	Naypyidaw
+48186	San Felipe de Puerto Plata
+48460	Konârak
+48598	Chandrapur
+49008	Pachuca
+49229	Tekax
+49350	Ninh Binh
+49374	Houei Sai
+49764	Nam Dinh
+49924	San Miguel de Cozumel
+50005	Poza Rica
+50903	Pindaya
+51295	León
+51421	Surate
+51535	Taëf
+51764	Ðiện Biên Phủ
+51824	La Mecque
+51908	Djeddah
+52244	Ouadi-Halfa
+52730	Macao
+52766	Stanley
+53117	Chittagong
+53151	Abou Simbel
+53541	Calcutta
+53552	Sour
+53661	Thibaw
+53833	District de Longgang
+53853	Zouerate
+54027	Chandernagor
+54164	Baraily
+54278	Canton
+54298	La Havane
+54569	Kymore
+54691	Mascate
+54756	Loyabad
+54804	Dacca
+54980	Namkham
+55091	Village Nouveau Zhongxing
+55145	Durango
+55160	Daltonganj
+55207	Assouan
+55250	Al Khardj
+55286	Al-Aïn
+55291	El Giof
+55476	Abou Dabi
+55488	Koderma
+55489	Médine
+55669	Riyad
+55837	Khajurâho
+55970	Edfou
+56057	Nouveau Taipei
+56077	District de Neihu
+56122	Chilung
+56320	Al Rayyan
+56360	Charjah
+56479	Allāhābād
+56612	Oumm al Qaïwaïn
+56792	Mau Aima
+56802	Louxor
+56886	Jawnpur
+56942	Ras el Khaïmah
+57141	Murzuq
+57433	Hamad Town
+57459	Riffa
+57535	Al-Khasab
+57698	Barhalganj
+58070	Oubari
+58265	Port Safaga
+58390	Gelephu
+58473	Parral
+58580	Darjeeling
+58583	Sebha
+58870	Préfecture de Bijie
+59042	Thimphou
+59130	Birak
+59168	Qambar
+59197	Dulikhel
+59267	Katmandou
+59289	Greater Sun Center
+59509	Charm el-Cheikh
+59517	Guaymas
+59799	Delicias
+59988	Bareli
+60100	Gurgaon
+60127	San Cristóbal de La Laguna
+60391	Kundarki
+60419	Beri
+60934	Ahmedpur Sharqia
+60997	Siwa
+61063	Shigatsé
+61151	Fayoum
+61245	Koweït
+61269	Ifni
+61601	Chiraz
+61650	Lhassa
+62097	Sakaka
+62144	Bahawâlpur
+62155	La Nouvelle-Ibérie
+62164	Gizeh
+62236	Boulaq
+62240	Le Caire
+62576	Ville de 10 Ramadan
+62850	Ménouf
+62918	Bassorah
+63005	Kassassin
+63269	Saint Marys
+63574	Zarandj
+63594	Tanis
+63663	Mansourah
+63810	Chamdo
+63811	El-Arich
+63929	Alexandrie
+63935	Fouah
+63946	Syrte
+63981	Sti Fadma
+64021	Beer-Sheva
+64052	Jhang
+64112	Aboukir
+64155	Samawa
+64173	Bani Suheila
+64222	Al-Qarara
+64229	Kapurthala
+64258	Rosette
+64289	Damiette
+64384	Préfecture de Nagchu
+64475	Beit Hanoun
+64558	Lachkargah
+64621	Marrakech
+64719	Bethléem
+64803	Beni Ulid
+64842	Vieille Ville
+64853	Jérusalem-Est
+64881	Mevasseret Tsion
+64904	Guedera
+64947	Amarah
+65071	Narang
+65114	Zentan
+65179	Kullu
+65203	Rishon LeZion
+65248	Diwaniya
+65305	Nadjaf
+65319	Yehud
+65336	Xiangfan
+65346	Jophé
+65349	Koufa
+65369	Nankin
+65397	Zarka
+65430	Petah Tikva
+65433	Tobrouk
+65589	Garyan
+65628	Île de Hilton-Head
+65630	Suse
+65685	Naplouse
+65883	Tulkarem
+66017	Misrata
+66029	Dezfoul
+66114	Baka al-Gharbiyye
+66206	Jénine
+66217	Hilla
+66293	Beït Shéan
+66314	Kafr Qara
+66330	Kut
+66356	Binyamina
+66533	Afoula
+66549	Kerbala
+66551	Deraa
+66621	Ispahan
+66671	Migdal HaEmek
+66707	Ir ha-Karmel
+66744	Soueïda
+66880	Derna
+66938	Tibériade
+67057	Kiryat-Yam
+67120	Naoua
+67195	Zouara
+67347	Nahariya
+67503	Naqoura
+67520	Qouneitra
+67533	Benguerdene
+67549	Mirpur
+67654	Kiryat Shmona
+67732	Tyr
+67784	Abou Ghraib
+67831	Bagdad
+67843	Falloujah
+68064	Yarmouk
+68096	Djaramana
+68142	Jeju
+68145	Damas
+68160	Ghaziyeh
+68271	Douma
+68668	Bakouba
+68871	Doujaïl
+68981	Beyrouth
+68994	East Compton
+69020	Hazro
+69149	Jehangira
+69222	Mira Loma
+69339	Fez
+69396	Fès Jdid
+69564	Jbeil
+69692	Xuzhou
+69834	Bcharré
+69960	Province de Kermanshah
+70181	Goélette
+70370	Kaboul
+70434	Palmyre
+70672	Nara
+70890	Kakogawa
+71048	Bamiyan
+71240	Tartous
+71561	Tcharikar
+71799	Pusan
+71851	Famagouste
+71863	Hama
+71956	Ville de Chechaouèn
+71966	Nicosie
+71988	Banias
+72006	Jinju
+72372	Héraklion
+72442	Jablé
+72448	Réthymnon
+72683	Assilah
+72691	Kirkouk
+72820	La Canée
+72874	Lattaquié
+72911	Kolymvári
+72943	Eslamchahr
+72963	Souleimaniye
+72987	Zéramdine
+73245	Sayada
+73263	Bourj Islam
+73334	Téhéran
+73362	Funabashi
+73591	Tanger
+73636	Oume
+73860	Ħaż-Żabbar
+73980	Maïmana
+74028	Poul-e Khoumri
+74037	Noda-Shi
+74040	San Pawl il-Bahar
+74044	Raqqa
+74443	Algésiras
+74455	Enfida
+74542	Le Kef
+74611	Alep
+74620	Antioche
+74641	Nichapur
+74648	Sar-e Poul
+74746	Affreville
+74906	Sindjar
+74939	Mossoul
+75349	Hassaké
+75406	Cadix
+75569	Tipaza
+75703	Cheongju
+75790	Chibirchan
+75852	Xérès
+75937	Mazar-e Charif
+76008	Kondôz
+76018	Alger
+76109	Bougie
+76266	Guyoville
+76296	Myrte
+76315	Pointe-Pescade
+76451	Ariana
+76471	Duhok
+76605	Tarse
+76626	Raguse
+76710	Naghadeh
+77036	Qamichli
+77098	Sparte
+77100	Syracuse
+77216	Khotan
+77403	Édesse
+77475	Grenade
+77524	Xian de Pingyao
+77589	Termez
+77755	Bizert
+77864	Cap-Girardeau
+77878	Agrigente
+78110	Séville
+78311	Myconos
+78446	Khorog
+78454	Catane
+78632	Ourmia
+78799	Carthagène
+78933	Olympie
+79298	Adiyaman
+79532	District de Gapyeong
+79753	Aenew
+79767	Cordoue
+79961	Corinthe
+79973	Le Pirée
+80001	Achgabat
+80138	Athènes
+80161	Murcie
+80190	Mégare
+80454	Kamateró
+80522	Kephissia
+80660	Reggio de Calabre
+80675	Palerme
+80890	Argostoli
+80938	Messine
+81098	Patras
+81113	Crevillent
+81153	Elx
+81340	Thèbes
+81625	Yarkand
+81700	Livadiá
+81788	Chalcis
+81831	Delphes
+81927	Sariwon
+82022	Douchanbé
+82313	Saint-Louis
+82362	Calpe
+82568	Tour de Belém
+82695	Lisbonne
+82884	Santa Maria dos Olivais
+83209	Karchi
+83637	Gandie
+84007	Chakhrisabz
+84242	Pergame
+84555	Nakhitchevan
+85644	Kachgar
+85663	Valence
+85743	Pendjikent
+85939	Doğubeyazıt
+86168	Fizuli
+86273	Corfou
+86388	Samarcande
+86479	Sagonte
+86820	Choucha
+86865	Boukhara
+87230	Tolède
+87300	Saranda
+87483	Pékin
+87519	Istaravchan
+87620	Saatli
+87754	Philadelphie
+87774	Artachat
+87941	Castellón de la Plana
+87972	Agdam
+88019	Ciudadela
+88172	Plasence
+88221	Haciqabul
+88301	Agdzhabedi
+88497	Navoï
+88806	Erebouni
+88814	Djizak
+88978	Etchmiadzin
+89056	Erevan
+89616	Khodjent
+89983	Terter
+90064	Richtan
+90178	Bakou
+90216	Ferghana
+90544	Nicée
+90672	Binə
+90763	Tarente
+90788	Vlora
+90950	Goulistan
+91131	Och
+91134	Kokand
+91260	Ville de Capri
+91364	Agsu
+91372	Corat
+91432	L'Escurial
+91500	El Escorial
+91539	Pyléa
+91720	Hacı Zeynalabdin
+91828	Gafanha da Nazaré
+91860	Thessalonique
+91937	Goeycay
+92110	Salerne
+92152	Comté de Queens
+92154	Gandja
+92359	New York
+92564	Dilidjan
+92640	Langadás
+92758	Nicomédie
+92901	Andijan
+92981	Gumri
+93036	Kuchova
+93265	Shamkhor
+93377	Pouzzoles
+93382	Almalyk
+93659	Idjevan
+93894	Nouvelle-Rochelle
+94057	Chinaz
+94098	Lushnja
+94119	Djalalabad
+94138	Ségovie
+94285	Salamanque
+94720	Nurafshon
+94768	Kotchkor-Ata
+94828	Pekin
+95012	Caserte
+95138	Qazax
+95212	Capoue
+95305	Tarragone
+95372	Bénévent
+95443	Guevgueliya
+95710	Aksou
+95721	Kavaja
+95887	Gaète
+96186	Tachkent
+96736	District de Sants-Montjuïc
+96760	Castamena
+96776	Vieille ville de Barcelone
+96800	Quartier gothique
+96807	Khiva
+96824	Barcelone
+96888	Pétritch
+97116	Kavadartsi
+97329	Tchirtchik
+97386	Tsentar Joupa
+97475	Bulkiza
+97594	Kitchevo
+97822	Ourguentch
+97883	Roustavi
+97905	Gotsé Deltchev
+98182	Lérida
+98327	Batoumi
+98353	Kardjali
+98409	Saragosse
+98624	Tbilissi
+98751	Koutcha
+99221	Bragance
+99631	Loop
+99723	Vatican
+100170	Gérone
+100227	Chisra
+100263	Khachouri
+100985	Koumanovo
+101287	Pazardjik
+101619	Doupnitsa
+101638	Koutaïssi
+101828	Chymkent
+101931	Kounia-Ourguentch
+102238	Gjakova
+102430	Viterbe
+102609	Noukous
+102615	Balyktchy
+102818	Bourgas
+102822	Escaldes-Engordany
+102825	Andorre-la-Vieille
+102841	Saint-Jean-Pla-de-Corts
+103015	Argelès-sur-Mer
+103684	Perpignan la Catalane
+103832	Spolète
+104066	Pampelune
+104168	Nahodka
+104179	Vitoria
+104251	Bichkek
+104297	Saint-Jacques-de-Compostelle
+104306	Mitrovica
+104410	Podujevë
+104537	Tourfan
+104638	Makhatchkala
+104734	Soukhoumi
+104870	Alaguir
+105030	Veliko Tarnovo
+105082	Six-Fours-la-Plage
+105125	Chutes Niagara
+105174	Pérouse
+105242	Ourous-Martan
+105250	Lovetch
+105300	Laudio
+105318	Chali
+105417	Sainte-Catharine
+105528	Atchkhoï-Martan
+105801	Targovichté
+105892	Choumen
+106021	Argoun
+106030	Turkestan
+106038	Langreo
+106059	Province de Macerata
+106107	Karaboulak
+106149	Saint-Sébastien
+106189	Sienne
+106201	Sounja
+106355	Goudermes
+106372	Iessik
+106390	Artiom
+106441	Fontarabie
+106455	La Corogne
+106498	Tyrnyaouz
+107141	Kentaou
+107256	Livourne
+107261	Mandelieu
+107343	Dobritch
+107446	Sotchi
+107487	Castres-sur-l'Agout
+107496	Ancône
+107728	Aktaou
+107829	Krasnaïa Poliana
+107832	Rivière-Saas-et-Gourby
+108018	Pise
+108443	Vintimille
+108684	Lucques
+108707	Roussé
+109033	L'Isle
+109101	Ville de Saint-Marin
+109673	Carrare
+109763	Touapsé
+109894	Césène
+110244	Tcherkessk
+110628	Savone
+110814	Seyne
+111060	Gênes
+111086	Zelenokoumsk
+111103	Ravenne
+111153	Khadyjensk
+111184	Bucarest
+111309	Apcheronsk
+111357	San Lazzaro di Savena
+111473	Bologne
+111556	Balaclava
+111683	Fiorano Modenese
+111911	Guelendjik
+112056	Maïkop
+112057	Sébastopol
+112265	Saluces
+112273	Modène
+112569	Reggio d'Émilie
+112909	Bakhtchyssaraï
+112912	Neftekoumsk
+113010	Beloretchensk
+113161	Parme
+113403	Ferrare
+113468	Carmagnole
+113501	Severskaïa
+113546	Guiaguinskaïa
+113694	Kourganinsk
+113702	Pignerol
+113845	Alexandrie
+114504	Taldykourgan
+114629	Théodosie
+114819	Plaisance
+115319	Novokoubansk
+115468	Crémone
+115694	Mantoue
+115913	Pavie
+116038	St. Michael
+116190	Sainte-Égrève
+116480	Saint-Jean
+116689	Kamych-Bouroun
+116848	Verceil
+117044	Izmaïl
+117090	Kertch
+117291	Rimnik
+117368	Allevard-les-Bains
+117483	Padoue
+117685	St Étienne
+117690	Mira
+117708	Venise
+117710	Kropotkine
+117722	Vérone
+117765	Kiliïa
+117787	Novare
+117934	Ivrée
+117969	Lessozavodsk
+118111	Spinea
+118227	Montecchio Maggiore
+118390	Andrézieux
+118556	Vicence
+118607	Cusano Milanino
+118726	Belœil
+118783	Le Mont-Dore
+118814	Katlabouh
+118820	Chabanières
+119141	Baïkonour
+119245	St Hyacinthe
+119554	Trévise
+119796	Bergame
+119952	Djankoï
+120184	Aoste
+120447	Meyzieux
+120831	Côme
+122505	Sorel
+122646	Alba-Julia
+122665	Trente
+122919	Belleville-sur-Saône
+123123	Bellune
+123306	Hénitchesk
+123476	Bellinzone
+123529	Genève
+123680	Sion
+124059	Viège
+124152	Rarogne
+125016	Odessa
+125035	Grand Sudbury
+125143	Sault-Sainte-Marie
+125684	Klagenfurt
+125690	Olechky
+125897	Roche-sur-Yon
+126014	Ieïsk
+126311	Thoune
+126332	Berdiansk
+126582	Aralsk
+126636	Bikine
+126754	Tighina
+126834	Coire
+127302	Berne
+127345	Ioujno-Sakhalinsk
+127442	Mykolaïv
+127670	Schwytz
+127820	Lucerne
+127864	Berthoud
+128051	Marioupol
+128121	Atyraou
+128310	Bienne
+128321	Orpond
+128441	Montménil
+128524	Zoug
+128642	Granges
+128778	Soleure
+128869	Rostov-sur-le-Don
+128941	Khrechtchatytskè
+129384	Paimbœuf
+129417	La Baule
+129945	Romorantin
+130135	Dniproroudné
+130432	Novotcherkassk
+130445	Saint-Gall
+130770	Zaïssan
+130857	9e arrondissement de Budapest
+130935	10e arrondissement de Budapest
+131099	7e arrondissement de Budapest
+131106	Brégence
+131124	Winterthour
+131224	14e arrondissement de Budapest
+131525	Bâle
+131548	Voznessensk
+131565	Saint-Jean de Terre-Neuve
+131946	Île de Bainbridge
+132162	Constance
+132288	Javarin
+132385	Schaffhouse
+132519	Chakhty
+132783	Municipalité de Bălţi
+132893	Ravensbourg
+132965	Jezkazgan
+132992	Salzbourg
+133336	Zaporijjia
+133661	Kryvyï Rih
+133669	Oulan-Bator
+133911	Villniansk
+134163	Kourakhove
+134230	Fribourg-en-Brisgau
+134367	Zouhres
+134614	Pervomaïsk
+134640	Makiïvka
+134978	Biberach
+135226	Yassynouvata
+135317	Avdiïvka
+135376	Presbourg
+135382	Kirovske
+135401	Vieille ville
+135459	Zroub-Komarivskyï
+135552	Khoust
+135603	Belaïa Kalitva
+135807	Vienne
+136333	Saint-Dié
+136371	Tchernivtsi
+136526	Novo'oukraïnka
+136676	Lahr/Schwarzwald
+136706	Jovti Vody
+136719	Chakhtarske
+136877	Augsbourg
+137075	Loutouhyne
+137104	Piatykhatky
+137334	Moukatchévo
+137335	Mohyliv-Podilskyï
+137423	Guntzbourg
+137490	Dobropillia
+137531	Offenbourg
+137790	Kamianské
+137974	Svaliava
+138119	Louhansk
+138121	Stakhanov
+138159	Pidhorodné
+138295	Bakhmout
+138388	Sourovikino
+138474	Oujhorod
+138598	Ste-Geneviève-des-Bois
+138784	Toultchyn
+138786	Oleksandriïa
+138808	Heidenheim
+138812	Kamianets-Podilskyï
+138856	Ladyjyn
+138883	Kalatch-na-Donou
+139060	Znamianka
+139127	Neubourg-sur-le-Danube
+139237	Ouman
+139493	Birobidjan
+139607	Haïssyn
+139710	Emba
+139816	Les Quinze-Vingts
+139828	Paris 06
+139832	Slaviansk
+139958	Rosny
+140030	Paris 17
+140045	Dounaïvtsi
+140100	Ludwigsbourg
+140296	Vaihingen-sur-lEnz
+140471	Ölgiy
+140484	Dolina
+140536	Franconville-la-Garenne
+140667	Horichni Plavni
+140689	Bahatcheve
+140694	Chpola
+140705	Ratisbonne
+140730	Tchortkiv
+140757	Zaritchnè
+140760	Kalouch
+140789	Weissenburg in Bayern
+140806	Jmérynka
+140942	Doubovka
+140973	Krementchouk
+141547	Nord Delta
+141731	Landau
+141793	Izioum
+141951	Vinnytsia
+141953	Sarrebruck
+142041	Deux-Ponts
+142268	Trouskavets
+142287	Vancouver West End
+142479	Sarrelouis
+142529	Spire
+143028	Korsun-Chevtchenkivskyï
+143143	Tcherkassy
+143149	Béréjany
+143206	Saint-Pierre-Port
+143308	Ludwigshafen
+143597	Volotchysk
+143864	Slobojanske
+143974	Ville de Luxembourg
+144086	Kivcharivka
+144141	Cherbourg-en-Cotentin
+144216	Krassyliv
+144296	Zolotonocha
+144500	Koupiansk
+144541	Koziatyn
+144740	Starokostiantyniv
+144743	Trèves
+144800	Portage-aux-Rats
+144937	Wurtzbourg
+144951	Raïtchikhinsk
+144995	Karaganda
+145028	Zolotchiv
+145125	Bielsko-Biała
+145213	Tchouhouïv
+145327	Fryštát
+145498	Kenty
+145565	Berdytchiv
+145740	Gross-Gerau
+145957	Karlstadt-sur-le-Main
+146028	Öskemen
+146053	Aschaffenbourg
+146096	Mayence
+146291	Loubny
+146406	Auschwitz
+146480	Pallassovka
+146495	Temirtaou
+146548	Cracovie
+146551	Mikhaïlovka
+146706	Kamychine
+146813	Derhatchi
+146838	Francfort-sur-le-Main
+146841	Oboukhiv
+146943	Hanau
+147069	Bohodoukhiv
+147149	Vassylkiv
+147154	Chépétivka
+147371	Sükhbaatar
+147376	Amoursk
+147500	Cobourg
+147513	Jytomyr
+147579	Blagovechtchensk
+147591	Aktioubé
+147671	Slavouta
+147791	Korostychiv
+147839	Nétichyn
+147973	Coblence
+148048	Hadiatch
+148166	Vychneve
+148309	Doubno
+148399	Semeï
+148648	Kiev
+148700	Novoouzensk
+148883	Kotsioubynske
+149133	Annœullin
+149266	Komsomolsk-sur-l'Amour
+149427	Lebedine
+149435	Vychhorod
+149473	Giessen
+149497	Zviahel
+149565	Bilhorod-Dnistrovskyi
+150141	Tolbiac
+150469	Rhode-Saint-Genèse
+150551	Loutsk
+150663	Aix-la-Chapelle
+150678	Leeuw-Saint-Pierre
+150683	Tongres
+150778	Menin
+150848	Tirlemont
+150858	Marbourg
+150911	Saint-Trond
+150956	Boutourlinovka
+150967	Courtrai
+151119	Bruxelles
+151122	Ypres
+151130	Audenarde
+151235	Ostrogojsk
+151332	Louvain
+151609	Soumy
+151646	Juliers
+151692	Iéna
+151729	Cologne
+151755	Alost
+151813	Roulers
+152068	Altenbourg
+152274	Krasnoarmeïsk
+152290	Malines
+152303	Termonde
+152329	Dixmude
+152352	Dunkerque
+152434	Nijyn
+152449	Gand
+152460	Dresde
+152517	Mont-Saint-Amand
+152876	Coxyde
+152940	Douvres
+152973	Lierre
+152986	Tunbridge Wells
+153100	Naumbourg
+153170	Meißen
+153190	Saint-Nicolas
+153354	Ruremonde
+153428	Bruges
+153457	Ostende
+153471	Saint-Gilles-Waes
+153477	Anvers
+153597	Oural
+153750	Cantorbéry
+153769	Goubkine
+153941	Cassel
+153987	Ovroutch
+154106	Mersebourg
+154111	Ierchov
+154407	Hann. Münden
+154493	Mülheim an der Ruhr
+154496	Duisbourg
+154546	Flessingue
+154775	Halle
+154800	Dortmund-Hörde
+154805	Kouvandyk
+154855	Berg-op-Zoom
+154884	Middelbourg
+154920	Tchernihiv
+154940	Londres
+154981	Roubtsovsk
+155011	Gueldre
+155034	Slavoutytch
+155100	Rosendael
+155141	District londonien d'Islington
+155886	Voronej
+155931	Hloukhiv
+155942	Semilouki
+156022	Bois-le-Duc
+156036	Mont-Sainte-Gertrude
+156078	Babouchkine
+156120	Ekibastouz
+156144	Koursk
+156265	Wijk en Aalburg
+156317	Orenbourg
+156325	Tsiolkovski
+156408	Clèves
+156409	Quedlinbourg
+156429	Bernbourg
+156490	Atbassar
+156571	Oulan-Oudé
+156618	Dessau-Roßlau
+156622	Emmerich am Rhein
+156633	Nimègue
+156776	Chtchigry
+157139	Culembourg
+157156	Gorno-Altaïsk
+157228	Nertchinsk
+157319	Chimanovsk
+157458	Tchita
+157588	La Haye
+157718	Hamelin
+157847	Magdebourg
+157997	Leyde
+158245	Chelekhov
+158255	Jytkavitchy
+158323	Varsovie
+158462	Rtichtchevo
+158491	Brunswick
+158614	Irkoutsk
+158836	Francfort-sur-l'Oder
+158947	Hanovre
+158969	Amsterdam-Centre
+159078	Berlin-Lichtenrade
+159143	Brandebourg-sur-la-Havel
+159152	Berlin-Marienfelde
+159168	Berlin-Buckow
+159171	Wolfsbourg
+159172	Berlin-Rudow
+159182	Berlin-Gropiusstadt
+159211	Homiel
+159216	Berlin-Lankwitz
+159220	Berlin-Mariendorf
+159235	Berlin-Britz
+159245	Berlin-Köpenick
+159277	Berlin-Kladow
+159284	Berlin-Steglitz
+159294	Berlin-Dahlem
+159330	Berlin-Tempelhof
+159346	Berlin-Friedenau
+159361	Berlin-Schmargendorf
+159420	Aleïsk
+159432	Berlin-Kreuzberg
+159448	Berlin-Rummelsburg
+159488	Berlin-Friedrichshain
+159499	Berlin-Westend
+159528	Berlin-Wilhelmstadt
+159536	Berlin-Moabit
+159545	Berlin-Fennpfuhl
+159556	Berlin-Hellersdorf
+159570	Berlin-Staaken
+159593	Berlin-Haselhorst
+159601	Berlin-Alt-Hohenschönhausen
+159603	Berlin-Wedding
+159612	Berlin-Gesundbrunnen
+159619	Berlin-Falkenhagener Feld
+159641	Berlin-Hakenfelde
+159657	Berlin-Reinickendorf
+159666	Royal Sutton Coldfield
+159672	Berlin-Neu-Hohenschönhausen
+159706	Berlin-Tegel
+159734	Starodoub
+159768	Berlin-Wittenau
+159779	Berlin-Märkisches Viertel
+159797	Berlin-Französisch Buchholz
+159837	Berlin-Hermsdorf
+159838	Ielets
+159840	Berlin-Heiligensee
+159915	Berlin-Frohnau
+159955	Nienburg/Weser
+160350	Koumertaou
+160395	Bouzoulouk
+160718	Mitchourinsk
+160778	Vilioutchinsk
+160854	Le Helder
+160864	Meleouz
+160866	Belinski
+160900	Tchapaïevsk
+160995	Sloutsk
+161107	Petropavlovsk-Kamtchatski
+161134	Brême
+161139	Papenbourg
+161185	Rahatchow
+161199	Novokouïbychevsk
+161257	Kouznetsk
+161291	Baranovitchi
+161308	Iefremov
+161319	Oldenbourg
+161341	Nikolaïevsk-sur-l'Amour
+161558	Kostanaï
+161570	Groningue
+161684	Lunebourg
+161756	Briansk
+161814	Kokchetaou
+161827	Comté de Dublin Sud
+162070	Barnaoul
+162416	Hambourg-Harburg
+162519	Hambourg-Bergedorf
+162713	Togliatti
+162805	Arrondissement dAltona
+162807	Arrondissement de Hambourg-Mitte
+162813	Hambourg
+162842	Neubrandenbourg
+162907	Hambourg-Eimsbüttel
+162978	Arrondissement de Hambourg-Nord
+163003	Stade
+163004	Navahroudak
+163042	Ossinniki
+163159	Saint-Albert
+163205	Barych
+163226	Bougourouslan
+163298	Dziarjynsk
+163301	Abdoulino
+163310	Mejdouretchensk
+163347	Minoussinsk
+163360	Riajsk
+163459	Karassouk
+163512	Novokouznetsk
+163586	Souzoun
+163673	Skopine
+163859	Moguilev
+163920	Kireïevsk
+164024	Ouzlovaïa
+164229	Greifswald
+164254	Soukhinitchi
+164265	Neustadt en Holstein
+164267	Belebeï
+164436	Toula
+164606	Rendsbourg
+164661	Oulianovsk
+164705	Veniov
+164710	Sassovo
+164838	Achmiany
+164856	Nourlat
+164957	Aleksine
+164991	Kalouga
+165046	Touloun
+165079	Goussev
+165118	Astraviets
+165135	Riazan
+165179	Leninsk-Kouznetski
+165298	Oufa
+165320	Iemanjelinsk
+165364	Flensbourg
+165419	Pouchtchino
+165434	Kachira
+165504	Stoupino
+165518	Nijneoudinsk
+165522	Kourtamych
+165570	Kassimov
+165613	Bouïnsk
+165617	Loukhovitsy
+165670	Maloïaroslavets
+165682	Novossibirsk
+165694	Blagovechtchensk
+165712	Åbenrå
+165724	Kalatchinsk
+165811	Tchekhov
+165824	Tcheliabinsk
+165832	Zlatooust
+165886	Choumikha
+165962	Voskressensk
+165967	Oujour
+166075	Koulebaki
+166110	Kouïbychev
+166113	Kourgan
+166158	Polatsk
+166161	Karabach
+166174	Choumerlia
+166175	Mojaïsk
+166184	Kanach
+166218	Charypovo
+166244	Gagarine
+166256	Ramenskoïe
+166267	Mourom
+166274	Chatoura
+166282	Koubinka
+166287	Kourovskoïe
+166320	Tuchcovo
+166394	Nijnekamsk
+166466	Copenhague
+166468	Lioubertsy
+166519	Likino-Douliovo
+166554	Elektroougli
+166605	Moscou
+166627	Reoutov
+166680	Balachikha
+166718	Orekhovo-Zouïevo
+166814	Noguinsk
+166844	Iachkino
+166914	Mytichtchi
+166939	Petouchki
+166954	Ioubileïny
+166988	Édimbourg
+167073	Pouchkino
+167084	Tchernogolovka
+167142	Elseneur
+167148	Krasnoïarsk
+167215	Snejinsk
+167225	Chadrinsk
+167250	Krasnoarmeïsk
+167266	Ichim
+167291	Tcheboksary
+167326	Kirjatch
+167364	Solnetchnogorsk
+167453	Dzerjinsk
+167478	Rjev
+167487	Atchinsk
+167545	Nijni Novgorod
+167548	Kline
+167583	Strounino
+167672	Sarapoul
+167700	Zavodooukovsk
+167708	Tchernouchka
+167773	Krasnooufimsk
+167791	Iochkar-Ola
+167874	Doubna
+167956	Kamychlov
+167959	Chouïa
+167961	Ijevsk
+167963	Ekaterinbourg
+167965	Teïkovo
+168048	Verkhniaïa Pychma
+168062	Sredneouralsk
+168069	Assino
+168102	Torjok
+168172	Ostachkov
+168176	Tioumen
+168203	Rostov Veliki
+168228	Fourmanov
+168245	Ossa
+168288	Kachine
+168302	Privoljsk
+168317	Koungour
+168329	Kinechma
+168387	Ouglitch
+168444	Iaroslavl
+168503	Göteborg
+168555	Bejetsk
+168682	Verkhniaïa Salda
+168684	Tourinsk
+168762	Lessossibirsk
+168786	Kouchva
+168787	Tchoussovoï
+168805	Mantourovo
+168835	Galitch
+168849	Borovitchi
+168915	Novgorod
+168923	Kirovo-Tchepetsk
+168950	Nijniaïa Toura
+168965	Omoutninsk
+168991	Louga
+169023	Goubakha
+169088	Koudymkar
+169130	Tchoudovo
+169139	Tcherepovets
+169209	Tonsberg
+169305	Kinguissepp
+169308	Arrondissement de Nõmme
+169338	Arrondissement de Mustamäe
+169354	Arrondissement de Haabersti
+169366	Arrondissement de Lasnamäe
+169369	Arrondissement de Kesklinn
+169376	Arrondissement de Tallin-Nord
+169387	Arrondissement de Pirita
+169388	Kirichi
+169473	Kommounar
+169481	Tikhvine
+169612	Lomonossov
+169638	Saint-Pétersbourg
+169688	Vsevolojsk
+170097	Sipoo
+170291	Hyvinkää
+170400	Nijnevartovsk
+170419	Khanty-Mansiïsk
+170429	Meguion
+170533	Sourgout
+170832	Iakoutsk
+170845	Radoujny
+171168	Oukhta
+171208	Mouravlenko
+171430	Petchora
+171500	Aïkhal
+171507	Oussinsk
+171532	Oudatchny
+171545	Labytnangui
+171585	Vorkouta
+171606	Montchegorsk
+171655	Mourmansk
+171668	Poliarny
+171681	Doudinka

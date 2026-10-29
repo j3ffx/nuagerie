@@ -83,3 +83,19 @@ test.describe('on a phone in English', () => {
     await expect(page.getByRole('heading', { name: 'Settings', level: 1 })).toBeVisible();
   });
 });
+
+test.describe('in French', () => {
+  test('names foreign places in French', async ({ page }) => {
+    test.slow();
+    await page.goto('/?demo=1');
+    await page.goto('/recherche');
+    await page.getByRole('searchbox').fill('londres');
+    await expect(page.getByRole('heading', { name: 'Lieux' })).toBeVisible(PLACES);
+    await expect(
+      page
+        .getByRole('main')
+        .getByRole('link', { name: /^Londres/ })
+        .first(),
+    ).toBeVisible();
+  });
+});

@@ -1,4 +1,5 @@
 import { openDB, type DBSchema } from 'idb';
+import { language } from '../../lib/i18n.ts';
 import type { MediaItem } from '../model.ts';
 import { PLACES_URL, type Place } from './placeIndex.ts';
 import { coordinateKey, lookupPlaces } from './places.ts';
@@ -130,8 +131,8 @@ interface PlacesDB extends DBSchema {
 
 /** Its own database: the index's schema stays as it is, and clearing one leaves the other. */
 const DB_NAME = 'nuagerie-places';
-/** The list the places were found with, and the shape they are kept in. */
-const LIST = `${PLACES_URL}#town`;
+/** The list the places were found with, the shape and the language they are kept in. */
+const LIST = `${PLACES_URL}#town#${language}`;
 
 function indexedPlaceStorage(): PlaceStorage {
   const open = async () => {

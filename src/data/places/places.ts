@@ -1,3 +1,4 @@
+import { language } from '../../lib/i18n.ts';
 import type { Place } from './placeIndex.ts';
 import type { PlaceRequest, PlaceResponse } from './placeWorker.ts';
 
@@ -12,7 +13,11 @@ const answers = new Map<string, Promise<Place | null>>();
 
 function getWorker(): Worker {
   if (!worker) {
-    worker = new Worker(new URL('./placeWorker.ts', import.meta.url), { type: 'module' });
+    // Named by the language, which the worker names the places in.
+    worker = new Worker(new URL('./placeWorker.ts', import.meta.url), {
+      type: 'module',
+      name: language,
+    });
     worker.onmessage = (event: MessageEvent<PlaceResponse>) => {
       const request = pending.get(event.data.requestId);
       if (!request) return;
