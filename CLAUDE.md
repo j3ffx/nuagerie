@@ -36,7 +36,7 @@ Body explaining *why* (the diff already shows what).
 - **Scope** is optional; `scripts/check-commits.mjs` holds the authoritative list of types and scopes.
 - Header of 72 characters or fewer. One logical change and one type per commit.
 - Code, comments and commit messages are in English. The UI is in French and English (see
-  Languages); the user docs are in French, the changelog in both.
+  Languages); the user docs are in French, the README and the changelog in both.
 
 ## Privacy of the public repository
 
