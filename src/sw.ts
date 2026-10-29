@@ -61,15 +61,13 @@ async function coverIcon(cover: MediaItem | null): Promise<string> {
   const places = [
     ...names
       .filter((name) => name.startsWith('nuagerie-offline-'))
-      .map((name) => [name, 'offline']),
+      .map((name) => [name, 'offline'] as const),
     ...names
       .filter((name) => name.startsWith('nuagerie-thumbnails-'))
-      .map((name) => [name, 'thumbnails']),
+      .map((name) => [name, 'thumbnails'] as const),
   ];
   for (const [name, path] of places) {
-    const hit = await (
-      await caches.open(name ?? '')
-    ).match(`${self.location.origin}/__${path}/${key}`);
+    const hit = await (await caches.open(name)).match(`${self.location.origin}/__${path}/${key}`);
     if (!hit) continue;
     const bytes = new Uint8Array(await hit.arrayBuffer());
     let binary = '';

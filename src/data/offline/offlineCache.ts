@@ -15,6 +15,7 @@ export interface OfflineStorage {
 }
 
 const SIZE_HEADER = 'X-Nuagerie-Bytes';
+const LIST_BATCH = 200;
 
 export function createOfflineCache(
   name: string,
@@ -52,10 +53,15 @@ export function createOfflineCache(
       const cache = await open();
       const kept = new Map<string, number>();
       if (!cache) return kept;
-      for (const request of await cache.keys()) {
-        if (!request.url.startsWith(prefix)) continue;
-        const response = await cache.match(request);
-        kept.set(request.url.slice(prefix.length), Number(response?.headers.get(SIZE_HEADER)) || 0);
+      const requests = (await cache.keys()).filter((request) => request.url.startsWith(prefix));
+      // By batches: one at a time, thousands of images take seconds on a phone.
+      for (let start = 0; start < requests.length; start += LIST_BATCH) {
+        const batch = requests.slice(start, start + LIST_BATCH);
+        const responses = await Promise.all(batch.map((request) => cache.match(request)));
+        batch.forEach((request, i) => {
+          const size = Number(responses[i]?.headers.get(SIZE_HEADER)) || 0;
+          kept.set(request.url.slice(prefix.length), size);
+        });
       }
       return kept;
     },

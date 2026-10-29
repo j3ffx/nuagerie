@@ -22,6 +22,11 @@ export type SyncStatus =
 
 export interface SyncContextValue {
   favorites: ReadonlySet<string>;
+  /**
+   * The favourites this device knows, even while they are not shown (a Microsoft session to
+   * restore, the sync turned off): what is kept offline must not go with a passing state.
+   */
+  storedFavorites: ReadonlySet<string>;
   /** Favourites can be used: demo, or the sync with OneDrive is on. */
   favoritesOn: boolean;
   toggleFavorite: (id: string) => void;

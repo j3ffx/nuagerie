@@ -292,9 +292,10 @@ export function SyncProvider({
     granted,
     status: status.status,
   });
+  const storedFavorites = useMemo(() => favoriteIds(state), [state]);
   const favorites = useMemo(
-    () => (favoritesOn ? favoriteIds(state) : new Set<string>()),
-    [favoritesOn, state],
+    () => (favoritesOn ? storedFavorites : new Set<string>()),
+    [favoritesOn, storedFavorites],
   );
 
   // Hearts touched before the sync was on (one photo, or a selection): they become favourites
@@ -317,6 +318,7 @@ export function SyncProvider({
     <SyncContext.Provider
       value={{
         favorites,
+        storedFavorites,
         favoritesOn,
         toggleFavorite,
         available,

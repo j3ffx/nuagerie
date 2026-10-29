@@ -183,6 +183,15 @@ export interface ManagerDeps {
 
 const PARALLEL = 3;
 
+/** Network failures in a row (not "not found") that mean the network lets nothing through. */
+const FAILURES_BEFORE_PAUSE = 6;
+/** Listeners hear of the progress at most this often: every tile and badge redraws on it. */
+const NOTIFY_EVERY_MS = 250;
+
+/** The photos and versions a list stands for: the same list needs no new round. */
+const signatureOf = (items: readonly MediaItem[]) =>
+  items.map((item) => `${item.id}:${item.eTag}`).join('\n');
+
 export function createOfflineManager(deps: ManagerDeps) {
   let state: OfflineState = {
     images: 0,
@@ -197,48 +206,75 @@ export function createOfflineManager(deps: ManagerDeps) {
   let present: Map<string, number> | null = null;
   const failures = new Map<string, FailureReason>();
   let latest: readonly MediaItem[] = [];
+  let signature: string | null = null;
   let mobileDataAllowed = false;
   let controller: AbortController | null = null;
   let round: Promise<void> | null = null;
   let again = false;
+  let notifiedAt = 0;
+  let notifyTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const update = (next: Partial<OfflineState>) => {
+  const notify = () => {
+    notifiedAt = Date.now();
+    notifyTimer = null;
+    listeners.forEach((listener) => listener());
+  };
+  const update = (next: Partial<OfflineState>, now = false) => {
     state = { ...state, ...next };
-    listeners.forEach((notify) => notify());
+    if (now || Date.now() - notifiedAt >= NOTIFY_EVERY_MS) {
+      if (notifyTimer) clearTimeout(notifyTimer);
+      notify();
+    } else {
+      notifyTimer ??= setTimeout(notify, NOTIFY_EVERY_MS);
+    }
   };
   const counted = () => {
     let bytes = 0;
     for (const size of present?.values() ?? []) bytes += size;
     return { images: present?.size ?? 0, bytes };
   };
+  /** Why downloads must wait now, if they must. */
+  const pauseNow = (): OfflinePause =>
+    !deps.isOnline() ? 'offline' : deps.onMobileData() && !mobileDataAllowed ? 'mobile-data' : null;
 
   const runRound = async () => {
+    // From the start: a new list given while the kept images are listed or dropped stops this
+    // round, which would otherwise download what is no longer wanted.
+    const signal = (controller = new AbortController()).signal;
     present ??= await deps.storage.list().catch(() => new Map<string, number>());
+    if (signal.aborted) return;
     const { downloads, drops } = offlinePlan(latest, new Set(present.keys()));
     if (drops.length > 0) {
       await deps.storage.delete(drops).catch(() => undefined);
       for (const key of drops) present.delete(key);
+      if (signal.aborted) return;
     }
     const wanted = new Set(downloads.map((download) => download.key));
     for (const key of failures.keys()) if (!wanted.has(key)) failures.delete(key);
-    update({ ...counted(), total: downloads.length, done: 0, failed: 0, pause: null });
+    update({ ...counted(), total: downloads.length, done: 0, failed: 0, pause: null }, true);
     if (downloads.length === 0) return;
 
-    const pause = !deps.isOnline()
-      ? 'offline'
-      : deps.onMobileData() && !mobileDataAllowed
-        ? 'mobile-data'
-        : null;
-    if (pause) {
-      update({ pause });
+    const stop = (pause: OfflinePause) => {
+      controller?.abort();
+      update({ pause }, true);
+    };
+    const waiting = pauseNow();
+    if (waiting) {
+      update({ pause: waiting }, true);
       return;
     }
 
-    const signal = (controller = new AbortController()).signal;
-    update({ running: true });
+    update({ running: true }, true);
     let next = 0;
+    let failedInARow = 0;
     const worker = async () => {
       while (next < downloads.length && !signal.aborted) {
+        // Checked before each image: off the Wi-Fi in the middle, the rest waits for it.
+        const pause = pauseNow();
+        if (pause) {
+          stop(pause);
+          break;
+        }
         const download = downloads[next++];
         if (!download) break;
         try {
@@ -248,14 +284,14 @@ export function createOfflineManager(deps: ManagerDeps) {
           await deps.storage.put(download.key, data.blob);
           present?.set(download.key, data.blob.size);
           failures.delete(download.key);
+          failedInARow = 0;
           update({ ...counted(), done: state.done + 1 });
         } catch (error) {
           if (signal.aborted) break;
           // The network went: not this image's fault. Stop here, the round starts again when
           // it is back.
           if (!deps.isOnline()) {
-            controller?.abort();
-            update({ pause: 'offline' });
+            stop('offline');
             break;
           }
           const reason = reasonOf(error);
@@ -263,11 +299,13 @@ export function createOfflineManager(deps: ManagerDeps) {
           update({ failed: state.failed + 1 });
           // No room left on the device: the next images would fail the same way.
           if (reason === 'full') controller?.abort();
+          // "Connected" but nothing gets through (hotel Wi-Fi, a portal): stop asking.
+          if (reason === 'failed' && ++failedInARow >= FAILURES_BEFORE_PAUSE) stop('offline');
         }
       }
     };
     await Promise.all(Array.from({ length: PARALLEL }, worker));
-    update({ running: false });
+    update({ running: false }, true);
   };
 
   const start = (): Promise<void> => {
@@ -283,7 +321,7 @@ export function createOfflineManager(deps: ManagerDeps) {
     })().finally(() => {
       round = null;
       controller = null;
-      if (state.running) update({ running: false });
+      if (state.running) update({ running: false }, true);
     });
     return round;
   };
@@ -302,12 +340,24 @@ export function createOfflineManager(deps: ManagerDeps) {
     /** Keeps these items (and only these): downloads what is missing, drops the rest. */
     sync(items: readonly MediaItem[]): Promise<void> {
       latest = items;
+      const next = signatureOf(items);
+      // The same photos (an index refreshed with nothing new for them): the round goes on.
+      if (next === signature && round) return round;
+      signature = next;
       // The list changed: the round in progress gives way to a new one.
       controller?.abort();
       return start();
     },
-    /** The network is back, or the app came back to the screen. */
+    /** The network is back. */
     resume(): Promise<void> {
+      return start();
+    },
+    /**
+     * The app came back to the screen: what is kept is listed again (the browser may have
+     * cleared it to free space), then downloads go on.
+     */
+    refresh(): Promise<void> {
+      if (!round) present = null;
       return start();
     },
     /** "Télécharger quand même": mobile data is fine, until the app closes. */
@@ -318,12 +368,16 @@ export function createOfflineManager(deps: ManagerDeps) {
     /** Signing out, or "Tout retirer". */
     async clear(): Promise<void> {
       latest = [];
+      signature = null;
       controller?.abort();
       await round?.catch(() => undefined);
       await deps.storage.clear();
       present = new Map();
       failures.clear();
-      update({ images: 0, bytes: 0, total: 0, done: 0, failed: 0, running: false, pause: null });
+      update(
+        { images: 0, bytes: 0, total: 0, done: 0, failed: 0, running: false, pause: null },
+        true,
+      );
     },
   };
 }

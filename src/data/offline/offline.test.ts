@@ -321,3 +321,88 @@ describe('createOfflineManager: failures', () => {
     expect(offline.view.failure(thumbnailKey(byId('m1'), 'medium'))).toBeNull();
   });
 });
+
+describe('createOfflineManager: on a real phone', () => {
+  it('stops on mobile data in the middle, and waits for Wi-Fi', async () => {
+    let cellular = false;
+    const { offline, fetch } = manager({ onMobileData: () => cellular });
+    fetch.mockImplementation(() => {
+      cellular = true; // the user walks out of the Wi-Fi
+      return Promise.resolve({ blob: new Blob(['m']) });
+    });
+    await offline.sync([byId('m1'), byId('s1'), byId('e1'), byId('a1')]);
+    expect(offline.getSnapshot().pause).toBe('mobile-data');
+    // Only those already under way went on.
+    expect(fetch.mock.calls.length).toBeLessThanOrEqual(3);
+  });
+
+  it('stops asking when the network lets nothing through', async () => {
+    const { offline, fetch } = manager();
+    fetch.mockImplementation(() => Promise.reject(new TypeError('Failed to fetch')));
+    const many = Array.from({ length: 20 }, (_, i) => ({ ...byId('m1'), id: `m${i}` }));
+    await offline.sync(many);
+    expect(offline.getSnapshot().pause).toBe('offline');
+    expect(fetch.mock.calls.length).toBeLessThan(10);
+  });
+
+  it('keeps going through a few failures that are not the network', async () => {
+    const { offline, fetch } = manager();
+    fetch.mockImplementation((item) =>
+      item.id.endsWith('1') && item.id !== 'm1'
+        ? Promise.reject(Object.assign(new Error('Not found'), { status: 404 }))
+        : Promise.resolve({ blob: new Blob(['m']) }),
+    );
+    const many = Array.from({ length: 12 }, (_, i) => ({ ...byId('m1'), id: `x${i}1` }));
+    await offline.sync(many);
+    expect(offline.getSnapshot()).toMatchObject({ pause: null, failed: 24 });
+  });
+
+  it('gives way to a new list given while old images are dropped', async () => {
+    const { storage } = memoryStorage([['large/old/e', 1]]);
+    let dropped: () => void = () => undefined;
+    storage.delete = () => new Promise((resolve) => (dropped = resolve));
+    const fetch = vi.fn<ManagerDeps['fetch']>(() => Promise.resolve({ blob: new Blob(['m']) }));
+    const offline = createOfflineManager({
+      storage,
+      fetch,
+      isOnline: () => true,
+      onMobileData: () => false,
+    });
+    const first = offline.sync([byId('m1'), byId('s1')]);
+    await vi.waitFor(() => expect(dropped).not.toBe(undefined));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const second = offline.sync([byId('a1')]);
+    dropped();
+    await Promise.all([first, second]);
+    // Nothing of the first list was downloaded.
+    expect(new Set(fetch.mock.calls.map(([item]) => item.id))).toEqual(new Set(['a1']));
+  });
+
+  it('lists what is kept again when the app comes back (the browser may have cleared it)', async () => {
+    const { offline, kept, fetch } = manager();
+    await offline.sync([byId('m1')]);
+    kept.clear(); // evicted under storage pressure
+    await offline.refresh();
+    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(kept.size).toBe(2);
+  });
+
+  it('starts no new round for the same photos', async () => {
+    const { offline, fetch } = manager();
+    const releases: (() => void)[] = [];
+    fetch.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          releases.push(() => resolve({ blob: new Blob(['m']) }));
+        }),
+    );
+    const first = offline.sync([byId('m1')]);
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalled());
+    // A refreshed index: new objects, same photos and versions.
+    const again = offline.sync([{ ...byId('m1') }]);
+    fetch.mockImplementation(() => Promise.resolve({ blob: new Blob(['m']) }));
+    releases.forEach((release) => release());
+    await Promise.all([first, again]);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+});

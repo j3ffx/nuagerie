@@ -9,11 +9,24 @@ export const FAVORITES_ALBUM_ID = 'favoris';
 
 /** The favourite photos and videos still in the index, most recent first, undated last. */
 export function useFavoriteItems(): readonly MediaItem[] {
-  const index = useMediaIndex();
   const { favorites } = useSync();
+  return useItemsOf(favorites);
+}
+
+/**
+ * The favourites this device knows, even while they are hidden (a session to restore, the
+ * sync off): those kept offline stay kept through such a passing state.
+ */
+export function useStoredFavoriteItems(): readonly MediaItem[] {
+  const { storedFavorites } = useSync();
+  return useItemsOf(storedFavorites);
+}
+
+function useItemsOf(ids: ReadonlySet<string>): readonly MediaItem[] {
+  const index = useMediaIndex();
   return useMemo(
-    () => (index && favorites.size > 0 ? index.items.filter((item) => favorites.has(item.id)) : []),
-    [index, favorites],
+    () => (index && ids.size > 0 ? index.items.filter((item) => ids.has(item.id)) : []),
+    [index, ids],
   );
 }
 

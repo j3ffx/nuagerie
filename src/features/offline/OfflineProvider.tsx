@@ -18,7 +18,7 @@ import {
 } from '../../data/offline/offline.ts';
 import { isOnline } from '../../lib/online.ts';
 import { usePersistentState } from '../../lib/persistent.ts';
-import { FAVORITES_ALBUM_ID, useFavoriteItems } from '../favorites/useFavorites.ts';
+import { FAVORITES_ALBUM_ID, useStoredFavoriteItems } from '../favorites/useFavorites.ts';
 import { keptKey, OfflineContext, type OfflineContextValue } from './offlineContext.ts';
 
 /** The Network Information API (Chrome on Android): not in the DOM types everywhere. */
@@ -40,7 +40,8 @@ const onMobileData = () => {
 export function OfflineProvider({ children }: { children: ReactNode }) {
   const { mode, source, thumbnails } = useData();
   const index = useMediaIndex();
-  const favorites = useFavoriteItems();
+  // Not the favourites shown, which a session to restore hides for a while: those stored.
+  const favorites = useStoredFavoriteItems();
   const [choice, setChoice] = usePersistentState<KeptChoice>(keptKey(mode), NOTHING_KEPT);
   const [manager] = useState(() =>
     createOfflineManager({
@@ -65,15 +66,17 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
   }, [items, manager]);
 
   useEffect(() => {
-    const resume = () => {
-      if (document.visibilityState === 'visible') void manager.resume();
+    const resume = () => void manager.resume();
+    // Back on screen: what is kept is listed again, as the browser may have freed some of it.
+    const refresh = () => {
+      if (document.visibilityState === 'visible') void manager.refresh();
     };
     window.addEventListener('online', resume);
-    document.addEventListener('visibilitychange', resume);
+    document.addEventListener('visibilitychange', refresh);
     connection()?.addEventListener('change', resume);
     return () => {
       window.removeEventListener('online', resume);
-      document.removeEventListener('visibilitychange', resume);
+      document.removeEventListener('visibilitychange', refresh);
       connection()?.removeEventListener('change', resume);
     };
   }, [manager]);
