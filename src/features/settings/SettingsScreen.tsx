@@ -12,6 +12,7 @@ import { checkForUpdate } from '../../app/updates.ts';
 import { AboutSection } from './AboutSection.tsx';
 import { AccountSection } from './AccountSection.tsx';
 import { MemoriesNotificationSection } from './MemoriesNotificationSection.tsx';
+import { OfflineSection } from './OfflineSection.tsx';
 import { PermissionsSection } from './PermissionsSection.tsx';
 import { SyncSection } from './SyncSection.tsx';
 import { ThumbnailCacheSection } from './ThumbnailCacheSection.tsx';
@@ -171,6 +172,8 @@ export function SettingsScreen() {
             )}
           </div>
         </section>
+
+        <OfflineSection />
 
         <ThumbnailCacheSection />
 

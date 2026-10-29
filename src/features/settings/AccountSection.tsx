@@ -13,6 +13,7 @@ import { removePersistent } from '../../lib/persistent.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
 import { useConfirm } from '../../ui/confirmContext.ts';
+import { useOffline } from '../offline/offlineContext.ts';
 
 /** The signed-in Microsoft account (OneDrive mode only). */
 export function AccountSection() {
@@ -21,18 +22,24 @@ export function AccountSection() {
   const online = useOnline();
   const confirm = useConfirm();
   const reconnect = useSignIn();
+  const offline = useOffline();
 
   /** Signing out leaves nothing of the drive on the device: index, thumbnails and places go too. */
   const signOutAndForget = async () => {
     const answer = await confirm({
       title: 'Se déconnecter ?',
       message:
-        'Ce que Nuagerie garde sur cet appareil (index, miniatures, lieux, recherches, copie des favoris et des préférences) sera effacé. Rien ne change dans OneDrive : ce qui est synchronisé y reste et revient quand tu te reconnectes.',
+        'Ce que Nuagerie garde sur cet appareil (index, miniatures, albums gardés hors connexion, lieux, recherches, copie des favoris et des préférences) sera effacé. Rien ne change dans OneDrive : ce qui est synchronisé y reste et revient quand tu te reconnectes.',
       confirmLabel: 'Se déconnecter',
       danger: true,
     });
     if (!answer) return;
-    await Promise.all([source.reset?.(), thumbnails.disk.clear(), photoPlaces().clear()]);
+    await Promise.all([
+      source.reset?.(),
+      thumbnails.disk.clear(),
+      offline.clear(),
+      photoPlaces().clear(),
+    ]);
     thumbnails.store.clearMemory();
     // This device's copy of the favourites and preferences; OneDrive's copy stays.
     removePersistent(syncStateKey('onedrive'));
