@@ -1,0 +1,101 @@
+/* A 44 px target over the corner of the cover; the visible disc is smaller. */
+.badge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  padding: 0;
+  border: none;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.disc {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-soft);
+}
+
+.badge[data-phase='done'] .disc {
+  background: var(--color-success);
+  color: var(--color-on-success);
+}
+
+.badge[data-phase='downloading'] .disc,
+.badge[data-phase='waiting'] .disc {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.badge[data-phase='error'] .disc {
+  background: var(--color-danger);
+  color: var(--color-on-danger);
+}
+
+/* Downloading: a ring turns around the disc. */
+.badge[data-phase='downloading'] .disc::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 3px solid transparent;
+  border-top-color: var(--color-primary);
+  border-right-color: var(--color-primary);
+  border-radius: var(--radius-pill);
+  animation: turn 1s linear infinite;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* No turning for whoever asked for less motion: a still ring says the same. */
+@media (prefers-reduced-motion: reduce) {
+  .badge[data-phase='downloading'] .disc::after {
+    animation: none;
+    border-color: var(--color-primary);
+  }
+}
+
+/* The details open from inside the badge's area, which lets taps through to the tile. */
+.dialog {
+  pointer-events: auto;
+}
+
+.details {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-3);
+}
+
+.state {
+  font-weight: 800;
+}
+
+.state[data-phase='error'] {
+  color: var(--color-danger);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--color-text-muted);
+}
+
+.facts dd {
+  margin: 0;
+  font-weight: 700;
+}

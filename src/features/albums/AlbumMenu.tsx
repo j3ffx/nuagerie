@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 import type { Album } from '../../data/albums.ts';
-import { ChevronIcon, ExternalIcon, HideIcon, MapIcon } from '../../ui/icons.tsx';
+import { formatBytes, formatItemCount } from '../../lib/format.ts';
+import { ChevronIcon, ExternalIcon, HideIcon, MapIcon, OfflineIcon } from '../../ui/icons.tsx';
+import { useOffline } from '../offline/offlineContext.ts';
 import { OneDriveLink } from '../../ui/OneDriveLink.tsx';
 import styles from './AlbumMenu.module.css';
 import { useAlbumPhotos } from './useAlbumPhotos.ts';
@@ -15,8 +17,8 @@ export type AlbumPlace = 'home' | 'sub' | 'favorites';
 
 /**
  * The menu of an album tile, opened with a long press (a right click with a
- * mouse): its full name, then hide it, see its photos on the map, open it on
- * OneDrive's website. A native modal dialog: Escape, Android's back gesture
+ * mouse): its full name, then hide it, see its photos on the map, keep it
+ * offline, open it on OneDrive's website. A native modal dialog: Escape, Android's back gesture
  * or a tap beside it closes it. Nothing in it can be selected as text: the
  * finger that opened it is often still down, and Android would select
  * what comes under it.
@@ -34,7 +36,11 @@ export function AlbumMenu({
   const pressedBeside = useRef(false);
   const [, navigate] = useLocation();
   const { setChecked, setHidden } = useAlbumSelection();
-  const located = useAlbumPhotos(album.id)?.items.some((item) => item.latitude !== null) ?? false;
+  const photos = useAlbumPhotos(album.id);
+  const located = photos?.items.some((item) => item.latitude !== null) ?? false;
+  const offline = useOffline();
+  const kept = offline.isKept(album.id);
+  const count = photos?.items.length ?? 0;
 
   useEffect(() => {
     const dialog = ref.current;
@@ -93,6 +99,26 @@ export function AlbumMenu({
             <span className={styles.text}>
               Voir sur la carte
               {!located && <span className={styles.note}>Aucune photo localisée.</span>}
+            </span>
+            <ChevronIcon className={styles.chevron} />
+          </button>
+          <button
+            type="button"
+            className={styles.item}
+            onClick={() => {
+              offline.keep(album.id, !kept);
+              onClose();
+            }}
+            disabled={!kept && count === 0}
+          >
+            <OfflineIcon className={styles.icon} />
+            <span className={styles.text}>
+              {kept ? 'Ne plus garder hors connexion' : 'Garder hors connexion'}
+              <span className={styles.note}>
+                {kept
+                  ? 'Libère la place prise sur l’appareil.'
+                  : `≈ ${formatBytes(offline.estimate(count))} · ${formatItemCount(count)}${album.subAlbumCount > 0 ? ', sous-albums compris' : ''}`}
+              </span>
             </span>
             <ChevronIcon className={styles.chevron} />
           </button>

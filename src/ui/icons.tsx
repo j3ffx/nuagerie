@@ -224,3 +224,23 @@ export function ClockIcon(props: IconProps) {
     </Icon>
   );
 }
+
+/** Kept on the device for offline use: a cloud with an arrow down into it. */
+export function OfflineIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 10a4 4 0 0 1 0 8" />
+      <path d="M12 11v8M9 16l3 3 3-3" />
+    </Icon>
+  );
+}
+
+export function AlertIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 7.5v5.5" />
+      <path d="M12 16.5h.01" strokeWidth="3" />
+      <circle cx="12" cy="12" r="9" />
+    </Icon>
+  );
+}

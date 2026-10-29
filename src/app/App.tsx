@@ -24,6 +24,7 @@ import { MapScreen } from '../features/map/MapScreen.tsx';
 import { ZoneScreen } from '../features/map/ZoneScreen.tsx';
 import { MemoriesScreen } from '../features/memories/MemoriesScreen.tsx';
 import { MemoriesClosedWatcher } from '../features/memories/useMemories.ts';
+import { OfflineProvider } from '../features/offline/OfflineProvider.tsx';
 import { SearchScreen } from '../features/search/SearchScreen.tsx';
 import { FoldersScreen } from '../features/settings/FoldersScreen.tsx';
 import { FavoritesScreen } from '../features/favorites/FavoritesScreen.tsx';
@@ -91,9 +92,11 @@ function Data({
   return (
     <DataProvider mode={mode} signedIn={signedIn} source={source}>
       <SyncProvider mode={mode} signedIn={signedIn}>
-        <Router aroundNav={scrollToTopOnNewScreen}>
-          <Shell />
-        </Router>
+        <OfflineProvider>
+          <Router aroundNav={scrollToTopOnNewScreen}>
+            <Shell />
+          </Router>
+        </OfflineProvider>
       </SyncProvider>
     </DataProvider>
   );

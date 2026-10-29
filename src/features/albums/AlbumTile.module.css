@@ -25,6 +25,19 @@
   transform: scale(0.98);
 }
 
+/* The tile, and over the corner of its cover the "kept offline" badge (a button of its own). */
+.holder {
+  position: relative;
+  min-width: 0;
+}
+
+.badgeArea {
+  position: absolute;
+  inset: 0 0 auto;
+  aspect-ratio: 1;
+  pointer-events: none;
+}
+
 .caption {
   display: grid;
   padding: var(--space-2) var(--space-1) 0;

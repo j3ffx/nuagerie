@@ -144,6 +144,20 @@ const SCREENS: {
     },
   },
   {
+    name: 'kept album details',
+    path: '/',
+    ready: async (page) => {
+      await page
+        .getByRole('list', { name: 'Albums' })
+        .getByRole('link', { name: /^Tapo,/ })
+        .click({ button: 'right' });
+      await page.getByRole('button', { name: /^Garder hors connexion/ }).click();
+      const badge = page.getByRole('button', { name: /^Hors connexion : à jour/ });
+      await badge.click({ timeout: 30_000 });
+      await expect(page.getByRole('dialog', { name: 'Tapo' })).toBeVisible();
+    },
+  },
+  {
     name: 'settings',
     path: '/reglages',
     ready: (page) => expect(page.getByRole('heading', { name: 'Apparence' })).toBeVisible(),

@@ -3,6 +3,8 @@ import { Link } from 'wouter';
 import type { Album } from '../../data/albums.ts';
 import { formatCount, formatItemCount, formatYearRange } from '../../lib/format.ts';
 import { Thumbnail } from '../../ui/Thumbnail.tsx';
+import { KeptBadge } from '../offline/KeptBadge.tsx';
+import { useOffline } from '../offline/offlineContext.ts';
 import { useLongPress } from '../../ui/useLongPress.ts';
 import { AlbumMenu, type AlbumPlace } from './AlbumMenu.tsx';
 import styles from './AlbumTile.module.css';
@@ -37,11 +39,12 @@ export function AlbumTile({
     returnTo.current.focus({ preventScroll: true });
     returnTo.current = null;
   }, [menuFor]);
+  const kept = useOffline().isKept(album.id);
   const longPress = useLongPress((tile) => {
     if (menu) setMenuFor(tile);
   });
   return (
-    <>
+    <div className={styles.holder}>
       <Link
         href={href ?? `/album/${encodeURIComponent(album.id)}`}
         className={styles.tile}
@@ -71,8 +74,15 @@ export function AlbumTile({
             {period && <span className="hidden-inline">, </span>}
           </span>
           {period && <span className={styles.meta}>{period}</span>}
+          {kept && <span className="visually-hidden">, gardé hors connexion</span>}
         </span>
       </Link>
+      {/* Beside the link, over the corner of the cover: a tap on it tells, without opening. */}
+      {kept && (
+        <span className={styles.badgeArea}>
+          <KeptBadge albumId={album.id} name={album.name} />
+        </span>
+      )}
       {menuFor && menu && (
         <AlbumMenu
           album={album}
@@ -83,6 +93,6 @@ export function AlbumTile({
           }}
         />
       )}
-    </>
+    </div>
   );
 }
