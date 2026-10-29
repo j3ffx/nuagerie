@@ -16,7 +16,8 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
   prise, l’état ou l’erreur.
 - Réglages → Hors connexion : ce qui est gardé, la place prise et la place restante, la
   progression, et « Tout retirer ».
-- La notification des souvenirs montre une de leurs photos.
+- La notification des souvenirs montre une de leurs photos, et le nuage de Nuagerie dans la
+  barre d’état au lieu d’une cloche.
 
 ### Corrections
 

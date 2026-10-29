@@ -90,11 +90,13 @@ async function tellMemories(): Promise<void> {
       now: () => currentDateContext().nowWallClock,
       readNotifiedOn: () => readToldOn(state),
       writeNotifiedOn: (day) => writeToldOn(state, day),
-      // No badge: Android draws it from the icon's transparency, and ours is full-bleed.
       show: async (title, body, cover) =>
         self.registration.showNotification(title, {
           body,
           icon: await coverIcon(cover).catch(() => '/pwa-192x192.png'),
+          // The cloud alone, in white on nothing (scripts/build-badge.mjs): Android draws the
+          // status bar icon from its transparency; without it, Chrome shows a bell.
+          badge: '/notification-badge.png',
           tag: MEMORIES_SYNC_TAG,
           data: { url: MEMORIES_URL },
         }),
