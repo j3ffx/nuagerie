@@ -4,6 +4,25 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## Depuis la dernière version
+
+### Nouveautés
+
+- Garder hors connexion : un appui long sur un album (ou sur Favoris) → « Garder hors
+  connexion ». Ses photos sont téléchargées à l’avance, en Wi-Fi, avec leurs grandes images :
+  sans réseau, elles s’ouvrent en grand. La taille est indiquée avant.
+- Une pastille sur la tuile d’un album gardé dit où il en est : verte quand tout est là, bleue
+  qui tourne pendant le téléchargement, rouge en cas de problème. Touche-la pour voir la place
+  prise, l’état ou l’erreur.
+- Réglages → Hors connexion : ce qui est gardé, la place prise et la place restante, la
+  progression, et « Tout retirer ».
+- La notification des souvenirs montre une de leurs photos.
+
+### Corrections
+
+- Pas de notification des souvenirs quand tu les as déjà vus ou fermés ce jour-là (même sur un
+  autre appareil) ; celle déjà affichée s’en va.
+
 ## 0.5.0 — 2026-10-28
 
 Revoir tes souvenirs.

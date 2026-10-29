@@ -108,6 +108,12 @@ commit metadata.
   updated nor replaced). Only signing out, a full reindex or a change of root folders erases it.
   Whatever needs the network (sharing, saving an original, reindexing, signing out) is disabled
   offline rather than left to fail.
+- **Kept offline** (`src/data/offline/`, `src/features/offline/`): the favourites and the albums
+  the user chose, per device. For each photo, the grid's and the viewer's thumbnails (never
+  originals, videos or map tiles), in a Cache Storage of their own (`nuagerie-offline-<mode>`),
+  never evicted, read before the thumbnail cache. Downloads wait for Wi-Fi when the device says it
+  is on mobile data, follow the index (new photos come, removed ones go), and are erased on
+  sign-out.
 - **Accessibility:** contrast ≥ 4.5:1 (tokens in `src/styles/tokens.css`), visible focus, touch targets
   ≥ 44 px, `alt` text, `prefers-reduced-motion` respected (scripted motion included, e.g. the map's
   momentum). `e2e/a11y.spec.ts` checks every screen against WCAG 2.1 AA with axe, light and dark.

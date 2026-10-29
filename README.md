@@ -44,7 +44,9 @@ agréable aussi sur PC.
   OneDrive, qui peut avoir des années de retard.
 - **Hors connexion.** L’application s’installe sur le téléphone. L’index des photos et les
   miniatures déjà vues restent sur l’appareil : sans réseau, tout ce qui a été vu reste
-  consultable.
+  consultable. Les favoris et les albums choisis (appui long → « Garder hors connexion ») sont
+  téléchargés à l’avance, en Wi-Fi, avec leurs grandes images : ils s’ouvrent en grand sans
+  réseau. Une pastille sur la tuile dit où ça en est.
 - **Favoris.** Un cœur dans la visionneuse, et un album « Favoris » en tête de l’accueil.
 - **Synchronisation.** Optionnelle : les favoris, les préférences (albums affichés, tris,
   filtre) et les dossiers parcourus se rangent dans un dossier à part de OneDrive
