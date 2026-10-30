@@ -13,6 +13,7 @@ The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
 ### Fixes
 
 - When Microsoft asks to sign in again, a banner says so, instead of hiding the favourites without a word.
+- The Privacy page tells everything: what stays in your OneDrive, what the map reveals, what is kept on the device. The diagnostic report no longer shows your folders’ names, and a sync turned off on a device stays off after signing out.
 
 ## 1.0.0 — 2026-10-30
 

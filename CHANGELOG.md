@@ -13,6 +13,7 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 ### Corrections
 
 - Quand Microsoft demande de se reconnecter, un bandeau le dit, au lieu de cacher les favoris sans prévenir.
+- La page Confidentialité dit tout : ce qui reste dans ton OneDrive, ce que la carte révèle, ce qui est gardé sur l’appareil. Le rapport de diagnostic ne montre plus le nom de tes dossiers, et la synchro coupée sur un appareil le reste après une déconnexion.
 
 ## 1.0.0 — 2026-10-30
 

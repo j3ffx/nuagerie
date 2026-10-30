@@ -58,16 +58,19 @@ commit metadata.
 ## Invariants (discuss before changing)
 
 - **Read-only by default.** At sign-in, Microsoft Graph delegated scopes are `Files.Read`, `User.Read`,
-  `offline_access` and nothing else. The app never creates, changes, moves or deletes the user's files.
-  Requests are GETs, plus `POST /$batch` whose sub-requests are GETs.
+  `offline_access` (plus the `openid` and `profile` that MSAL always adds) and nothing else. The app
+  never creates, changes, moves or deletes the user's files. Requests are GETs, plus `POST /$batch`
+  whose sub-requests are GETs.
 - **One opt-in write: the app's own folder.** The sync (favourites, preferences, root folders) goes
   to OneDrive only once the user turns it on (Réglages → Synchronisation, or the first heart): only
   then is `Files.ReadWrite.AppFolder` requested (incremental consent), which reaches `Apps/Nuagerie`
   (`special/approot`) and nothing else. Microsoft grants it to the account, so another device follows
   on its own when a silent token and the app folder's copy are both there, unless the user turned the
-  sync off on that device. A gzipped copy of the index (`index.json.gz`, at most once a day) lets a
-  new device start without listing the drive (`src/data/sync/indexSnapshot.ts`), then catch up by
-  delta; it is used only for the same account and root folders.
+  sync off on that device (a choice kept through sign-out). The app never deletes what it wrote there:
+  the privacy page tells the user to delete `Apps/Nuagerie` to erase it. A gzipped copy of the index
+  (`index.json.gz`, at most once a day) lets a new device start without listing the drive
+  (`src/data/sync/indexSnapshot.ts`), then catch up by delta; it is used only for the
+  same account and root folders.
   The one write is `putAppFile` in `src/data/graph/client.ts`, which builds its path itself; without
   the sync, there are no favourites in OneDrive mode (on the device only, they would be lost with the
   app; the demo keeps them locally). Réglages → Permissions shows the scopes the tokens actually carry,
