@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { dayKey, yearsAgoLabel, type MemoryYear } from '../../data/memories.ts';
 import { formatItemCount, formatLongDate } from '../../lib/format.ts';
 import { CloseIcon } from '../../ui/icons.tsx';
@@ -13,17 +13,21 @@ const t = localized({
   en: { title: 'Memories', seeAll: 'See all', close: 'Close the memories until tomorrow' },
 });
 
+const MEMORIES_PATH = '/souvenirs';
+
 /** The photo that stands for a year: its most recent photo, a video when there is none. */
 const coverOf = (memory: MemoryYear) =>
   memory.items.find((item) => item.kind === 'image') ?? memory.items[0];
 
 /**
  * "Il y a N ans", at the top of the albums: one card per year with photos
- * taken on this day. Closed, it stays closed until the next day, on every
- * device (the sync carries it).
+ * taken on this day, on a panel of its own. A tap anywhere on it (a year's
+ * card or the panel) opens all of today's memories. Closed, it stays closed
+ * until the next day, on every device (the sync carries it).
  */
 export function MemoriesSection() {
   const { memories, today, closed, close } = useMemories();
+  const [, navigate] = useLocation();
   const section = useRef<HTMLElement>(null);
   const shown = !closed && memories.length > 0;
   // Seen once half of it was on screen: no notification about them today.
@@ -53,12 +57,20 @@ export function MemoriesSection() {
   };
 
   return (
-    <section ref={section} className={styles.section} aria-labelledby="memories-title">
+    // The panel's own tap, for pointers: keyboards and screen readers have the links.
+    <section
+      ref={section}
+      className={styles.section}
+      aria-labelledby="memories-title"
+      onClick={(event) => {
+        if (!(event.target as Element).closest('a, button')) navigate(MEMORIES_PATH);
+      }}
+    >
       <div className={styles.header}>
         <h2 id="memories-title" className={styles.title}>
           {t.title}
         </h2>
-        <Link href="/souvenirs" className={styles.all}>
+        <Link href={MEMORIES_PATH} className={styles.all}>
           {t.seeAll}
         </Link>
         <button
@@ -76,11 +88,7 @@ export function MemoriesSection() {
           const takenAt = cover?.takenAt ?? null;
           return (
             <li key={memory.year}>
-              <Link
-                href={`/souvenirs?annee=${memory.year}`}
-                className={styles.card}
-                draggable={false}
-              >
+              <Link href={MEMORIES_PATH} className={styles.card} draggable={false}>
                 {cover && <Thumbnail item={cover} className={styles.cover} decorative />}
                 {/* Read as shown: "Il y a 3 ans, 28 octobre 2023, 12 éléments". */}
                 <span className={styles.caption}>

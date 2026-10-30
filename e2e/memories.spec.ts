@@ -26,13 +26,11 @@ test('shows the memories of the day above the albums, one card a year', async ({
     /^Il y a \d+ ans?, 28 octobre 20\d\d, \d+ éléments?$/,
   );
 
-  await cards(page).first().click();
-  await expect(page).toHaveURL(/\/souvenirs\?annee=20\d\d$/);
-  await expect(page.getByRole('heading', { level: 1, name: /^Il y a \d+ ans?$/ })).toBeVisible();
-  await expect(page.getByText(/^28 octobre · \d+ éléments?$/)).toBeVisible();
-  const months = page.getByRole('main').getByRole('heading', { level: 2 });
-  await expect(months).toHaveCount(1);
-  await expect(months.first()).toHaveText(/^Octobre 20\d\d$/);
+  // A year's card opens all of today's memories, not just that year.
+  await cards(page).nth(1).click();
+  await expect(page).toHaveURL(/\/souvenirs$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Souvenirs' })).toBeVisible();
+  await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveCount(count);
   // The albums tab stays the current one.
   await expect(
     page
@@ -47,6 +45,33 @@ test('shows the memories of the day above the albums, one card a year', async ({
   await expect(page.getByRole('dialog', { name: 'Visionneuse' })).toHaveCount(0);
   await page.goBack();
   await expect(section(page)).toBeVisible();
+});
+
+test('opens the memories from anywhere on their panel, which stands out', async ({ page }) => {
+  const panel = await section(page).evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      background: style.backgroundColor,
+      page: getComputedStyle(document.body).backgroundColor,
+    };
+  });
+  expect(panel.background).not.toBe(panel.page);
+  await section(page).getByRole('heading', { name: 'Souvenirs' }).click();
+  await expect(page).toHaveURL(/\/souvenirs$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Souvenirs' })).toBeVisible();
+});
+
+test('shows one year alone from a link to it', async ({ page }) => {
+  const name =
+    (await cards(page).first().getAttribute('aria-label')) ??
+    (await cards(page).first().innerText());
+  const year = /20\d\d/.exec(name)?.[0];
+  await page.goto(`/souvenirs?annee=${year}`);
+  await expect(page.getByRole('heading', { level: 1, name: /^Il y a \d+ ans?$/ })).toBeVisible();
+  await expect(page.getByText(/^28 octobre · \d+ éléments?$/)).toBeVisible();
+  const months = page.getByRole('main').getByRole('heading', { level: 2 });
+  await expect(months).toHaveCount(1);
+  await expect(months.first()).toHaveText(`Octobre ${year}`);
 });
 
 test('shows every year of the day together', async ({ page }) => {
