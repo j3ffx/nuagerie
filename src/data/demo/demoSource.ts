@@ -88,7 +88,7 @@ export function createDemoSource(): DataSource {
       deleteItem: (id, options) => drive().deleteItem(id, options),
       updateItem: (id, change) => drive().updateItem(id, change),
       createFolder: (parentId, name) => drive().createFolder(parentId, name),
-      restoreItem: (id) => drive().restoreItem(id),
+      restoreItem: (id, parentId) => drive().restoreItem(id, parentId),
       getItem: (id) => drive().getItem(id),
     },
     index: async () => load().index,

@@ -14,6 +14,8 @@ export interface TrashEntry {
   /** The album it was in, by name, and the folder to bring it back to. */
   albumName: string;
   folderId: string;
+  /** Where that album was: there it is made again, if it is deleted too. */
+  albumParentId?: string | null;
   deletedAt: number;
 }
 
@@ -44,19 +46,23 @@ export function parseTrash(raw: unknown, now: number | null): TrashEntry[] {
 export function withDeleted(
   trash: readonly TrashEntry[],
   items: readonly MediaItem[],
-  albumName: (item: MediaItem) => string,
+  album: (item: MediaItem) => { name: string; parentId: string | null },
   now: number,
 ): TrashEntry[] {
   const ids = new Set(items.map((item) => item.id));
-  const added = items.map((item): TrashEntry => ({
-    id: item.id,
-    name: item.name,
-    kind: item.kind,
-    takenAt: item.takenAt,
-    albumName: albumName(item),
-    folderId: item.folderId,
-    deletedAt: now,
-  }));
+  const added = items.map((item): TrashEntry => {
+    const { name, parentId } = album(item);
+    return {
+      id: item.id,
+      name: item.name,
+      kind: item.kind,
+      takenAt: item.takenAt,
+      albumName: name,
+      folderId: item.folderId,
+      albumParentId: parentId,
+      deletedAt: now,
+    };
+  });
   return [...added, ...trash.filter((entry) => !ids.has(entry.id))];
 }
 

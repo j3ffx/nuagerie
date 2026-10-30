@@ -200,6 +200,7 @@ describe('DriveWriter', () => {
       json({ id: 'F!2' }),
       json({ id: 'N!3' }),
       json({ id: 'A!1' }),
+      json({ id: 'A!1' }),
     ]);
     await client.deleteItem('A!1');
     expect(calls[0]).toMatchObject({ url: `${base}A!1`, init: { method: 'DELETE' } });
@@ -225,6 +226,10 @@ describe('DriveWriter', () => {
     await client.restoreItem('A!1');
     expect(calls[4]?.url.startsWith(`${base}A!1/restore?$select=`)).toBe(true);
     expect(calls[4]?.init?.method).toBe('POST');
+    expect(body(calls[4])).toEqual({});
+    // Its folder gone too: into another one.
+    await client.restoreItem('A!1', 'F!9');
+    expect(body(calls[5])).toEqual({ parentReference: { id: 'F!9' } });
   });
 
   it('deletes only the version it was given, when told', async () => {

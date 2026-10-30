@@ -47,9 +47,18 @@ export function useAlbumSelection() {
     [hidden, selection, setSelection],
   );
 
+  /** Shows these albums too, in one go. */
+  const show = useCallback(
+    (folderIds: readonly string[]) => {
+      if (folderIds.length === 0) return;
+      setSelection({ ...selection, checked: [...new Set([...checked, ...folderIds])] });
+    },
+    [checked, selection, setSelection],
+  );
+
   const reset = useCallback(() => setSelection(DEFAULT_SELECTION), [setSelection]);
 
-  return { selection, checked, hidden, setChecked, setHidden, reset };
+  return { selection, checked, hidden, setChecked, setHidden, show, reset };
 }
 
 export function useAlbumModel(): AlbumModel | null {

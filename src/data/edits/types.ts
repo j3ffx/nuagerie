@@ -19,6 +19,8 @@ export interface EditResult {
   failed: { id: string; reason: EditFailure }[];
   /** The index with the changes made, or null when none was. */
   index: MediaIndex | null;
+  /** Albums made again to bring photos back into (restoreItems). */
+  albums?: string[];
 }
 
 /**
@@ -29,8 +31,12 @@ export interface EditResult {
 export interface DriveEdits {
   /** To OneDrive's recycle bin. */
   deleteItems(ids: readonly string[], onProgress?: Progress): Promise<EditResult>;
-  /** Back from the recycle bin, to where they were (ids the app put there). */
-  restoreItems(ids: readonly string[], onProgress?: Progress): Promise<EditResult>;
+  /**
+   * Back from the recycle bin, to where they were (items the app put there).
+   * One whose folder is gone too goes to an album of the same name where its
+   * album was, made again if need be, or else to that folder itself.
+   */
+  restoreItems(items: readonly RestoreItem[], onProgress?: Progress): Promise<EditResult>;
   moveItems(ids: readonly string[], folderId: string, onProgress?: Progress): Promise<EditResult>;
   /** Undoes a move: back to any folder of the index, a year or a month folder included. */
   moveBack(ids: readonly string[], folderId: string, onProgress?: Progress): Promise<EditResult>;
@@ -41,3 +47,12 @@ export interface DriveEdits {
 }
 
 export type Progress = (done: number, total: number) => void;
+
+/** An item to bring back, with where it was when the app deleted it (when known). */
+export interface RestoreItem {
+  id: string;
+  folderId?: string | null;
+  albumName?: string;
+  /** The folder its album was in. */
+  albumParentId?: string | null;
+}

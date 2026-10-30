@@ -38,6 +38,8 @@ const t = localized({
     restored: (count: string) => `${count} remis en place`,
     elsewhere: (count: string) =>
       `${count} hors de tes dossiers : son album n’existe plus, regarde dans OneDrive`,
+    rehomed: (count: string, album: string) =>
+      `${count} dans « ${album} » : son album n’existait plus`,
     created: (name: string) => `Album « ${name} » créé`,
     renamed: (name: string) => `Album renommé « ${name} »`,
     albumDeleted: 'Album supprimé',
@@ -61,6 +63,7 @@ const t = localized({
     restored: (count: string) => `${count} put back`,
     elsewhere: (count: string) =>
       `${count} outside your folders: its album no longer exists, look in OneDrive`,
+    rehomed: (count: string, album: string) => `${count} in “${album}”: its album was gone`,
     created: (name: string) => `Album “${name}” created`,
     renamed: (name: string) => `Album renamed “${name}”`,
     albumDeleted: 'Album deleted',
@@ -233,9 +236,23 @@ export function EditsProvider({ children }: { children: ReactNode }) {
   const restore = useCallback(
     (ids: readonly string[]) =>
       guard(async () => {
-        if (!edits) return;
-        const result = await run('restore', (onProgress) => edits.restoreItems(ids, onProgress));
-        if (!result) return;
+        if (!edits) return [];
+        const kept = new Map(
+          parseTrash(readPersistent(trashKey(mode), []), null).map((entry) => [entry.id, entry]),
+        );
+        const items = ids.map((id) => {
+          const entry = kept.get(id);
+          return entry
+            ? {
+                id,
+                folderId: entry.folderId,
+                albumName: entry.albumName,
+                albumParentId: entry.albumParentId ?? null,
+              }
+            : { id };
+        });
+        const result = await run('restore', (onProgress) => edits.restoreItems(items, onProgress));
+        if (!result) return [];
         // Back, or gone for good: either way, no longer in the app's list.
         const forgotten = [
           ...result.done,
@@ -248,22 +265,37 @@ export function EditsProvider({ children }: { children: ReactNode }) {
           without(parseTrash(readPersistent(trashKey(mode), []), Date.now()), forgotten),
         );
         void trashCache.delete(forgotten);
-        // Back in OneDrive, but where the index does not look (its album was deleted too).
-        const shown = new Set((result.index ?? index)?.items.map((item) => item.id));
+        // Its album deleted too: in another one (said), or where the index does not look.
+        const after = result.index ?? index;
+        const shown = new Map(after?.items.map((item) => [item.id, item]));
         const elsewhere = result.done.filter((id) => !shown.has(id)).length;
-        const done =
-          result.done.length > 0 ? t.restored(formatItemCount(result.done.length)) : null;
+        const rehomed = result.done.flatMap((id) => {
+          const was = kept.get(id)?.folderId;
+          const item = shown.get(id);
+          return item && was && !index?.folders.has(was) ? [item] : [];
+        });
+        const back = result.done.length - elsewhere - rehomed.length;
+        const done = back > 0 ? t.restored(formatItemCount(back)) : null;
+        const moved = rehomed[0]
+          ? t.rehomed(formatItemCount(rehomed.length), albumName(rehomed[0].albumId, after))
+          : null;
         say(
           [
             done,
+            moved,
             elsewhere > 0 ? t.elsewhere(formatItemCount(elsewhere)) : null,
             failureText(result.failed),
           ]
             .filter(Boolean)
             .join(' · '),
         );
-      }, undefined),
-    [guard, edits, run, mode, trashCache, index, say],
+        // Made again right in a root folder: on the home screen, as when it was made.
+        return (result.albums ?? []).filter((id) => {
+          const parentId = after?.folders.get(id)?.parentId;
+          return !!parentId && after?.rootFolderIds.includes(parentId);
+        });
+      }, []),
+    [guard, edits, run, mode, trashCache, index, albumName, say],
   );
 
   const deletePhotos = useCallback(
@@ -294,7 +326,10 @@ export function EditsProvider({ children }: { children: ReactNode }) {
           withDeleted(
             parseTrash(readPersistent(trashKey(mode), []), Date.now()),
             deleted,
-            (item) => albumName(item.albumId, before),
+            (item) => ({
+              name: albumName(item.albumId, before),
+              parentId: before?.folders.get(item.albumId)?.parentId ?? null,
+            }),
             Date.now(),
           ),
         );

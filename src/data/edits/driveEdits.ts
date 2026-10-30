@@ -1,8 +1,9 @@
 import { GraphError, mapWithConcurrency, type DriveWriter } from '../graph/client.ts';
 import type { GraphDriveItem } from '../graph/types.ts';
 import type { MediaIndex } from '../model.ts';
-import type { DriveEdits, EditFailure, EditResult, Progress } from './types.ts';
-export type { DriveEdits, EditFailure, EditResult, Progress } from './types.ts';
+import type { DriveEdits, EditFailure, EditResult, Progress, RestoreItem } from './types.ts';
+export type { DriveEdits, EditFailure, EditResult, Progress, RestoreItem } from './types.ts';
+import { locale } from '../../lib/i18n.ts';
 import { albumNameProblem, isEditableAlbum, looksEmpty, mediaIdsIn, moveTargets } from './rules.ts';
 
 export class EditRefused extends Error {
@@ -99,6 +100,51 @@ export function createDriveEdits({ writer, index, apply }: DriveEditsOptions): D
     );
   }
 
+  /**
+   * Where to bring back the items whose folder is gone too (an album emptied
+   * then deleted): OneDrive would put them back into it, where the index does
+   * not look. The album of the same name where it was, made again if need be;
+   * else that folder itself (the first root folder when it is gone too). Those
+   * whose folder is there go back as they are (no parent given).
+   */
+  async function homesOf(
+    current: MediaIndex,
+    items: readonly RestoreItem[],
+  ): Promise<{ parents: Map<string, string>; albums: string[]; index: MediaIndex | null }> {
+    const parents = new Map<string, string>();
+    const albums: string[] = [];
+    let latest: MediaIndex | null = null;
+    // One after the other: two photos of the same album make it once.
+    for (const item of items) {
+      if (!item.folderId || current.folders.has(item.folderId)) continue;
+      const known = latest ?? current;
+      const was = item.albumParentId ? known.folders.get(item.albumParentId) : undefined;
+      const parent = was && !was.technical ? was.id : known.rootFolderIds[0];
+      if (!parent || !known.folders.has(parent)) continue;
+      const name = item.albumName?.trim() ?? '';
+      const key = name.toLocaleLowerCase(locale);
+      let home = [...known.folders.values()].find(
+        (folder) =>
+          folder.parentId === parent &&
+          !folder.technical &&
+          name !== '' &&
+          folder.name.toLocaleLowerCase(locale) === key,
+      )?.id;
+      if (!home && !albumNameProblem(known, parent, name)) {
+        try {
+          const folder = await writer.createFolder(parent, name);
+          latest = await apply([folder], []);
+          home = folder.id;
+          albums.push(folder.id);
+        } catch {
+          // Taken meanwhile, or refused: the folder it was in will do.
+        }
+      }
+      parents.set(item.id, home ?? parent);
+    }
+    return { parents, albums, index: latest };
+  }
+
   return {
     async deleteItems(ids, onProgress) {
       const allowed = new Set(mediaIdsIn(await index(), ids));
@@ -114,14 +160,17 @@ export function createDriveEdits({ writer, index, apply }: DriveEditsOptions): D
       );
     },
 
-    async restoreItems(ids, onProgress) {
+    async restoreItems(items, onProgress) {
       // Not in the index any more: the caller gives only what the app itself deleted.
-      return each(
-        ids,
-        new Set(ids),
-        async (id) => ({ upsert: await writer.restoreItem(id) }),
+      const current = await index();
+      const homes = await homesOf(current, items);
+      const result = await each(
+        items.map((item) => item.id),
+        new Set(items.map((item) => item.id)),
+        async (id) => ({ upsert: await writer.restoreItem(id, homes.parents.get(id)) }),
         onProgress,
       );
+      return { ...result, index: result.index ?? homes.index, albums: homes.albums };
     },
 
     async moveItems(ids, folderId, onProgress) {

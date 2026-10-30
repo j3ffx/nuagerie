@@ -9,6 +9,7 @@ import common from '../../ui/common.module.css';
 import { BackIcon } from '../../ui/icons.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import albumStyles from '../albums/AlbumScreen.module.css';
+import { useAlbumSelection } from '../albums/useAlbums.ts';
 import { useEdits } from './editsContext.ts';
 import styles from './TrashScreen.module.css';
 
@@ -87,6 +88,9 @@ export function TrashScreen() {
   const { mode } = useData();
   const online = useOnline();
   const canRestore = edits.usable && (mode === 'demo' || online);
+  const { show } = useAlbumSelection();
+  // An album made again to take its photos back shows on the home screen, as it did.
+  const restore = async (ids: readonly string[]) => show(await edits.restore(ids));
 
   return (
     <>
@@ -113,7 +117,7 @@ export function TrashScreen() {
                   type="button"
                   className={common.buttonSoft}
                   disabled={!canRestore}
-                  onClick={() => void edits.restore(edits.trash.map((entry) => entry.id))}
+                  onClick={() => void restore(edits.trash.map((entry) => entry.id))}
                 >
                   {t.restoreAll}
                 </button>
@@ -134,7 +138,7 @@ export function TrashScreen() {
                       type="button"
                       className={`${common.buttonSoft} ${styles.restore}`}
                       disabled={!canRestore}
-                      onClick={() => void edits.restore([entry.id])}
+                      onClick={() => void restore([entry.id])}
                       aria-label={`${t.restore} ${entry.name}`}
                     >
                       {t.restore}

@@ -48,7 +48,8 @@ export interface EditsContextValue {
   movePhotos: (items: readonly MediaItem[], folderId: string) => Promise<boolean>;
   /** What the app put in the recycle bin, most recent first. */
   trash: readonly TrashEntry[];
-  restore: (ids: readonly string[]) => Promise<void>;
+  /** The albums made again in a root folder to bring photos back into (to show them). */
+  restore: (ids: readonly string[]) => Promise<string[]>;
   /** The thumbnail kept for a trash entry, as an object URL to release, or null. */
   trashThumbnail: (id: string) => Promise<string | null>;
   /** The new album's id, or null when it failed (the notice says why). */

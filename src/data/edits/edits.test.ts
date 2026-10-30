@@ -131,10 +131,60 @@ describe('createDriveEdits', () => {
   it('brings deleted photos back where they were', async () => {
     const { edits, current } = setup();
     await edits.deleteItems(['p1', 'p3']);
-    const result = await edits.restoreItems(['p3', 'never-deleted']);
+    const result = await edits.restoreItems([
+      { id: 'p3', folderId: 'holidays', albumName: 'Vacances' },
+      { id: 'never-deleted' },
+    ]);
     expect(result.done).toEqual(['p3']);
     expect(result.failed).toEqual([{ id: 'never-deleted', reason: 'gone' }]);
     expect(current().items.find((item) => item.id === 'p3')?.albumId).toBe('holidays');
+  });
+
+  it('brings photos back into their album made again, once, when it was deleted too', async () => {
+    const { items, edits, current } = setup();
+    await edits.deleteItems(['p1', 'p2', 'p3']);
+    await edits.deleteAlbum('animals');
+    await edits.deleteAlbum('holidays');
+    expect(current().folders.has('animals')).toBe(false);
+    // An album of that name made elsewhere meanwhile takes them in.
+    await edits.createAlbum('pics', 'vacances');
+    const was = { albumParentId: 'pics' };
+    const result = await edits.restoreItems([
+      { id: 'p1', folderId: 'animals', albumName: 'Animaux', ...was },
+      { id: 'p2', folderId: 'animals', albumName: 'Animaux', ...was },
+      { id: 'p3', folderId: 'holidays', albumName: 'Vacances', ...was },
+    ]);
+    expect(result.done.sort()).toEqual(['p1', 'p2', 'p3']);
+    expect(result.albums).toHaveLength(1);
+    const albumOf = (id: string) => {
+      const albumId = current().items.find((item) => item.id === id)?.albumId ?? '';
+      return current().folders.get(albumId);
+    };
+    expect(albumOf('p1')).toMatchObject({ name: 'Animaux', parentId: 'pics' });
+    expect(albumOf('p2')?.id).toBe(albumOf('p1')?.id);
+    expect(albumOf('p3')?.name).toBe('vacances');
+    expect(items.filter((item) => item.name === 'Animaux')).toHaveLength(1);
+  });
+
+  it('makes the album again where it was, below another album', async () => {
+    const { edits, current } = setup();
+    const { id: cats } = await edits.createAlbum('animals', 'Chats');
+    await edits.moveItems(['p1'], cats);
+    await edits.deleteItems(['p1']);
+    await edits.deleteAlbum(cats);
+    await edits.restoreItems([
+      { id: 'p1', folderId: cats, albumName: 'Chats', albumParentId: 'animals' },
+    ]);
+    const albumId = current().items.find((item) => item.id === 'p1')?.albumId ?? '';
+    expect(current().folders.get(albumId)).toMatchObject({ name: 'Chats', parentId: 'animals' });
+  });
+
+  it('brings a photo back into the root folder when its album cannot be made again', async () => {
+    const { edits, current } = setup();
+    await edits.deleteItems(['p3']);
+    await edits.deleteAlbum('holidays');
+    await edits.restoreItems([{ id: 'p3', folderId: 'holidays', albumName: '' }]);
+    expect(current().items.find((item) => item.id === 'p3')?.folderId).toBe('pics');
   });
 
   it('moves photos into an album, skipping those already there and refusing other targets', async () => {
@@ -275,9 +325,19 @@ describe('trash', () => {
   const item = build(drive()).items.find((one) => one.id === 'p1')!;
 
   it('keeps what the app deleted, most recent first, for 30 days', () => {
-    const trash = withDeleted([], [item], () => 'Animaux', now - 2 * DAY);
-    expect(trash[0]).toMatchObject({ id: 'p1', albumName: 'Animaux', folderId: 'animals' });
-    const again = withDeleted(trash, [item], () => 'Animaux', now);
+    const trash = withDeleted(
+      [],
+      [item],
+      () => ({ name: 'Animaux', parentId: 'pics' }),
+      now - 2 * DAY,
+    );
+    expect(trash[0]).toMatchObject({
+      id: 'p1',
+      albumName: 'Animaux',
+      folderId: 'animals',
+      albumParentId: 'pics',
+    });
+    const again = withDeleted(trash, [item], () => ({ name: 'Animaux', parentId: 'pics' }), now);
     expect(again).toHaveLength(1);
     expect(again[0]?.deletedAt).toBe(now);
     expect(keptUntil(again[0]!)).toBe(now + 30 * DAY);

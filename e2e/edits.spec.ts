@@ -205,6 +205,60 @@ test('creates, renames and deletes an empty album; a full one cannot be deleted'
   await expect(remove).toContainText('Seulement un album vide.');
 });
 
+test('brings a photo back into its album made again, when the album was deleted too', async ({
+  page,
+}) => {
+  await turnOnChanges(page);
+  await go(page, 'Tout');
+  await cells(page).first().click();
+  const viewer = page.getByRole('dialog', { name: 'Visionneuse' });
+  await viewer.getByRole('button', { name: 'Plus d’actions' }).click();
+  await page.getByRole('button', { name: 'Déplacer vers un album' }).click();
+  await page
+    .getByRole('dialog', { name: 'Déplacer 1 élément' })
+    .getByRole('button', { name: 'Nouvel album…' })
+    .click();
+  const name = page.getByRole('dialog', { name: 'Nouvel album' });
+  await name.getByRole('textbox', { name: 'Nom' }).fill('Brouillons');
+  await name.getByRole('button', { name: 'Créer' }).click();
+  await expect(toast(page)).toContainText(/1 élément dans « Brouillons »/);
+  await viewer.getByRole('button', { name: 'Plus d’actions' }).click();
+  await page.getByRole('button', { name: /^Supprimer/ }).click();
+  await page
+    .getByRole('dialog', { name: 'Supprimer 1 élément ?' })
+    .getByRole('button', { name: 'Supprimer' })
+    .click();
+  await expect(toast(page)).toContainText(/1 élément dans la corbeille/);
+  await page.goBack();
+
+  // The album, empty now, goes too.
+  await go(page, 'Albums');
+  await albums(page)
+    .getByRole('link', { name: /^Brouillons/ })
+    .click({ button: 'right' });
+  await page
+    .getByRole('dialog', { name: 'Brouillons' })
+    .getByRole('button', { name: /^Supprimer l’album/ })
+    .click();
+  await page
+    .getByRole('dialog', { name: 'Supprimer « Brouillons » ?' })
+    .getByRole('button', { name: 'Supprimer' })
+    .click();
+  await expect(albums(page).getByRole('link', { name: /^Brouillons/ })).toHaveCount(0);
+
+  await go(page, 'Réglages');
+  await page.getByRole('link', { name: 'Corbeille (1)' }).click();
+  await page
+    .getByRole('list', { name: 'Éléments supprimés' })
+    .getByRole('button', { name: /^Restaurer / })
+    .click();
+  await expect(toast(page)).toContainText(
+    '1 élément dans « Brouillons » : son album n’existait plus',
+  );
+  await go(page, 'Albums');
+  await expect(albums(page).getByRole('link', { name: /^Brouillons, 1 élément/ })).toBeVisible();
+});
+
 test('fits the actions and the notice on a 360 px screen', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 760 });
   await turnOnChanges(page);

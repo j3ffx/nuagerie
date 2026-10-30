@@ -67,10 +67,16 @@ export function createMemoryWriter(items: GraphDriveItem[]): DriveWriter {
       return folder;
     },
 
-    async restoreItem(id) {
-      const item = bin.get(id);
-      if (!item) throw new GraphError(404, 'itemNotFound', 'Not in the recycle bin');
+    async restoreItem(id, parentId) {
+      const deleted = bin.get(id);
+      if (!deleted) throw new GraphError(404, 'itemNotFound', 'Not in the recycle bin');
+      if (parentId !== undefined) find(parentId);
       bin.delete(id);
+      // Without a parent, back where it was, even into a folder deleted meanwhile.
+      const item =
+        parentId === undefined
+          ? deleted
+          : { ...deleted, parentReference: { ...deleted.parentReference, id: parentId } };
       items.push(item);
       return item;
     },

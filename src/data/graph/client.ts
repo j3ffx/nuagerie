@@ -86,7 +86,8 @@ export interface DriveWriter {
   updateItem(id: string, change: { name?: string; parentId?: string }): Promise<GraphDriveItem>;
   /** A new folder in `parentId`; fails if one of that name is there. */
   createFolder(parentId: string, name: string): Promise<GraphDriveItem>;
-  restoreItem(id: string): Promise<GraphDriveItem>;
+  /** Into `parentId` when given: without it, OneDrive puts it back where it was, deleted or not. */
+  restoreItem(id: string, parentId?: string): Promise<GraphDriveItem>;
   /** An item as it is now, e.g. to check that a folder is empty before deleting it. */
   getItem(id: string): Promise<GraphDriveItem & { folder?: { childCount?: number } }>;
 }
@@ -258,8 +259,12 @@ export function createGraphClient(
       });
     },
 
-    restoreItem(id) {
-      return sendJson(`${itemPath(id)}/restore${selected}`, 'POST', {});
+    restoreItem(id, parentId) {
+      return sendJson(
+        `${itemPath(id)}/restore${selected}`,
+        'POST',
+        parentId === undefined ? {} : { parentReference: { id: parentId } },
+      );
     },
 
     async getItem(id) {
