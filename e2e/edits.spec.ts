@@ -135,6 +135,31 @@ test('moves photos into a new album, shown on the home screen', async ({ page })
   await expect(albums(page).getByRole('link', { name: /^Chats, 2 éléments/ })).toBeVisible();
 });
 
+test('undoes a move: the photos go back to their year and month folders', async ({ page }) => {
+  await turnOnChanges(page);
+  await go(page, 'Tout');
+  const first = cells(page).first();
+  const id = (await first.getAttribute('data-item-id')) ?? '';
+  // The demo's camera roll sorts its photos into year and month folders.
+  await first.click();
+  const viewer = page.getByRole('dialog', { name: 'Visionneuse' });
+  const album = (await viewer.locator('header').innerText()).split('·').at(-1)?.trim() ?? '';
+  await viewer.getByRole('button', { name: 'Plus d’actions' }).click();
+  await page.getByRole('button', { name: 'Déplacer vers un album' }).click();
+  await page
+    .getByRole('dialog', { name: 'Déplacer 1 élément' })
+    .getByRole('button', { name: /^Animaux/ })
+    .first()
+    .click();
+  await expect(toast(page)).toContainText(/1 élément dans « Animaux »/);
+  await expect(viewer.locator('header')).toContainText('Animaux');
+  await page.getByRole('button', { name: 'Annuler' }).click();
+  await expect(viewer.locator('header')).toContainText(album);
+  await expect(page.getByText(/ne peut pas toucher/)).toHaveCount(0);
+  await page.goBack();
+  await expect(cells(page).first()).toHaveAttribute('data-item-id', id);
+});
+
 test('creates, renames and deletes an empty album; a full one cannot be deleted', async ({
   page,
 }) => {
