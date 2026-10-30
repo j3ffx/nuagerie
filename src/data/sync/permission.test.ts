@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { favoritesShown, whenPermissionMissing } from './permission.ts';
+import { favoritesShown, syncPaused, whenPermissionMissing } from './permission.ts';
+
+describe('syncPaused', () => {
+  it('is paused only while on and waiting for Microsoft’s page', () => {
+    expect(syncPaused({ enabled: true, status: 'needs-permission' })).toBe(true);
+    for (const status of ['ok', 'syncing', 'offline', 'error', 'off']) {
+      expect(syncPaused({ enabled: true, status }), status).toBe(false);
+    }
+    expect(syncPaused({ enabled: false, status: 'needs-permission' })).toBe(false);
+  });
+});
 
 describe('favoritesShown', () => {
   const onedrive = { mode: 'onedrive', enabled: true, granted: true } as const;

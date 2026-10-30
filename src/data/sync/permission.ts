@@ -27,6 +27,14 @@ export function whenPermissionMissing({
 }
 
 /**
+ * The sync is on but Microsoft wants its page again (a session that ran out, a
+ * permission withdrawn): favourites are hidden until the user goes through it.
+ */
+export function syncPaused({ enabled, status }: { enabled: boolean; status: string }): boolean {
+  return enabled && status === 'needs-permission';
+}
+
+/**
  * Whether favourites show. The demo keeps them on the device. In OneDrive mode
  * they need the sync turned on and granted, but no Microsoft session: started
  * with no network, the app shows the copy kept on the device, and hearts

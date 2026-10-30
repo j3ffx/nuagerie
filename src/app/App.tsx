@@ -39,6 +39,7 @@ import banners from './Banner.module.css';
 import { ConnectionBanner } from './ConnectionBanner.tsx';
 import { MovedBanner } from './MovedBanner.tsx';
 import { NavBar } from './NavBar.tsx';
+import { SyncPausedBanner } from './SyncPausedBanner.tsx';
 import { UpdateBanner } from './UpdateBanner.tsx';
 import { WhatsNewBanner } from './WhatsNewBanner.tsx';
 import { scrollToTopOnNewScreen } from './navigation.ts';
@@ -144,6 +145,7 @@ function ShellContent() {
         <UpdateBanner />
         <WhatsNewBanner />
         <ConnectionBanner />
+        <SyncPausedBanner />
       </div>
       <SyncNotice />
       <MemoriesClosedWatcher />

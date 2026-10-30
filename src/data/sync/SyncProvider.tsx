@@ -230,32 +230,37 @@ export function SyncProvider({
     return () => window.clearTimeout(timer);
   }, [stored, folder, run]);
 
-  const enable = useCallback(async (favorites?: string | readonly string[]) => {
-    const pending = typeof favorites === 'string' ? [favorites] : (favorites ?? []);
-    if (pending.length > 0) writePersistent(PENDING_FAVORITE_KEY, pending);
-    writePersistent(SYNC_TURNED_OFF_KEY, false);
-    setNotice(null);
-    try {
-      // Granted already (on another device, or before signing out): no page to go through.
-      await getSyncToken({ deviceOnly: true });
-      writePersistent(SYNC_GRANTED_KEY, true);
+  const enable = useCallback(
+    async (favorites?: string | readonly string[]) => {
+      const pending = typeof favorites === 'string' ? [favorites] : (favorites ?? []);
+      if (pending.length > 0) writePersistent(PENDING_FAVORITE_KEY, pending);
+      writePersistent(SYNC_TURNED_OFF_KEY, false);
+      setNotice(null);
+      try {
+        // Granted already (on another device, or before signing out): no page to go through.
+        await getSyncToken({ deviceOnly: true });
+        writePersistent(SYNC_GRANTED_KEY, true);
+        writePersistent(SYNC_ENABLED_KEY, true);
+        // Already on and waiting for the permission: nothing else would run it again.
+        void run();
+        return;
+      } catch {
+        // Whatever the reason, Microsoft's page asks the user; the first sync tells what they said.
+      }
+      writePersistent(SYNC_GRANTED_KEY, false);
+      writePersistent(ASKING_KEY, true);
       writePersistent(SYNC_ENABLED_KEY, true);
-      return;
-    } catch {
-      // Whatever the reason, Microsoft's page asks the user; the first sync tells what they said.
-    }
-    writePersistent(SYNC_GRANTED_KEY, false);
-    writePersistent(ASKING_KEY, true);
-    writePersistent(SYNC_ENABLED_KEY, true);
-    try {
-      await requestSyncPermission();
-    } catch (error) {
-      // The page could not be opened: nothing was asked.
-      writePersistent(ASKING_KEY, false);
-      writePersistent(SYNC_ENABLED_KEY, false);
-      setNotice(failedNotice(error instanceof Error ? error.message : String(error)));
-    }
-  }, []);
+      try {
+        await requestSyncPermission();
+      } catch (error) {
+        // The page could not be opened: nothing was asked.
+        writePersistent(ASKING_KEY, false);
+        writePersistent(SYNC_ENABLED_KEY, false);
+        setNotice(failedNotice(error instanceof Error ? error.message : String(error)));
+      }
+    },
+    [run],
+  );
 
   const disable = useCallback(() => {
     writePersistent(SYNC_ENABLED_KEY, false);
