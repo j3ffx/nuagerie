@@ -43,6 +43,16 @@ export function useSelection(items: readonly MediaItem[]) {
   /** The selection when the drag began; the drag adds its range to it. */
   const dragBase = useRef<Selection>(EMPTY);
   const pushed = useRef(false);
+  /**
+   * A step back over the selection's entry is under way: one only. Photos that
+   * leave the list (deleted, moved) end the selection while the bar closes it.
+   */
+  const leaving = useRef(false);
+  const leave = useCallback(() => {
+    if (leaving.current) return;
+    leaving.current = true;
+    window.history.back(); // popstate clears it
+  }, []);
 
   // Started: one history entry, so that back ends the selection instead of leaving the screen.
   // Chrome's back button skips entries added without a user gesture, and a long press is not
@@ -51,6 +61,7 @@ export function useSelection(items: readonly MediaItem[]) {
     if (!active || pushed.current) return;
     const push = () => {
       if (pushed.current) return;
+      leaving.current = false;
       window.history.pushState({ selection: true } satisfies SelectionState, '');
       pushed.current = true;
     };
@@ -77,6 +88,7 @@ export function useSelection(items: readonly MediaItem[]) {
   useEffect(() => {
     if (!pushed.current) skipDeadEntry();
     const onPop = () => {
+      leaving.current = false;
       if (!pushed.current) {
         skipDeadEntry();
         return;
@@ -91,12 +103,12 @@ export function useSelection(items: readonly MediaItem[]) {
 
   const clear = useCallback(() => {
     if (pushed.current && isSelectionEntry(window.history.state)) {
-      window.history.back(); // popstate clears it
+      leave();
     } else {
       pushed.current = false;
       setSelected(EMPTY);
     }
-  }, []);
+  }, [leave]);
 
   // Escape ends it on a computer (unless a dialog above has it).
   useEffect(() => {
@@ -113,10 +125,8 @@ export function useSelection(items: readonly MediaItem[]) {
   // Emptied (by taps, or its photos left the list): the entry goes too, and the popstate that
   // follows clears what is left, so that photos coming back do not bring the selection back.
   useEffect(() => {
-    if (!active && pushed.current && isSelectionEntry(window.history.state)) {
-      window.history.back();
-    }
-  }, [active]);
+    if (!active && pushed.current && isSelectionEntry(window.history.state)) leave();
+  }, [active, leave]);
 
   /** A long press: the photo is selected, and a drag may follow from it. */
   const press = useCallback((item: MediaItem) => {
