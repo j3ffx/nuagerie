@@ -7,7 +7,7 @@ import { locale, localized } from '../../lib/i18n.ts';
 const t = localized({
   fr: {
     read: 'Lire tes fichiers OneDrive (lecture seule)',
-    user: 'Connaître ton nom et ton adresse',
+    user: 'Connaître ton nom et ton adresse e-mail',
     stay: 'Rester connecté sans redemander ton mot de passe',
     appFolder:
       'Écrire dans un seul dossier, Applis/Nuagerie, pour la synchronisation (favoris, préférences, index)',
@@ -23,7 +23,7 @@ const t = localized({
   },
   en: {
     read: 'Read your OneDrive files (read-only)',
-    user: 'Know your name and address',
+    user: 'Know your name and email address',
     stay: 'Stay signed in without asking for your password again',
     appFolder:
       'Write in one folder only, Apps/Nuagerie, for the sync (favourites, preferences, index)',

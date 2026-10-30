@@ -31,7 +31,7 @@ const t = localized({
       {
         title: 'Microsoft',
         paragraphs: [
-          'Tu te connectes avec ton compte Microsoft. Nuagerie demande à lire tes fichiers OneDrive (lecture seule), ton nom et ton adresse (pour les afficher dans les réglages) et à rester connectée.',
+          'Tu te connectes avec ton compte Microsoft. Nuagerie demande à lire tes fichiers OneDrive (lecture seule), ton nom et ton adresse e-mail (pour les afficher dans les réglages) et à rester connectée.',
           'Seulement si tu actives la synchronisation, elle demande aussi à écrire dans un seul dossier, Applis/Nuagerie, pour y ranger tes favoris, tes préférences, tes dossiers et une copie de l’index de tes photos. Elle ne crée, ne modifie, ne déplace ni ne supprime jamais tes fichiers.',
           'Réglages → Permissions montre ce que Microsoft autorise vraiment, avec un lien pour le retirer.',
         ],
@@ -82,7 +82,7 @@ const t = localized({
       {
         title: 'Microsoft',
         paragraphs: [
-          'You sign in with your Microsoft account. Nuagerie asks to read your OneDrive files (read-only), your name and address (to show them in the settings) and to stay signed in.',
+          'You sign in with your Microsoft account. Nuagerie asks to read your OneDrive files (read-only), your name and email address (to show them in the settings) and to stay signed in.',
           'Only if you turn on the sync does it also ask to write in one folder, Apps/Nuagerie, to keep your favourites, your preferences, your folders and a copy of your photos’ index there. It never creates, changes, moves or deletes your files.',
           'Settings → Permissions shows what Microsoft really allows, with a link to withdraw it.',
         ],

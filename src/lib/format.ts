@@ -23,7 +23,7 @@ const t = localized({
   en: {
     near: (name: string) => `Near ${name}`,
     undated: (video: boolean) => (video ? 'Undated video' : 'Undated photo'),
-    dated: (video: boolean, date: string) => `${video ? 'Video' : 'Photo'} of ${date}`,
+    dated: (video: boolean, date: string) => `${video ? 'Video' : 'Photo'} taken on ${date}`,
     kb: 'kB',
     mb: 'MB',
     gb: 'GB',
