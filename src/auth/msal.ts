@@ -22,6 +22,14 @@ export const GRAPH_SCOPES = ['Files.Read', 'User.Read'];
  */
 export const SYNC_SCOPE = 'Files.ReadWrite.AppFolder';
 
+/**
+ * Opt-in, asked for only when the user turns on the changes (Réglages →
+ * Modifications): delete, move and restore photos, create, rename and delete
+ * empty albums. `.All` because Graph restores from the recycle bin of a
+ * personal OneDrive only with it. Never requested at sign-in.
+ */
+export const EDIT_SCOPE = 'Files.ReadWrite.All';
+
 /** Route of the redirect bridge page required by MSAL v5 (see main.tsx). */
 export const REDIRECT_PATH = '/redirect';
 
@@ -274,3 +282,43 @@ export async function grantedScopes(): Promise<string[]> {
 
 /** Where the user can see and withdraw what they granted the app, on Microsoft's side. */
 export const MANAGE_CONSENT_URL = 'https://account.live.com/consent/Manage';
+
+/** The user has not (or no longer) granted the permission to change their files. */
+export class EditPermissionMissing extends Error {
+  constructor() {
+    super('The permission to change files is not granted');
+    this.name = 'EditPermissionMissing';
+  }
+}
+
+/**
+ * A token allowing changes to the user's files, never through Microsoft's
+ * page (see getSyncToken); asked for only by what the user just did.
+ */
+export async function getEditToken({ deviceOnly = false } = {}): Promise<string> {
+  const msal = getMsal();
+  const account = msal.getActiveAccount();
+  if (!account) throw new NotSignedInError();
+  try {
+    return (
+      await msal.acquireTokenSilent({
+        scopes: [EDIT_SCOPE],
+        account,
+        ...(deviceOnly ? { cacheLookupPolicy: CacheLookupPolicy.AccessTokenAndRefreshToken } : {}),
+      })
+    ).accessToken;
+  } catch (error) {
+    if (error instanceof InteractionRequiredAuthError) throw new EditPermissionMissing();
+    throw error;
+  }
+}
+
+/** Asks Microsoft for the permission to change files (its page says what it allows). */
+export function requestEditPermission(): Promise<void> {
+  const msal = getMsal();
+  const account = msal.getActiveAccount() ?? undefined;
+  return msal.acquireTokenRedirect({
+    scopes: [...GRAPH_SCOPES, EDIT_SCOPE],
+    ...(account ? { account } : {}),
+  });
+}
