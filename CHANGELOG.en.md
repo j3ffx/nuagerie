@@ -17,6 +17,15 @@ The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
   like “Sans date”.
 - A Privacy page (Settings → About) tells what Nuagerie does with your data; it can be read
   without an account too.
+- Nuagerie has its own address: nuagerie.app. The old one sends people there; whoever already
+  has their photos there sees a banner and can move at their own pace.
+
+### Fixes
+
+- Signing out also erases the choices tied to the account (folders, albums shown, sorting, the
+  map's last view), as the Privacy page says; theme and language stay.
+- The search no longer takes “Mar” or “Jan” alone for months (“Viña del Mar”); “mar 2024” is
+  still March 2024.
 
 ## 0.6.0 — 2026-10-29
 

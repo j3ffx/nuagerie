@@ -17,6 +17,15 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
   comme « Sans date ».
 - Une page Confidentialité (Réglages → À propos) dit ce que Nuagerie fait de tes données ; elle
   se lit aussi sans compte.
+- Nuagerie a sa propre adresse : nuagerie.app. L’ancienne y envoie ; qui y a déjà ses photos
+  voit un bandeau et peut s’y installer à son rythme.
+
+### Corrections
+
+- Se déconnecter efface aussi les choix liés au compte (dossiers, albums affichés, tris, dernière
+  vue de la carte), comme le dit la page Confidentialité ; le thème et la langue restent.
+- La recherche ne prend plus « Mar » ou « Jan » seuls pour des mois (« Viña del Mar ») ; « mar
+  2024 » reste mars 2024.
 
 ## 0.6.0 — 2026-10-29
 
