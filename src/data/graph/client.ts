@@ -1,9 +1,13 @@
 import { isOnline } from '../../lib/online.ts';
+import { DELTA_SELECT } from './sync.ts';
+import type { GraphDriveItem } from './types.ts';
 
 /**
  * Minimal Microsoft Graph client: bearer token, retries on throttling and
- * transient errors (honouring Retry-After), typed errors. Read-only usage:
- * GET requests, plus POST /$batch, whose sub-requests are GETs too.
+ * transient errors (honouring Retry-After), typed errors. Reads are GET
+ * requests, plus POST /$batch, whose sub-requests are GETs too. The writes are
+ * here as well, and only here: the app folder's files (AppFolderWriter) and,
+ * once the user turned the changes on, the few changes of DriveWriter.
  */
 
 export const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
@@ -36,7 +40,7 @@ export interface GraphClientOptions {
 }
 
 interface Request {
-  method: 'GET' | 'POST' | 'PUT';
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
   body?: string | Blob;
 }
@@ -62,6 +66,31 @@ export interface AppFolderWriter {
  * over whatever is there, for a file any device may replace whole.
  */
 export type AppFileWrite = { ifMatch: string | null } | { overwrite: true };
+
+/**
+ * The changes the user can make once they turned them on (Réglages →
+ * Modifications, `Files.ReadWrite.All`), each on one item by its id. A deleted
+ * item goes to OneDrive's recycle bin, from which `restoreItem` brings it back.
+ * Which items may be changed is the caller's to check (src/data/edits/).
+ */
+export interface DriveWriter {
+  deleteItem(id: string): Promise<void>;
+  /** Moves (to `parentId`) or renames; fails rather than replace an item of the same name. */
+  updateItem(id: string, change: { name?: string; parentId?: string }): Promise<GraphDriveItem>;
+  /** A new folder in `parentId`; fails if one of that name is there. */
+  createFolder(parentId: string, name: string): Promise<GraphDriveItem>;
+  restoreItem(id: string): Promise<GraphDriveItem>;
+  /** An item as it is now, e.g. to check that a folder is empty before deleting it. */
+  getItem(id: string): Promise<GraphDriveItem & { folder?: { childCount?: number } }>;
+}
+
+/** The path of one item: its id encoded, so a request never leaves /me/drive/items/{id}. */
+function itemPath(id: string): string {
+  if (!id || id === 'root') throw new Error(`Not an item id: ${id}`);
+  return `/me/drive/items/${encodeURIComponent(id)}`;
+}
+
+const FAIL_ON_CONFLICT = { '@microsoft.graph.conflictBehavior': 'fail' };
 
 export interface GraphClient {
   getJson<T>(pathOrUrl: string): Promise<T>;
@@ -124,7 +153,9 @@ async function toGraphError(response: Response): Promise<GraphError> {
   return new GraphError(response.status, code, message, response.headers.get('Location'));
 }
 
-export function createGraphClient(options: GraphClientOptions): GraphClient & AppFolderWriter {
+export function createGraphClient(
+  options: GraphClientOptions,
+): GraphClient & AppFolderWriter & DriveWriter {
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   const sleep = options.sleep ?? ((ms: number) => new Promise((r) => setTimeout(r, ms)));
   const maxRetries = options.maxRetries ?? 6;
@@ -172,9 +203,47 @@ export function createGraphClient(options: GraphClientOptions): GraphClient & Ap
     }
   }
 
+  const sendJson = async (path: string, method: Request['method'], body: unknown) =>
+    (await (
+      await send(path, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+    ).json()) as GraphDriveItem;
+  const selected = `?$select=${DELTA_SELECT}`;
+
   return {
     async getJson<T>(pathOrUrl: string): Promise<T> {
       return (await (await send(pathOrUrl)).json()) as T;
+    },
+
+    async deleteItem(id) {
+      await send(itemPath(id), { method: 'DELETE' });
+    },
+
+    updateItem(id, { name, parentId }) {
+      return sendJson(`${itemPath(id)}${selected}`, 'PATCH', {
+        ...(name === undefined ? {} : { name }),
+        ...(parentId === undefined ? {} : { parentReference: { id: parentId } }),
+        ...FAIL_ON_CONFLICT,
+      });
+    },
+
+    createFolder(parentId, name) {
+      return sendJson(`${itemPath(parentId)}/children${selected}`, 'POST', {
+        name,
+        folder: {},
+        ...FAIL_ON_CONFLICT,
+      });
+    },
+
+    restoreItem(id) {
+      return sendJson(`${itemPath(id)}/restore`, 'POST', {});
+    },
+
+    async getItem(id) {
+      return (await send(`${itemPath(id)}${selected}`)).json() as Promise<GraphDriveItem>;
     },
 
     async batch(requests: BatchRequest[]): Promise<BatchResponse[]> {

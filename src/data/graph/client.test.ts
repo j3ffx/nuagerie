@@ -188,6 +188,69 @@ describe('putAppFile', () => {
   });
 });
 
+describe('DriveWriter', () => {
+  const base = 'https://graph.microsoft.com/v1.0/me/drive/items/';
+  const body = (call: { init: RequestInit | undefined } | undefined) =>
+    JSON.parse(String(call?.init?.body)) as unknown;
+
+  it('deletes, moves, renames, creates and restores one item at a time, by its id', async () => {
+    const { client, calls } = setup([
+      new Response(null, { status: 204 }),
+      json({ id: 'A!1' }),
+      json({ id: 'F!2' }),
+      json({ id: 'N!3' }),
+      json({ id: 'A!1' }),
+    ]);
+    await client.deleteItem('A!1');
+    expect(calls[0]).toMatchObject({ url: `${base}A!1`, init: { method: 'DELETE' } });
+
+    await expect(client.updateItem('A!1', { parentId: 'F!9' })).resolves.toEqual({ id: 'A!1' });
+    expect(calls[1]?.url.startsWith(`${base}A!1?$select=id,name,parentReference`)).toBe(true);
+    expect(calls[1]?.init?.method).toBe('PATCH');
+    expect(body(calls[1])).toEqual({
+      parentReference: { id: 'F!9' },
+      '@microsoft.graph.conflictBehavior': 'fail',
+    });
+
+    await client.updateItem('F!2', { name: 'Vacances' });
+    expect(body(calls[2])).toEqual({
+      name: 'Vacances',
+      '@microsoft.graph.conflictBehavior': 'fail',
+    });
+
+    await client.createFolder('F!9', 'Nouvel album');
+    expect(calls[3]?.url.startsWith(`${base}F!9/children?`)).toBe(true);
+    expect(calls[3]?.init?.method).toBe('POST');
+    expect(body(calls[3])).toEqual({
+      name: 'Nouvel album',
+      folder: {},
+      '@microsoft.graph.conflictBehavior': 'fail',
+    });
+
+    await client.restoreItem('A!1');
+    expect(calls[4]).toMatchObject({ url: `${base}A!1/restore`, init: { method: 'POST' } });
+  });
+
+  it('never reaches past one item, nor the drive root', async () => {
+    const { client, calls } = setup([new Response(null, { status: 204 })]);
+    await client.deleteItem('../root/children');
+    expect(calls[0]?.url).toBe(`${base}..%2Froot%2Fchildren`);
+    for (const id of ['', 'root']) {
+      await expect(client.deleteItem(id)).rejects.toThrow(/Not an item id/);
+    }
+    expect(calls).toHaveLength(1);
+  });
+
+  it('reports a name already taken without retrying', async () => {
+    const { client, calls } = setup([json({ error: { code: 'nameAlreadyExists' } }, 409)]);
+    await expect(client.createFolder('F!9', 'Vacances')).rejects.toMatchObject({
+      status: 409,
+      code: 'nameAlreadyExists',
+    });
+    expect(calls).toHaveLength(1);
+  });
+});
+
 describe('a request that never ends', () => {
   it('gives up, then retries, rather than waiting for ever', async () => {
     let calls = 0;
