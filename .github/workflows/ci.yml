@@ -81,6 +81,8 @@ jobs:
         env:
           # Not a secret (it ships in the bundle), but kept out of the repository.
           VITE_MSAL_CLIENT_ID: ${{ vars.VITE_MSAL_CLIENT_ID }}
+          # The app's own address, once it has one: the pages.dev one then sends people there.
+          VITE_HOME_URL: ${{ vars.VITE_HOME_URL }}
 
       - name: Check what will be published
         run: npm run check:dist

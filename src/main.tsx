@@ -9,6 +9,7 @@ import { language, localized } from './lib/i18n.ts';
 import { applyStoredTheme } from './lib/theme.ts';
 import { rememberLanguage } from './data/memoryNotifier.ts';
 import { hasSignedInBefore, initAuth, REDIRECT_PATH } from './auth/msal.ts';
+import { newHome } from './app/home.ts';
 import { resolveDataMode } from './data/mode.ts';
 import { PRIVACY_PATH, PrivacyScreen } from './features/privacy/PrivacyScreen.tsx';
 import { ConnectingScreen } from './features/welcome/SignInScreen.tsx';
@@ -34,6 +35,14 @@ async function start() {
     } catch {
       window.location.replace('/');
     }
+    return;
+  }
+
+  // The app moved to its own address: with nothing kept here yet, go there now (whoever has
+  // photos here is told by a banner, src/app/MovedBanner.tsx).
+  const home = newHome();
+  if (home && !hasSignedInBefore()) {
+    window.location.replace(home);
     return;
   }
 

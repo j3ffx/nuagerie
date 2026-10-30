@@ -5,6 +5,8 @@ import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
 import { Logo } from '../../ui/Logo.tsx';
 import { PRIVACY_PATH } from '../privacy/PrivacyScreen.tsx';
+import banners from '../../app/Banner.module.css';
+import { MovedBanner } from '../../app/MovedBanner.tsx';
 import styles from './SignInScreen.module.css';
 import { localized } from '../../lib/i18n.ts';
 
@@ -46,6 +48,9 @@ export function SignInScreen({ error }: { error: string | null }) {
 
   return (
     <main className={styles.welcome}>
+      <div className={banners.stack}>
+        <MovedBanner />
+      </div>
       <Logo size={96} />
       <h1 className={styles.title}>{t.welcome}</h1>
       <p className={common.muted}>{t.pitch}</p>

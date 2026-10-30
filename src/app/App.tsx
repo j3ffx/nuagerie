@@ -37,6 +37,7 @@ import { ConfirmProvider } from '../ui/confirm.tsx';
 import styles from './App.module.css';
 import banners from './Banner.module.css';
 import { ConnectionBanner } from './ConnectionBanner.tsx';
+import { MovedBanner } from './MovedBanner.tsx';
 import { NavBar } from './NavBar.tsx';
 import { UpdateBanner } from './UpdateBanner.tsx';
 import { WhatsNewBanner } from './WhatsNewBanner.tsx';
@@ -139,6 +140,7 @@ function ShellContent() {
       </a>
       <NavBar />
       <div className={banners.stack}>
+        <MovedBanner />
         <UpdateBanner />
         <WhatsNewBanner />
         <ConnectionBanner />

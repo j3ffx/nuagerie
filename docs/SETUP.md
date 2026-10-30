@@ -133,6 +133,39 @@ l’étape de déploiement est simplement sautée.
 Les en-têtes HTTP (sécurité, cache) sont dans `public/_headers`. Sans `404.html`,
 Cloudflare Pages sert `index.html` pour toutes les routes (application monopage).
 
+### Domaine à soi
+
+Une adresse à soi (par exemple `nuagerie.app`) plutôt que `<projet>.pages.dev`. À faire avant de
+partager l’application : les données d’un appareil (index, miniatures, application installée)
+appartiennent à une adresse, et en changer plus tard oblige chacun à réinstaller.
+
+1. **Acheter le domaine** : Cloudflare → **Domain Registration** → **Register Domains**, chercher
+   le nom, payer. Chez Cloudflare, le prix est celui du registre, et le DNS est déjà au bon
+   endroit. Les domaines `.app` imposent le HTTPS, ce que Pages fait de toute façon.
+2. **Le brancher sur Pages** : **Workers & Pages** → le projet → **Custom domains** →
+   **Set up a custom domain** → le nom → **Activate domain**. Cloudflare crée l’enregistrement DNS
+   et le certificat ; compter quelques minutes, jusqu’à ce que l’état passe à **Active**.
+3. **Microsoft** (section 6) : dans **Authentification**, ajouter `https://<domaine>/redirect`
+   aux URI SPA, sans retirer celle de `pages.dev` (les appareils qui y ont leurs photos s’y
+   connectent encore) ; dans **Personnalisation et propriétés**, mettre
+   `https://<domaine>/confidentialite` comme déclaration de confidentialité.
+4. **Le déménagement** : enregistrer l’adresse comme variable GitHub, puis pousser (ou relancer
+   la CI) :
+
+   ```bash
+   gh variable set VITE_HOME_URL --body https://nuagerie.app
+   ```
+
+   L’adresse `pages.dev` envoie alors aussitôt vers la nouvelle quiconque n’y a encore rien, en
+   gardant la page demandée (`?demo=1` compris). Qui s’y est déjà connecté voit un bandeau
+   « Nuagerie a déménagé », avec un lien : ses photos restent là jusqu’à sa déconnexion. Avec la
+   synchronisation, la nouvelle adresse s’ouvre en quelques secondes grâce à la copie de l’index ;
+   le thème, la langue, les albums gardés hors connexion et les recherches récentes, propres à
+   chaque appareil, sont à refaire. Les aperçus de branches et `localhost` ne déménagent jamais
+   (`src/app/home.ts`).
+
+5. Remplacer `nuagerie.pages.dev` par le nouveau domaine dans les README et ce fichier.
+
 ## 6. Inscription de l’application Microsoft
 
 Nuagerie lit OneDrive avec les droits de l’utilisateur connecté, en **lecture seule**.
