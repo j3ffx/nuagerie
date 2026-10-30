@@ -1,6 +1,15 @@
+import 'fake-indexeddb/auto';
 import { describe, expect, it, vi } from 'vitest';
 import type { MediaIndex, MediaItem } from './model.ts';
-import { isNavigateMessage, notifyMemories, type NotifierDeps } from './memoryNotifier.ts';
+import {
+  forgetMemoryState,
+  isNavigateMessage,
+  notifyMemories,
+  openMemoryState,
+  readLanguage,
+  rememberLanguage,
+  type NotifierDeps,
+} from './memoryNotifier.ts';
 
 const item = (id: string, takenAt: number): MediaItem => ({
   id,
@@ -87,5 +96,36 @@ describe('isNavigateMessage', () => {
     expect(isNavigateMessage({ type: 'NAVIGATE', url: '//example.com/' })).toBe(false);
     expect(isNavigateMessage({ type: 'SKIP_WAITING' })).toBe(false);
     expect(isNavigateMessage(null)).toBe(false);
+  });
+});
+
+describe('the language of the notification', () => {
+  it('speaks the language given by the app, else the device’s', async () => {
+    const english = deps({ language: 'en' });
+    await notifyMemories(english.all);
+    expect(english.show).toHaveBeenCalledWith(
+      '2 memories on this day',
+      expect.stringMatching(/years ago/),
+      expect.anything(),
+    );
+    // Never told by the app: the device's (French in the tests).
+    const device = deps();
+    await notifyMemories(device.all);
+    expect(device.show).toHaveBeenCalledWith(
+      '2 souvenirs ce jour-là',
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it('keeps the app’s language in IndexedDB, and forgets it with the rest on sign-out', async () => {
+    await rememberLanguage('en');
+    const state = await openMemoryState();
+    expect(await readLanguage(state)).toBe('en');
+    state.close();
+    await forgetMemoryState();
+    const fresh = await openMemoryState();
+    expect(await readLanguage(fresh)).toBeNull();
+    fresh.close();
   });
 });

@@ -97,6 +97,17 @@ describe('memoryNotification', () => {
     });
   });
 
+  it('speaks the language it is given (the app’s, in the service worker)', () => {
+    expect(memoryNotification(items, at(2026, 10, 28, 9), null, 'en')).toMatchObject({
+      title: '5 memories on this day',
+      body: '1 year ago, 3 years ago, 6 years ago… Tap to see them again.',
+    });
+    expect(memoryNotification(items.slice(2, 3), at(2026, 10, 28, 9), null, 'en')).toMatchObject({
+      title: 'A memory on this day',
+      body: '3 years ago. Tap to see them again.',
+    });
+  });
+
   it('waits until 8 o’clock, and tells once a day', () => {
     expect(memoryNotification(items, at(2026, 10, 28, 7), null)).toBeNull();
     expect(memoryNotification(items, at(2026, 10, 28, 8), null)).not.toBeNull();
