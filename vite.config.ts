@@ -30,8 +30,9 @@ export default defineConfig(({ mode }) => {
           id: '/',
           name: 'Nuagerie',
           short_name: 'Nuagerie',
-          description: 'Les photos OneDrive, rangées par albums, par date et par lieu.',
-          lang: 'fr',
+          // One manifest for both languages: the description says it in both.
+          description:
+            'Les photos OneDrive, par albums, date et lieu. OneDrive photos, by album, date and place.',
           dir: 'ltr',
           start_url: '/',
           scope: '/',

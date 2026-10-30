@@ -89,9 +89,15 @@ test('keeps touch targets at least 44 px', async ({ page }) => {
 test('is an installable PWA with an active service worker', async ({ page }) => {
   const manifest = await page.request.get('/manifest.webmanifest');
   expect(manifest.ok()).toBe(true);
-  const json = (await manifest.json()) as { name: string; lang: string; icons: unknown[] };
+  const json = (await manifest.json()) as {
+    name: string;
+    description: string;
+    icons: unknown[];
+  };
   expect(json.name).toBe('Nuagerie');
-  expect(json.lang).toBe('fr');
+  // One manifest for both languages.
+  expect(json.description).toMatch(/OneDrive photos/);
+  expect(json.description).toMatch(/Les photos OneDrive/);
   expect(json.icons.length).toBeGreaterThanOrEqual(3);
 
   await expect
