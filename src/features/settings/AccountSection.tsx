@@ -3,7 +3,7 @@ import { signOut } from '../../auth/msal.ts';
 import { useSignIn } from '../../auth/useSignIn.ts';
 import { useData } from '../../data/dataContext.ts';
 import { photoPlaces } from '../../data/places/photoPlaces.ts';
-import { forgetAccountPreferences } from '../../data/forgetAccount.ts';
+import { forgetAccountPreferences, forgetTrashThumbnails } from '../../data/forgetAccount.ts';
 import { forgetMemoryState } from '../../data/memoryNotifier.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
@@ -69,6 +69,7 @@ export function AccountSection() {
       thumbnails.disk.clear(),
       offline.clear(),
       photoPlaces().clear(),
+      forgetTrashThumbnails().catch(() => undefined),
     ]);
     thumbnails.store.clearMemory();
     // This device's copy of the favourites and preferences (OneDrive's copy stays), and the

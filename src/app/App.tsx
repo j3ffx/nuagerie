@@ -6,7 +6,7 @@ import type { AccountInfo } from '@azure/msal-browser';
 import { MsalProvider } from '@azure/msal-react';
 import { useEffect, useState } from 'react';
 import { Redirect, Route, Router, Switch, useLocation } from 'wouter';
-import { getAccessToken, getMsal } from '../auth/msal.ts';
+import { getAccessToken, getEditToken, getMsal } from '../auth/msal.ts';
 import { isNavigateMessage } from '../data/memoryNotifier.ts';
 import { DataProvider } from '../data/DataProvider.tsx';
 import { createAppFolderSnapshots } from '../data/sync/appFolderSnapshots.ts';
@@ -40,6 +40,9 @@ import { ConnectionBanner } from './ConnectionBanner.tsx';
 import { MovedBanner } from './MovedBanner.tsx';
 import { NavBar } from './NavBar.tsx';
 import { SyncPausedBanner } from './SyncPausedBanner.tsx';
+import { EditsProvider } from '../features/edits/EditsProvider.tsx';
+import { EditsToast } from '../features/edits/EditsToast.tsx';
+import { TrashScreen } from '../features/edits/TrashScreen.tsx';
 import { UpdateBanner } from './UpdateBanner.tsx';
 import { WhatsNewBanner } from './WhatsNewBanner.tsx';
 import { scrollToTopOnNewScreen } from './navigation.ts';
@@ -76,6 +79,7 @@ export function App({
             createOneDriveSource({
               accountId: account?.homeAccountId ?? null,
               getToken: getAccessToken,
+              getEditToken,
               snapshots: createAppFolderSnapshots(),
             })
           }
@@ -101,9 +105,11 @@ function Data({
     <DataProvider mode={mode} signedIn={signedIn} source={source}>
       <SyncProvider mode={mode} signedIn={signedIn}>
         <OfflineProvider>
-          <Router aroundNav={scrollToTopOnNewScreen}>
-            <Shell />
-          </Router>
+          <EditsProvider>
+            <Router aroundNav={scrollToTopOnNewScreen}>
+              <Shell />
+            </Router>
+          </EditsProvider>
         </OfflineProvider>
       </SyncProvider>
     </DataProvider>
@@ -147,6 +153,7 @@ function ShellContent() {
         <ConnectionBanner />
         <SyncPausedBanner />
       </div>
+      <EditsToast />
       <SyncNotice />
       <MemoriesClosedWatcher />
       <main id="main" className={styles.main}>
@@ -164,6 +171,7 @@ function ShellContent() {
           <Route path="/reglages" component={SettingsScreen} />
           <Route path="/reglages/dossiers" component={FoldersScreen} />
           <Route path="/nouveautes" component={WhatsNewScreen} />
+          <Route path="/corbeille" component={TrashScreen} />
           <Route path="/diagnostic" component={DiagnosticScreen} />
           <Route>
             <Redirect to="/" replace />

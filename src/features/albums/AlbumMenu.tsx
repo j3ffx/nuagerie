@@ -1,8 +1,22 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
 import type { Album } from '../../data/albums.ts';
+import { useData, useMediaIndex } from '../../data/dataContext.ts';
+import { isEditableAlbum, looksEmpty } from '../../data/edits/rules.ts';
+import { useOnline } from '../../lib/online.ts';
+import { useConfirm } from '../../ui/confirmContext.ts';
+import { NameDialog } from '../edits/EditDialogs.tsx';
+import { useEdits } from '../edits/editsContext.ts';
 import { formatBytes, formatItemCount } from '../../lib/format.ts';
-import { ChevronIcon, ExternalIcon, HideIcon, MapIcon, OfflineIcon } from '../../ui/icons.tsx';
+import {
+  ChevronIcon,
+  ExternalIcon,
+  HideIcon,
+  MapIcon,
+  OfflineIcon,
+  PencilIcon,
+  TrashIcon,
+} from '../../ui/icons.tsx';
 import { useOffline } from '../offline/offlineContext.ts';
 import { OneDriveLink } from '../../ui/OneDriveLink.tsx';
 import styles from './AlbumMenu.module.css';
@@ -22,6 +36,17 @@ const t = localized({
     frees: 'Libère la place prise sur l’appareil.',
     withSubAlbums: ', sous-albums compris',
     cancel: 'Annuler',
+    rename: 'Renommer',
+    renameTitle: 'Renommer l’album',
+    renameConfirm: 'Renommer',
+    remove: 'Supprimer l’album',
+    removeEmpty: 'Seulement un album vide.',
+    removeNote: 'Il est vide : il va dans la corbeille de OneDrive.',
+    removeTitle: (name: string) => `Supprimer « ${name} » ?`,
+    removeMessage: 'L’album est vide. Le dossier va dans la corbeille de OneDrive.',
+    removeConfirm: 'Supprimer',
+    needsNetwork: 'Demande le réseau.',
+    needsPermission: 'Redonne la permission dans les réglages.',
   },
   en: {
     hideHome: 'Hide from the home screen',
@@ -34,6 +59,17 @@ const t = localized({
     frees: 'Frees the space taken on the device.',
     withSubAlbums: ', sub-albums included',
     cancel: 'Cancel',
+    rename: 'Rename',
+    renameTitle: 'Rename the album',
+    renameConfirm: 'Rename',
+    remove: 'Delete the album',
+    removeEmpty: 'Only an empty album.',
+    removeNote: 'It is empty: it goes to OneDrive’s recycle bin.',
+    removeTitle: (name: string) => `Delete “${name}”?`,
+    removeMessage: 'The album is empty. Its folder goes to OneDrive’s recycle bin.',
+    removeConfirm: 'Delete',
+    needsNetwork: 'Needs the network.',
+    needsPermission: 'Give the permission again in the settings.',
   },
 });
 
@@ -69,6 +105,22 @@ export function AlbumMenu({
   const offline = useOffline();
   const kept = offline.isKept(album.id);
   const count = photos?.items.length ?? 0;
+  const index = useMediaIndex();
+  const edits = useEdits();
+  const confirm = useConfirm();
+  const online = useOnline();
+  const { mode } = useData();
+  const [renaming, setRenaming] = useState(false);
+  const editable =
+    place !== 'favorites' && edits.status !== 'off' && !!index && isEditableAlbum(index, album.id);
+  const empty = !!index && looksEmpty(index, album.id);
+  const editNote =
+    edits.status === 'needs-permission'
+      ? t.needsPermission
+      : !online && mode !== 'demo'
+        ? t.needsNetwork
+        : undefined;
+  const parentId = index?.folders.get(album.id)?.parentId ?? null;
 
   useEffect(() => {
     const dialog = ref.current;
@@ -79,6 +131,33 @@ export function AlbumMenu({
     if (place === 'home') setChecked(album.id, false);
     else setHidden(album.id, true);
     onClose();
+  };
+
+  if (renaming && parentId) {
+    return (
+      <NameDialog
+        title={t.renameTitle}
+        confirmLabel={t.renameConfirm}
+        parentId={parentId}
+        initial={album.name}
+        ignoreId={album.id}
+        onCancel={onClose}
+        onDone={async (name) => {
+          await edits.renameAlbum(album.id, name);
+          onClose();
+        }}
+      />
+    );
+  }
+
+  const remove = async () => {
+    const answer = await confirm({
+      title: t.removeTitle(album.name),
+      message: t.removeMessage,
+      confirmLabel: t.removeConfirm,
+      danger: true,
+    });
+    if (answer) await edits.deleteAlbum(album.id);
   };
 
   return (
@@ -154,6 +233,41 @@ export function AlbumMenu({
             <OneDriveLink id={album.id} className={styles.item}>
               <ExternalIcon className={styles.icon} />
             </OneDriveLink>
+          )}
+          {editable && (
+            <>
+              <button
+                type="button"
+                className={styles.item}
+                onClick={() => setRenaming(true)}
+                disabled={!edits.usable}
+              >
+                <PencilIcon className={styles.icon} />
+                <span className={styles.text}>
+                  {t.rename}
+                  {editNote && <span className={styles.note}>{editNote}</span>}
+                </span>
+                <ChevronIcon className={styles.chevron} />
+              </button>
+              <button
+                type="button"
+                className={styles.item}
+                onClick={() => {
+                  onClose();
+                  void remove();
+                }}
+                disabled={!edits.usable || !empty}
+              >
+                <TrashIcon className={styles.icon} />
+                <span className={styles.text}>
+                  {t.remove}
+                  <span className={styles.note}>
+                    {editNote ?? (empty ? t.removeNote : t.removeEmpty)}
+                  </span>
+                </span>
+                <ChevronIcon className={styles.chevron} />
+              </button>
+            </>
           )}
         </div>
         <button type="button" className={styles.cancel} onClick={onClose} autoFocus>

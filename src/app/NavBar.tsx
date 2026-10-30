@@ -49,7 +49,7 @@ const ENTRIES: NavEntry[] = [
     href: '/reglages',
     label: t.settings,
     icon: SettingsIcon,
-    isActive: (path) => path.startsWith('/reglages'),
+    isActive: (path) => path.startsWith('/reglages') || path === '/corbeille',
   },
 ];
 

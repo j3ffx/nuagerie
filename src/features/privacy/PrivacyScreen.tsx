@@ -32,7 +32,8 @@ const t = localized({
         title: 'Microsoft',
         paragraphs: [
           'Tu te connectes avec ton compte Microsoft. Nuagerie demande à lire tes fichiers OneDrive (lecture seule), ton nom et ton adresse e-mail (pour les afficher dans les réglages) et à rester connectée.',
-          'Seulement si tu actives la synchronisation, elle demande aussi à écrire dans un seul dossier, Applis/Nuagerie, pour y ranger tes favoris, tes préférences, tes dossiers et une copie de l’index de tes photos. Elle ne crée, ne modifie, ne déplace ni ne supprime jamais tes fichiers.',
+          'Seulement si tu actives la synchronisation, elle demande aussi à écrire dans un seul dossier, Applis/Nuagerie, pour y ranger tes favoris, tes préférences, tes dossiers et une copie de l’index de tes photos. La synchronisation ne touche à rien d’autre.',
+          'Seulement si tu actives les modifications (Réglages → Modifications), elle demande le droit de modifier tes fichiers. Elle s’en sert uniquement quand tu le lui demandes : supprimer une photo (elle va dans la corbeille de OneDrive), la restaurer, la déplacer dans un album, créer, renommer ou supprimer un album vide.',
           'Une fois activée, la synchronisation suit sur tes autres appareils connectés au même compte ; Réglages → Synchronisation la coupe appareil par appareil. La couper, ou retirer la permission, laisse ce dossier dans ton OneDrive : supprime Applis/Nuagerie pour l’effacer.',
           'Réglages → Permissions montre ce que Microsoft autorise vraiment, avec un lien pour le retirer.',
         ],
@@ -40,7 +41,7 @@ const t = localized({
       {
         title: 'Sur ton appareil',
         paragraphs: [
-          'Pour s’ouvrir vite, et sans réseau, Nuagerie garde dans ton navigateur l’index de tes photos, leurs miniatures, les albums que tu gardes hors connexion, les lieux de tes photos, tes favoris, tes dernières recherches, tes préférences et ta connexion Microsoft (nom du compte, adresse e-mail et jetons, gardés par la bibliothèque de connexion de Microsoft).',
+          'Pour s’ouvrir vite, et sans réseau, Nuagerie garde dans ton navigateur l’index de tes photos, leurs miniatures, les albums que tu gardes hors connexion, les lieux de tes photos, tes favoris, tes dernières recherches, tes préférences, la liste des photos supprimées depuis l’appli (avec leurs miniatures) et ta connexion Microsoft (nom du compte, adresse e-mail et jetons, gardés par la bibliothèque de connexion de Microsoft).',
           'Se déconnecter efface tout cela, sauf l’apparence de l’appli (thème, langue, colonnes). Effacer les données du site dans le navigateur aussi.',
           'La notification des souvenirs est préparée sur l’appareil et montre une de tes photos parmi tes notifications. Partager envoie une photo seulement à l’appli que tu choisis.',
         ],
@@ -85,7 +86,8 @@ const t = localized({
         title: 'Microsoft',
         paragraphs: [
           'You sign in with your Microsoft account. Nuagerie asks to read your OneDrive files (read-only), your name and email address (to show them in the settings) and to stay signed in.',
-          'Only if you turn on the sync does it also ask to write in one folder, Apps/Nuagerie, to keep your favourites, your preferences, your folders and a copy of your photos’ index there. It never creates, changes, moves or deletes your files.',
+          'Only if you turn on the sync does it also ask to write in one folder, Apps/Nuagerie, to keep your favourites, your preferences, your folders and a copy of your photos’ index there. The sync touches nothing else.',
+          'Only if you turn on the changes (Settings → Changes) does it ask for the right to change your files. It uses it only when you ask it to: delete a photo (it goes to OneDrive’s recycle bin), restore it, move it to an album, create, rename or delete an empty album.',
           'Once on, the sync follows on your other devices signed in to the same account; Settings → Sync turns it off device by device. Turning it off, or withdrawing the permission, leaves this folder in your OneDrive: delete Apps/Nuagerie to erase it.',
           'Settings → Permissions shows what Microsoft really allows, with a link to withdraw it.',
         ],
@@ -93,7 +95,7 @@ const t = localized({
       {
         title: 'On your device',
         paragraphs: [
-          'To open fast, and without a network, Nuagerie keeps in your browser the index of your photos, their thumbnails, the albums you keep offline, the places of your photos, your favourites, your latest searches, your preferences and your Microsoft sign-in (account name, email address and tokens, kept by Microsoft’s sign-in library).',
+          'To open fast, and without a network, Nuagerie keeps in your browser the index of your photos, their thumbnails, the albums you keep offline, the places of your photos, your favourites, your latest searches, your preferences, the list of photos deleted from the app (with their thumbnails) and your Microsoft sign-in (account name, email address and tokens, kept by Microsoft’s sign-in library).',
           'Signing out erases all of it, except the look of the app (theme, language, columns). So does clearing the site’s data in the browser.',
           'The memories notification is made on the device and shows one of your photos among your notifications. Sharing sends a photo only to the app you choose.',
         ],

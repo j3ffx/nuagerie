@@ -112,3 +112,10 @@
 .close:active {
   background: var(--color-press);
 }
+
+/* A sentence that says what happened: full contrast, wrapping rather than cut. */
+.message {
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}

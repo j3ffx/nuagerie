@@ -5,7 +5,19 @@ import { useSync } from '../../data/sync/syncContext.ts';
 import { formatBytes, formatCount } from '../../lib/format.ts';
 import { useOnline } from '../../lib/online.ts';
 import { useConfirm } from '../../ui/confirmContext.ts';
-import { CloseIcon, DownloadIcon, HeartIcon, ShareIcon } from '../../ui/icons.tsx';
+import {
+  CloseIcon,
+  DownloadIcon,
+  HeartIcon,
+  MoreIcon,
+  MoveIcon,
+  ShareIcon,
+  TrashIcon,
+} from '../../ui/icons.tsx';
+import { ActionSheet } from '../edits/ActionSheet.tsx';
+import { MoveDialog } from '../edits/EditDialogs.tsx';
+import { useEdits } from '../edits/editsContext.ts';
+import { useDeletePhotos } from '../edits/useDeletePhotos.ts';
 import { canShareFiles, shareableFile } from '../viewer/share.ts';
 import { beyondShareLimit, SHARE_LIMIT, selectedLabel } from './selection.ts';
 import styles from './SelectionBar.module.css';
@@ -36,6 +48,12 @@ const t = localized({
     preparing: 'Préparation du partage',
     downloading: 'Téléchargement',
     selection: 'Sélection',
+    more: 'Plus d’actions',
+    move: 'Déplacer vers un album',
+    remove: 'Supprimer',
+    removeNote: 'Va dans la corbeille de OneDrive.',
+    needsNetwork: 'Demande le réseau.',
+    needsPermission: 'Redonne la permission dans les réglages.',
     cancel: 'Annuler la sélection',
   },
   en: {
@@ -62,6 +80,12 @@ const t = localized({
     preparing: 'Preparing to share',
     downloading: 'Downloading',
     selection: 'Selection',
+    more: 'More actions',
+    move: 'Move to an album',
+    remove: 'Delete',
+    removeNote: 'Goes to OneDrive’s recycle bin.',
+    needsNetwork: 'Needs the network.',
+    needsPermission: 'Give the permission again in the settings.',
     cancel: 'Cancel the selection',
   },
 });
@@ -91,10 +115,21 @@ export function SelectionBar({
   items: readonly MediaItem[];
   onClose: () => void;
 }) {
-  const { source, thumbnails } = useData();
-  const sync = useSync();
-  const confirm = useConfirm();
+  const { source, thumbnails, mode } = useData();
   const offline = !useOnline();
+  const sync = useSync();
+  const edits = useEdits();
+  const deletePhotos = useDeletePhotos();
+  const [sheet, setSheet] = useState<'actions' | 'move' | null>(null);
+  // With the changes on, Download joins Move and Delete behind one button: four fit at 360 px.
+  const withEdits = edits.status !== 'off';
+  const editNote =
+    edits.status === 'needs-permission'
+      ? t.needsPermission
+      : offline && mode !== 'demo'
+        ? t.needsNetwork
+        : undefined;
+  const confirm = useConfirm();
   // What sharing has prepared is for these photos only: picked otherwise, it starts over.
   const picked = useMemo(() => items.map((item) => item.id).join(' '), [items]);
   const [stored, setShare] = useState<ShareState>(IDLE);
@@ -297,17 +332,66 @@ export function SelectionBar({
           <HeartIcon filled={allFavorites} />
         </button>
       )}
-      <button
-        type="button"
-        className={styles.icon}
-        onClick={() => void onDownload()}
-        disabled={offline || downloading !== null || share.status === 'preparing'}
-        aria-busy={downloading !== null}
-        aria-label={downloadLabel}
-        title={downloadLabel}
-      >
-        {downloading ? <span className={styles.spinner} /> : <DownloadIcon />}
-      </button>
+      {withEdits ? (
+        <button
+          type="button"
+          className={styles.icon}
+          onClick={() => setSheet('actions')}
+          disabled={busy || edits.progress !== null}
+          aria-busy={downloading !== null}
+          aria-label={t.more}
+          title={t.more}
+          aria-haspopup="dialog"
+        >
+          {downloading ? <span className={styles.spinner} /> : <MoreIcon />}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className={styles.icon}
+          onClick={() => void onDownload()}
+          disabled={offline || downloading !== null || share.status === 'preparing'}
+          aria-busy={downloading !== null}
+          aria-label={downloadLabel}
+          title={downloadLabel}
+        >
+          {downloading ? <span className={styles.spinner} /> : <DownloadIcon />}
+        </button>
+      )}
+      {sheet === 'actions' && (
+        <ActionSheet
+          title={selectedLabel(items.length)}
+          onClose={() => setSheet((current) => (current === 'actions' ? null : current))}
+          actions={[
+            {
+              label: downloadLabel,
+              icon: DownloadIcon,
+              onSelect: () => void onDownload(),
+              disabled: offline,
+            },
+            {
+              label: t.move,
+              icon: MoveIcon,
+              onSelect: () => setSheet('move'),
+              disabled: !edits.usable,
+              ...(editNote ? { note: editNote } : {}),
+            },
+            {
+              label: t.remove,
+              note: editNote ?? t.removeNote,
+              icon: TrashIcon,
+              onSelect: () =>
+                void deletePhotos(items).then((deleted) => {
+                  if (deleted) onClose();
+                }),
+              disabled: !edits.usable,
+            },
+          ]}
+        />
+      )}
+      {sheet === 'move' && (
+        <MoveDialog items={items} onMoved={onClose} onCancel={() => setSheet(null)} />
+      )}
       {share.status === 'failed' && (
         <p className={styles.toast} role="status">
           {share.message}

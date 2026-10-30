@@ -1,6 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'wouter';
 import { sortAlbums } from '../../data/albums.ts';
+import { useMediaIndex } from '../../data/dataContext.ts';
+import { PlusIcon } from '../../ui/icons.tsx';
+import { NameDialog } from '../edits/EditDialogs.tsx';
+import { useEdits } from '../edits/editsContext.ts';
+import { useCreateAlbum } from '../edits/useCreateAlbum.ts';
 import common from '../../ui/common.module.css';
 import { IndexStatus } from '../../ui/IndexStatus.tsx';
 import { Logo } from '../../ui/Logo.tsx';
@@ -20,6 +25,8 @@ const t = localized({
     choose: 'Choisir les albums',
     chooseShort: 'Choisir',
     sortBy: 'Trier les albums par',
+    newAlbum: 'Nouvel album',
+    create: 'Créer',
     none: 'Aucun album n’est affiché pour l’instant.',
   },
   en: {
@@ -27,6 +34,8 @@ const t = localized({
     choose: 'Choose the albums',
     chooseShort: 'Choose',
     sortBy: 'Sort the albums by',
+    newAlbum: 'New album',
+    create: 'Create',
     none: 'No album is shown yet.',
   },
 });
@@ -37,6 +46,12 @@ export function AlbumsScreen() {
   const albums = useMemo(() => (model ? sortAlbums(model.home, sort) : []), [model, sort]);
   // The favourites come first, whatever the sort: they gather photos from every album.
   const favorites = useFavoritesAlbum();
+  const edits = useEdits();
+  const createAlbum = useCreateAlbum();
+  const index = useMediaIndex();
+  const [creating, setCreating] = useState(false);
+  // A new album goes into the first root folder (the Photos folder, by default).
+  const newParent = index?.rootFolderIds[0] ?? null;
 
   return (
     <>
@@ -44,11 +59,37 @@ export function AlbumsScreen() {
         title={t.title}
         leading={<Logo size={32} />}
         actions={
-          <Link href="/albums/choisir" className={common.chip} aria-label={t.choose}>
-            {t.chooseShort}
-          </Link>
+          <>
+            {edits.status !== 'off' && newParent && (
+              <button
+                type="button"
+                className={styles.newAlbum}
+                onClick={() => setCreating(true)}
+                disabled={!edits.usable}
+                aria-label={t.newAlbum}
+                title={t.newAlbum}
+              >
+                <PlusIcon width={20} height={20} />
+              </button>
+            )}
+            <Link href="/albums/choisir" className={common.chip} aria-label={t.choose}>
+              {t.chooseShort}
+            </Link>
+          </>
         }
       />
+      {creating && newParent && (
+        <NameDialog
+          title={t.newAlbum}
+          confirmLabel={t.create}
+          parentId={newParent}
+          onCancel={() => setCreating(false)}
+          onDone={async (name) => {
+            await createAlbum(newParent, name);
+            setCreating(false);
+          }}
+        />
+      )}
       <div className={common.page}>
         <IndexStatus />
         {model && (

@@ -11,6 +11,7 @@ const t = localized({
     stay: 'Rester connecté sans redemander ton mot de passe',
     appFolder:
       'Écrire dans un seul dossier, Applis/Nuagerie, pour la synchronisation (favoris, préférences, index)',
+    edit: 'Modifier tes fichiers, quand tu actives les modifications : supprimer, déplacer et restaurer des photos, gérer des albums',
     signIn: 'Te connecter avec ton compte Microsoft',
     title: 'Permissions',
     intro: 'Ce que Microsoft autorise Nuagerie à faire :',
@@ -27,6 +28,7 @@ const t = localized({
     stay: 'Stay signed in without asking for your password again',
     appFolder:
       'Write in one folder only, Apps/Nuagerie, for the sync (favourites, preferences, index)',
+    edit: 'Change your files, once you turn on the changes: delete, move and restore photos, manage albums',
     signIn: 'Sign you in with your Microsoft account',
     title: 'Permissions',
     intro: 'What Microsoft allows Nuagerie to do:',
@@ -44,6 +46,7 @@ const DESCRIPTIONS: Record<string, string> = {
   'User.Read': t.user,
   offline_access: t.stay,
   'Files.ReadWrite.AppFolder': t.appFolder,
+  'Files.ReadWrite.All': t.edit,
   openid: t.signIn,
   profile: t.signIn,
   email: t.signIn,
@@ -77,6 +80,7 @@ export function PermissionsSection() {
         a.localeCompare(b, locale),
       )
     : [];
+  const edits = scopes?.includes('Files.ReadWrite.All') ?? false;
   const writes = scopes?.includes('Files.ReadWrite.AppFolder') ?? false;
 
   return (
@@ -93,7 +97,9 @@ export function PermissionsSection() {
                 <li key={line}>{line}</li>
               ))}
             </ul>
-            <p className={common.muted}>{writes ? t.nothingElseWrites : t.nothingElse}</p>
+            {!edits && (
+              <p className={common.muted}>{writes ? t.nothingElseWrites : t.nothingElse}</p>
+            )}
           </>
         ) : (
           <p className={common.muted} role="status">

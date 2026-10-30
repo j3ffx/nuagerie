@@ -3,3 +3,32 @@
   justify-items: start;
   gap: var(--space-3);
 }
+
+/* "Nouvel album" in the header: a round button the height of the chips, 44 px to the touch. */
+.newAlbum {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-soft);
+  color: var(--color-on-primary-soft);
+}
+
+.newAlbum::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+
+.newAlbum:active {
+  background: var(--color-press);
+}
+
+.newAlbum:disabled {
+  opacity: 0.5;
+}

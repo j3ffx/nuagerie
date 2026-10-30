@@ -244,3 +244,50 @@ export function AlertIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function TrashIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 7h16" />
+      <path d="M9 7V4h6v3" />
+      <path d="M6 7l1 13h10l1-13" />
+      <path d="M10 11v5M14 11v5" />
+    </Icon>
+  );
+}
+
+/** A folder with an arrow into it: move to an album. */
+export function MoveIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <path d="M9 13h6M12.5 10.5 15 13l-2.5 2.5" />
+    </Icon>
+  );
+}
+
+export function PlusIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </Icon>
+  );
+}
+
+export function PencilIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 20h4L19 9l-4-4L4 16z" />
+      <path d="m13.5 6.5 4 4" />
+    </Icon>
+  );
+}
+
+/** Three dots: more actions. */
+export function MoreIcon(props: IconProps) {
+  return (
+    <Icon strokeWidth="3" {...props}>
+      <path d="M12 5h.01M12 12h.01M12 19h.01" />
+    </Icon>
+  );
+}

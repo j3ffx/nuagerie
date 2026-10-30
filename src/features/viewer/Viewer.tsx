@@ -22,6 +22,9 @@ import {
   DownloadIcon,
   HeartIcon,
   InfoIcon,
+  MoreIcon,
+  MoveIcon,
+  TrashIcon,
   MapIcon,
 } from '../../ui/icons.tsx';
 import { useMediaQuery } from '../../lib/useMediaQuery.ts';
@@ -39,6 +42,10 @@ import {
 } from './gestures.ts';
 import { InfoPanel } from './InfoPanel.tsx';
 import { ShareButton } from './ShareButton.tsx';
+import { ActionSheet } from '../edits/ActionSheet.tsx';
+import { MoveDialog } from '../edits/EditDialogs.tsx';
+import { useEdits } from '../edits/editsContext.ts';
+import { useDeletePhotos } from '../edits/useDeletePhotos.ts';
 import { useViewer } from './useViewer.ts';
 import { usePlaceName } from './usePlaceName.ts';
 import { ViewerSlide } from './ViewerSlide.tsx';
@@ -50,6 +57,12 @@ const t = localized({
     unfavorite: 'Retirer des favoris',
     favorite: 'Ajouter aux favoris',
     downloadOffline: 'Télécharger (hors connexion)',
+    more: 'Plus d’actions',
+    move: 'Déplacer vers un album',
+    remove: 'Supprimer',
+    removeNote: 'Va dans la corbeille de OneDrive.',
+    needsNetwork: 'Demande le réseau.',
+    needsPermission: 'Redonne la permission dans les réglages.',
     download: 'Télécharger',
     syncTitle: 'Activer la synchronisation ?',
     syncConfirm: 'Activer',
@@ -68,6 +81,12 @@ const t = localized({
     unfavorite: 'Remove from favourites',
     favorite: 'Add to favourites',
     downloadOffline: 'Download (offline)',
+    more: 'More actions',
+    move: 'Move to an album',
+    remove: 'Delete',
+    removeNote: 'Goes to OneDrive’s recycle bin.',
+    needsNetwork: 'Needs the network.',
+    needsPermission: 'Give the permission again in the settings.',
     download: 'Download',
     syncTitle: 'Turn on the sync?',
     syncConfirm: 'Turn on',
@@ -538,6 +557,11 @@ export function Viewer({
       <ViewerBar
         item={item}
         onClose={onClose}
+        onLeave={() => {
+          const neighbour = next ?? previous;
+          if (neighbour) onShow(neighbour.id);
+          else onClose();
+        }}
         infoOpen={infoOpen}
         onInfo={infoOpen ? closeInfo : openInfo}
       />
@@ -572,11 +596,14 @@ export function Viewer({
 function ViewerBar({
   item,
   onClose,
+  onLeave,
   infoOpen,
   onInfo,
 }: {
   item: MediaItem;
   onClose: () => void;
+  /** This photo is going (deleted): the next one, or the previous, or the grid. */
+  onLeave: () => void;
   infoOpen: boolean;
   onInfo: () => void;
 }) {
@@ -590,6 +617,15 @@ function ViewerBar({
   const sync = useSync();
   const confirm = useConfirm();
   const favorite = sync.favorites.has(item.id);
+  const edits = useEdits();
+  const deletePhotos = useDeletePhotos();
+  const [sheet, setSheet] = useState<'actions' | 'move' | null>(null);
+  const editNote =
+    edits.status === 'needs-permission'
+      ? t.needsPermission
+      : offline && source.mode !== 'demo'
+        ? t.needsNetwork
+        : undefined;
 
   /** Favourites live in OneDrive: before the first one, the sync is turned on (once). */
   const onHeart = async () => {
@@ -683,20 +719,69 @@ function ViewerBar({
         {!(item.kind === 'video' && source.mode === 'demo') && (
           <ShareButton key={item.id} item={item} offline={offline} />
         )}
-        {!(item.kind === 'video' && source.mode === 'demo') && (
+        {edits.status !== 'off' ? (
           <button
             type="button"
             className={styles.icon}
-            onClick={() => void download()}
-            disabled={downloading || offline}
-            data-offline={offline || undefined}
-            aria-label={offline ? t.downloadOffline : t.download}
-            title={offline ? t.downloadOffline : t.download}
+            onClick={() => setSheet('actions')}
+            disabled={edits.progress !== null}
+            aria-label={t.more}
+            title={t.more}
+            aria-haspopup="dialog"
           >
-            <DownloadIcon />
+            <MoreIcon />
           </button>
+        ) : (
+          !(item.kind === 'video' && source.mode === 'demo') && (
+            <button
+              type="button"
+              className={styles.icon}
+              onClick={() => void download()}
+              disabled={downloading || offline}
+              data-offline={offline || undefined}
+              aria-label={offline ? t.downloadOffline : t.download}
+              title={offline ? t.downloadOffline : t.download}
+            >
+              <DownloadIcon />
+            </button>
+          )
         )}
       </header>
+      {sheet === 'actions' && (
+        <ActionSheet
+          title={item.name}
+          onClose={() => setSheet((current) => (current === 'actions' ? null : current))}
+          actions={[
+            ...(item.kind === 'video' && source.mode === 'demo'
+              ? []
+              : [
+                  {
+                    label: offline ? t.downloadOffline : t.download,
+                    icon: DownloadIcon,
+                    onSelect: () => void download(),
+                    disabled: downloading || offline,
+                  },
+                ]),
+            {
+              label: t.move,
+              icon: MoveIcon,
+              onSelect: () => setSheet('move'),
+              disabled: !edits.usable,
+              ...(editNote ? { note: editNote } : {}),
+            },
+            {
+              label: t.remove,
+              note: editNote ?? t.removeNote,
+              icon: TrashIcon,
+              onSelect: () => void deletePhotos([item], onLeave),
+              disabled: !edits.usable,
+            },
+          ]}
+        />
+      )}
+      {sheet === 'move' && (
+        <MoveDialog items={[item]} onMoved={() => setSheet(null)} onCancel={() => setSheet(null)} />
+      )}
       {place && (
         <footer className={styles.bottom}>
           <Link

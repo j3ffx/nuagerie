@@ -1,0 +1,23 @@
+/* Above the viewer and the selection bar (z-index 50 and 40): a change made there shows there. */
+.layer {
+  position: fixed;
+  z-index: 60;
+  right: var(--space-3);
+  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + var(--space-3));
+  left: var(--space-3);
+  display: grid;
+  max-width: 480px;
+  margin: 0 auto;
+  pointer-events: none;
+}
+
+.layer:empty {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .layer {
+    bottom: var(--space-5);
+    left: calc(var(--rail-width) + var(--space-3));
+  }
+}
