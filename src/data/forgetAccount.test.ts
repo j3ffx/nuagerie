@@ -16,7 +16,6 @@ const KEYS: Record<string, boolean> = {
   'sync.state.onedrive': true,
   'sync.enabled': true,
   'sync.granted': true,
-  'sync.turnedOff': true,
   'sync.lastSyncAt': true,
   'sync.pendingFavorite': true,
   'sync.asking': true,
@@ -27,6 +26,8 @@ const KEYS: Record<string, boolean> = {
   language: false,
   'grid.columns': false,
   seenVersion: false,
+  // So does the choice to keep the sync off here: signing back in must not turn it on again.
+  'sync.turnedOff': false,
 };
 
 describe('forgetAccountPreferences', () => {
