@@ -9,7 +9,7 @@ import styles from './PrivacyScreen.module.css';
 export const PRIVACY_PATH = '/confidentialite';
 
 /** Updated with the page: the date it was last changed. */
-const UPDATED = '2026-10-29';
+const UPDATED = '2026-10-30';
 
 interface Part {
   title: string;
@@ -33,21 +33,23 @@ const t = localized({
         paragraphs: [
           'Tu te connectes avec ton compte Microsoft. Nuagerie demande à lire tes fichiers OneDrive (lecture seule), ton nom et ton adresse e-mail (pour les afficher dans les réglages) et à rester connectée.',
           'Seulement si tu actives la synchronisation, elle demande aussi à écrire dans un seul dossier, Applis/Nuagerie, pour y ranger tes favoris, tes préférences, tes dossiers et une copie de l’index de tes photos. Elle ne crée, ne modifie, ne déplace ni ne supprime jamais tes fichiers.',
+          'Une fois activée, la synchronisation suit sur tes autres appareils connectés au même compte ; Réglages → Synchronisation la coupe appareil par appareil. La couper, ou retirer la permission, laisse ce dossier dans ton OneDrive : supprime Applis/Nuagerie pour l’effacer.',
           'Réglages → Permissions montre ce que Microsoft autorise vraiment, avec un lien pour le retirer.',
         ],
       },
       {
         title: 'Sur ton appareil',
         paragraphs: [
-          'Pour s’ouvrir vite, et sans réseau, Nuagerie garde dans ton navigateur l’index de tes photos, leurs miniatures, les albums que tu gardes hors connexion, les lieux de tes photos, tes dernières recherches et tes préférences.',
-          'Se déconnecter efface tout cela. Effacer les données du site dans le navigateur aussi.',
+          'Pour s’ouvrir vite, et sans réseau, Nuagerie garde dans ton navigateur l’index de tes photos, leurs miniatures, les albums que tu gardes hors connexion, les lieux de tes photos, tes favoris, tes dernières recherches, tes préférences et ta connexion Microsoft (nom du compte, adresse e-mail et jetons, gardés par la bibliothèque de connexion de Microsoft).',
+          'Se déconnecter efface tout cela, sauf l’apparence de l’appli (thème, langue, colonnes). Effacer les données du site dans le navigateur aussi.',
+          'La notification des souvenirs est préparée sur l’appareil et montre une de tes photos parmi tes notifications. Partager envoie une photo seulement à l’appli que tu choisis.',
         ],
       },
       {
         title: 'Lieux et carte',
         paragraphs: [
           'Le lieu d’une photo est trouvé sur l’appareil, dans une liste de villes (GeoNames) : ses coordonnées ne sont envoyées nulle part.',
-          'Les fonds de carte viennent d’OpenStreetMap : en affichant la carte, ton navigateur leur demande les images de la zone regardée, comme tout site qui montre leur carte.',
+          'Les fonds de carte viennent d’OpenStreetMap. La carte s’ouvre sur tes photos : ton navigateur leur demande donc les images de cette zone (ce qui dit, à peu près, où tes photos ont été prises), avec ton adresse IP et l’adresse de Nuagerie, comme tout site qui montre leur carte.',
         ],
       },
       {
@@ -59,7 +61,7 @@ const t = localized({
       {
         title: 'Signaler un problème',
         paragraphs: [
-          'Le lien des réglages ouvre GitHub (compte nécessaire), avec la version de Nuagerie et le type d’appareil, rien de personnel. Ce que tu y écris est public.',
+          'Le lien des réglages ouvre GitHub (compte nécessaire), avec la version de Nuagerie, si c’est la démo, et le type d’appareil (système, navigateur, largeur d’écran), rien de personnel. Ce que tu y écris est public.',
         ],
       },
     ],
@@ -84,21 +86,23 @@ const t = localized({
         paragraphs: [
           'You sign in with your Microsoft account. Nuagerie asks to read your OneDrive files (read-only), your name and email address (to show them in the settings) and to stay signed in.',
           'Only if you turn on the sync does it also ask to write in one folder, Apps/Nuagerie, to keep your favourites, your preferences, your folders and a copy of your photos’ index there. It never creates, changes, moves or deletes your files.',
+          'Once on, the sync follows on your other devices signed in to the same account; Settings → Sync turns it off device by device. Turning it off, or withdrawing the permission, leaves this folder in your OneDrive: delete Apps/Nuagerie to erase it.',
           'Settings → Permissions shows what Microsoft really allows, with a link to withdraw it.',
         ],
       },
       {
         title: 'On your device',
         paragraphs: [
-          'To open fast, and without a network, Nuagerie keeps in your browser the index of your photos, their thumbnails, the albums you keep offline, the places of your photos, your latest searches and your preferences.',
-          'Signing out erases all of it. So does clearing the site’s data in the browser.',
+          'To open fast, and without a network, Nuagerie keeps in your browser the index of your photos, their thumbnails, the albums you keep offline, the places of your photos, your favourites, your latest searches, your preferences and your Microsoft sign-in (account name, email address and tokens, kept by Microsoft’s sign-in library).',
+          'Signing out erases all of it, except the look of the app (theme, language, columns). So does clearing the site’s data in the browser.',
+          'The memories notification is made on the device and shows one of your photos among your notifications. Sharing sends a photo only to the app you choose.',
         ],
       },
       {
         title: 'Places and map',
         paragraphs: [
           'A photo’s place is found on the device, in a list of towns (GeoNames): its coordinates are sent nowhere.',
-          'Map backgrounds come from OpenStreetMap: when the map shows, your browser asks them for the images of the area looked at, like any site that shows their map.',
+          'Map backgrounds come from OpenStreetMap. The map opens on your photos: your browser therefore asks them for the images of that area (which tells, roughly, where your photos were taken), along with your IP address and Nuagerie’s address, like any site that shows their map.',
         ],
       },
       {
@@ -110,7 +114,7 @@ const t = localized({
       {
         title: 'Reporting a problem',
         paragraphs: [
-          'The link in the settings opens GitHub (an account is needed), with Nuagerie’s version and the kind of device, nothing personal. What you write there is public.',
+          'The link in the settings opens GitHub (an account is needed), with Nuagerie’s version, whether it shows the demo, and the kind of device (system, browser, screen width), nothing personal. What you write there is public.',
         ],
       },
     ],
