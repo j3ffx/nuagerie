@@ -97,7 +97,7 @@ contenu de `dist/` : pas de source map, aucun motif listé dans `.private-patter
 
 URL obtenues :
 
-- production (branche `main`) : `https://nuagerie.pages.dev` ;
+- production (branche `main`) : `https://nuagerie.pages.dev`, et le domaine `https://nuagerie.app` (voir « Domaine à soi ») ;
 - une autre branche, par exemple `essai` : `https://essai.nuagerie.pages.dev` ;
 - chaque déploiement a aussi une URL unique (`https://<hash>.nuagerie.pages.dev`).
 
@@ -185,7 +185,7 @@ annuaire par défaut (**Default Directory**). L’inscription d’application es
    `http://localhost:5173/redirect` (page « pont » exigée par MSAL v5).
 6. **Inscrire**, puis noter l’**ID d’application (client)**.
 7. **Authentification** → plateforme SPA → ajouter l’URL de l’instance déployée suivie de
-   `/redirect`, par exemple `https://nuagerie.pages.dev/redirect`.
+   `/redirect`, par exemple `https://nuagerie.app/redirect`.
 8. **Autorisations d’API** → **Microsoft Graph** → **Autorisations déléguées** :
    `Files.Read`, `User.Read`, `offline_access`. La synchronisation (favoris, préférences, dossiers)
    demande en plus, au moment où on l’active, `Files.ReadWrite.AppFolder` (écriture dans le seul dossier `Applis/Nuagerie`) : Microsoft
@@ -193,7 +193,7 @@ annuaire par défaut (**Default Directory**). L’inscription d’application es
    transparence. Aucune autre permission.
 9. **Personnalisation et propriétés** (_Branding & properties_) → **URL de la déclaration de
    confidentialité** : l’adresse de l’instance suivie de `/confidentialite`, par exemple
-   `https://nuagerie.pages.dev/confidentialite`. La page se lit sans être connecté, en français
+   `https://nuagerie.app/confidentialite`. La page se lit sans être connecté, en français
    ou en anglais selon la langue du navigateur.
 10. Copier l’ID d’application dans `.env` : `VITE_MSAL_CLIENT_ID=…`.
 

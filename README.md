@@ -61,7 +61,7 @@ found by date and by place. A PWA made for the phone, pleasant on a PC too.
 ## Privacy
 
 The details, readable without an account:
-[nuagerie.pages.dev/confidentialite](https://nuagerie.pages.dev/confidentialite).
+[nuagerie.app/confidentialite](https://nuagerie.app/confidentialite).
 
 - The only network traffic goes to Microsoft (sign-in and Graph) and to the map backgrounds of
   [OpenStreetMap](https://www.openstreetmap.org/copyright).
@@ -75,7 +75,7 @@ The details, readable without an account:
 
 ## Try it
 
-Online, with no account nor install: <https://nuagerie.pages.dev/?demo=1> (the demo, with its
+Online, with no account nor install: <https://nuagerie.app/?demo=1> (the demo, with its
 made-up photos). Or locally:
 
 ```bash

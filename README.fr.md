@@ -62,7 +62,7 @@ agréable aussi sur PC.
 
 ## Vie privée
 
-Le détail, lisible sans compte : [nuagerie.pages.dev/confidentialite](https://nuagerie.pages.dev/confidentialite).
+Le détail, lisible sans compte : [nuagerie.app/confidentialite](https://nuagerie.app/confidentialite).
 
 - Les seuls échanges réseau vont vers Microsoft (connexion et Graph) et vers les fonds de
   carte d’[OpenStreetMap](https://www.openstreetmap.org/copyright).
@@ -77,7 +77,7 @@ Le détail, lisible sans compte : [nuagerie.pages.dev/confidentialite](https://n
 
 ## Essayer
 
-En ligne, sans compte ni installation : <https://nuagerie.pages.dev/?demo=1> (la démo,
+En ligne, sans compte ni installation : <https://nuagerie.app/?demo=1> (la démo,
 avec ses photos factices). Ou en local :
 
 ```bash
