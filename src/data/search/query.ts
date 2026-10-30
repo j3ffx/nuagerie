@@ -161,8 +161,19 @@ const SEASONS: Record<Season, { words: readonly string[]; firstMonth: number }> 
 };
 const SEASON_KEYS = Object.keys(SEASONS) as Season[];
 
-const monthOf = (word: string) =>
-  MONTHS.findIndex((names) => names.fr === word || names.en === word || names.also.includes(word));
+/** English short forms, which are often words of a name ("Viña del Mar", "Jan"). */
+const NAME_LIKE = new Set(['jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep']);
+
+/**
+ * A month's index from its name, or -1. The English short forms are months
+ * only next to a day or a year (`beside`): alone, they stay words of a name.
+ */
+const monthOf = (word: string, beside: boolean) =>
+  beside || !NAME_LIKE.has(word)
+    ? MONTHS.findIndex(
+        (names) => names.fr === word || names.en === word || names.also.includes(word),
+      )
+    : -1;
 const seasonOf = (word: string) => SEASON_KEYS.find((key) => SEASONS[key].words.includes(word));
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
@@ -319,14 +330,14 @@ function periodAt(
   // 14 juillet, 1er mai 2024, 14th July
   const dayMatch = /^(\d{1,2})(?:er|st|nd|rd|th)?$/.exec(word);
   if (dayMatch) {
-    const month = monthOf(list[at + 1] ?? '');
+    const month = monthOf(list[at + 1] ?? '', true);
     const day = Number(dayMatch[1]);
     if (month < 0 || day < 1) return null;
     const inYear = year(list[at + 2]);
     return monthPeriod(month, inYear, day, inYear === null ? 2 : 3);
   }
   // juillet, juillet 2024, July 14, July 14th 2024
-  const month = monthOf(word);
+  const month = monthOf(word, true);
   if (month >= 0) {
     const after = /^(\d{1,2})(?:st|nd|rd|th)?$/.exec(list[at + 1] ?? '');
     const day = after ? Number(after[1]) : null;
@@ -335,6 +346,7 @@ function periodAt(
       return monthPeriod(month, inYear, day, inYear === null ? 2 : 3);
     }
     const inYear = year(list[at + 1]);
+    if (inYear === null && monthOf(word, false) < 0) return null; // "mar" alone: a word
     return monthPeriod(month, inYear, null, inYear === null ? 1 : 2);
   }
   return null;

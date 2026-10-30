@@ -196,6 +196,16 @@ describe('parseQuery: English words, in a French interface', () => {
     });
   });
 
+  it('reads a short month only next to a day or a year: alone, it is a word of a name', () => {
+    expect(parse('vina del mar').date).toBeNull();
+    expect(parse('vina del mar').terms).toEqual(['vina', 'del', 'mar']);
+    expect(parse('jan').date).toBeNull();
+    expect(parse('mar 2024').date).toMatchObject({ from: at(2024, 2, 1, 0) });
+    expect(parse('14 sep').date).toMatchObject({ months: [8], day: 14 });
+    expect(parse('dec').date).toMatchObject({ months: [11] }); // French short forms as before
+    expect(parse('may').date).toMatchObject({ months: [4] }); // a whole name
+  });
+
   it('leaves out the little English words', () => {
     expect(parse('the beach in may').terms).toEqual(['beach']);
   });
