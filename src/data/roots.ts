@@ -26,8 +26,13 @@ export function hasChosenRootPaths(): boolean {
 export function readRootPaths(): string[] {
   const paths = readPersistent<string[] | null>(ROOT_PATHS_KEY, null);
   if (paths && paths.length > 0) return paths;
-  const found = readPersistent<string | null>(DEFAULT_ROOT_PATH_KEY, null);
+  const found = readDefaultRootPath();
   return found ? [found] : [...DEFAULT_ROOT_PATHS];
+}
+
+/** The drive's Photos folder found on this device, if any. */
+export function readDefaultRootPath(): string | null {
+  return readPersistent<string | null>(DEFAULT_ROOT_PATH_KEY, null);
 }
 
 /** Remembers where the drive's Photos folder is, for the default. */

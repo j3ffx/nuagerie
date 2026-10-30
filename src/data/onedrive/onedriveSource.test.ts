@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { removePersistent } from '../../lib/persistent.ts';
 import type { GraphClient } from '../graph/client.ts';
 import type { GraphDriveItem } from '../graph/types.ts';
@@ -38,7 +38,11 @@ function fakeOneDrive(photosName = 'Pictures') {
       if (url.startsWith('/me/drive/special/photos')) {
         return { id: 'pics', name: photosName, parentReference: { path: '/drive/root:' } } as T;
       }
-      if (url.startsWith(`/me/drive/root:/${photosName}`))
+      // The Photos folder, and "/Pictures" for an index made before (the same folder here).
+      if (
+        url.startsWith(`/me/drive/root:/${photosName}`) ||
+        url.startsWith('/me/drive/root:/Pictures')
+      )
         return { id: 'pics', name: photosName } as T;
       if (url.includes('$top=1') && !url.includes('$top=1000')) return { value: [] } as T;
       if (url.startsWith('/me/drive/items/pics/delta')) {
@@ -69,6 +73,8 @@ describe('createOneDriveSource', () => {
   let store: IndexStore;
   beforeEach(async () => {
     store = await IndexStore.open(`source-${counter++}`);
+    // A new device each time: no Photos folder found yet.
+    removePersistent(DEFAULT_ROOT_PATH_KEY);
   });
 
   const source = (client: GraphClient, accountId: string | null = 'me') =>
@@ -113,8 +119,6 @@ describe('createOneDriveSource', () => {
   });
 
   describe('with no folders chosen', () => {
-    afterEach(() => removePersistent(DEFAULT_ROOT_PATH_KEY));
-
     it('indexes the drive’s Photos folder, whatever its name, and remembers it', async () => {
       const graph = fakeOneDrive('Images');
       const index = await source(graph.client).loadIndex();
@@ -129,6 +133,19 @@ describe('createOneDriveSource', () => {
       await source(graph.client).loadIndex();
       expect(graph.calls.some((url) => url.startsWith('/me/drive/special/photos'))).toBe(false);
       expect(readRootPaths()).toEqual(['/Pictures']);
+    });
+
+    it('keeps that folder through a full reindex, for an index made before it was remembered', async () => {
+      await source(fakeOneDrive().client).loadIndex();
+      // An index of an earlier version: its folder was never written down.
+      removePersistent(DEFAULT_ROOT_PATH_KEY);
+      const graph = fakeOneDrive('Images');
+      const s = source(graph.client);
+      await s.loadIndex();
+      await s.reset?.();
+      await s.loadIndex();
+      expect(graph.calls.some((url) => url.startsWith('/me/drive/special/photos'))).toBe(false);
+      expect((await store.getMeta())?.rootFolders.map((root) => root.path)).toEqual(['/Pictures']);
     });
   });
 

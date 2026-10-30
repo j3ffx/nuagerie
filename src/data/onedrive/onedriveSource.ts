@@ -17,6 +17,7 @@ import {
   childPath,
   DEFAULT_ROOT_PATHS,
   hasChosenRootPaths,
+  readDefaultRootPath,
   readRootPaths,
   writeDefaultRootPath,
 } from '../roots.ts';
@@ -326,15 +327,15 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
   /**
    * No folders chosen: the drive's Photos folder, whatever its name. An index
    * already kept for this account keeps its folders (it was made from the
-   * default of its time), so nothing is indexed again.
+   * default of its time), so nothing is indexed again; the folder found once
+   * is kept, so a full reindex finds it again (the drive is asked only then).
    */
   async function findDefaultRoot(existing: IndexMeta | null): Promise<void> {
     const kept = existing?.accountId === options.accountId ? existing.rootFolders : null;
-    const path =
-      kept?.length === 1 && kept[0]
-        ? kept[0].path
-        : ((await photosFolderPath(client)) ?? DEFAULT_ROOT_PATHS[0] ?? '/Pictures');
-    if (path !== readRootPaths()[0]) writeDefaultRootPath(path);
+    let path = kept?.length === 1 && kept[0] ? kept[0].path : readDefaultRootPath();
+    path ??= (await photosFolderPath(client)) ?? DEFAULT_ROOT_PATHS[0] ?? '/Pictures';
+    // Written even when it is the old default, "/Pictures".
+    if (path !== readDefaultRootPath()) writeDefaultRootPath(path);
   }
 
   /** Runs every channel; returns the number of changes. */
