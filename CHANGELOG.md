@@ -4,6 +4,16 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## Depuis la dernière version
+
+### Nouveautés
+
+- Les Souvenirs ont leur propre fond, et toucher n’importe où dessus ouvre ceux du jour en entier.
+
+### Corrections
+
+- Quand Microsoft demande de se reconnecter, un bandeau le dit, au lieu de cacher les favoris sans prévenir.
+
 ## 1.0.0 — 2026-10-30
 
 Nuagerie s’ouvre à tous : en anglais aussi, à sa propre adresse, nuagerie.app.

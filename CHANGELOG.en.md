@@ -4,6 +4,16 @@ The changes of each Nuagerie version, the most recent first. The numbers follow
 [semantic versioning](https://semver.org/): while they start with 0, the app still changes a lot.
 The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
 
+## Since the last version
+
+### New
+
+- Memories have a background of their own, and a tap anywhere on them opens all of today’s.
+
+### Fixes
+
+- When Microsoft asks to sign in again, a banner says so, instead of hiding the favourites without a word.
+
 ## 1.0.0 — 2026-10-30
 
 Nuagerie opens to everyone: in English too, at its own address, nuagerie.app.
