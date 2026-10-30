@@ -30,14 +30,23 @@ export function DataProvider({
   const [state, setState] = useState<DataState>({ status: 'loading', progress: null });
   const [sync, setSync] = useState<SyncState>(IDLE);
   const syncing = useRef(false);
+  /** The sync under way, for a change of the user's to wait for. */
+  const running = useRef<Promise<void>>(Promise.resolve());
+  /** A change of the user's is being made: syncs wait, then one runs after it. */
+  const editing = useRef(false);
+  const wanted = useRef(false);
   const [generation, setGeneration] = useState(0);
   const [thumbnails] = useState(() => createThumbnails(mode, source));
 
   const refresh = useCallback(() => {
+    if (editing.current) {
+      wanted.current = true;
+      return;
+    }
     if (!source.refresh || syncing.current || !isOnline()) return;
     syncing.current = true;
     setSync((s) => ({ ...s, status: 'running', progress: null, message: null }));
-    source
+    running.current = source
       .refresh((progress) => setSync((s) => ({ ...s, progress })))
       .then((index) => {
         if (index) setState((s) => (s.status === 'ready' ? { ...s, index } : s));
@@ -50,6 +59,25 @@ export function DataProvider({
         syncing.current = false;
       });
   }, [source]);
+
+  const exclusive = useCallback(
+    async <T,>(task: () => Promise<T>): Promise<T> => {
+      editing.current = true;
+      try {
+        // A sync and a change never write the index at once: an older page of changes would
+        // undo the user's, and the index it shows would be older than theirs.
+        await running.current.catch(() => undefined);
+        return await task();
+      } finally {
+        editing.current = false;
+        if (wanted.current) {
+          wanted.current = false;
+          refresh();
+        }
+      }
+    },
+    [refresh],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -100,7 +128,18 @@ export function DataProvider({
 
   return (
     <DataContext.Provider
-      value={{ mode, signedIn, source, thumbnails, state, sync, refresh, resetIndex, showIndex }}
+      value={{
+        mode,
+        signedIn,
+        source,
+        thumbnails,
+        state,
+        sync,
+        refresh,
+        resetIndex,
+        showIndex,
+        exclusive,
+      }}
     >
       {children}
     </DataContext.Provider>

@@ -562,6 +562,7 @@ export function Viewer({
           if (neighbour) onShow(neighbour.id);
           else onClose();
         }}
+        onReturn={onShow}
         infoOpen={infoOpen}
         onInfo={infoOpen ? closeInfo : openInfo}
       />
@@ -597,6 +598,7 @@ function ViewerBar({
   item,
   onClose,
   onLeave,
+  onReturn,
   infoOpen,
   onInfo,
 }: {
@@ -604,6 +606,8 @@ function ViewerBar({
   onClose: () => void;
   /** This photo is going (deleted): the next one, or the previous, or the grid. */
   onLeave: () => void;
+  /** It stayed after all (the delete failed): back to it. */
+  onReturn: (id: string) => void;
   infoOpen: boolean;
   onInfo: () => void;
 }) {
@@ -773,7 +777,15 @@ function ViewerBar({
               label: t.remove,
               note: editNote ?? t.removeNote,
               icon: TrashIcon,
-              onSelect: () => void deletePhotos([item], onLeave),
+              onSelect: () => {
+                let left = false;
+                void deletePhotos([item], () => {
+                  left = true;
+                  onLeave();
+                }).then((deleted) => {
+                  if (!deleted && left) onReturn(item.id);
+                });
+              },
               disabled: !edits.usable,
             },
           ]}

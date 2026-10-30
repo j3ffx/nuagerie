@@ -33,6 +33,8 @@ export interface DataContextValue {
   resetIndex: (options?: { useSharedCopy?: boolean }) => Promise<void>;
   /** Shows the index a change of the user's made (src/data/edits/), without waiting for a sync. */
   showIndex: (index: MediaIndex) => void;
+  /** Runs a change of the user's once no sync is writing the index, and none starts meanwhile. */
+  exclusive: <T>(task: () => Promise<T>) => Promise<T>;
 }
 
 export const DataContext = createContext<DataContextValue | null>(null);

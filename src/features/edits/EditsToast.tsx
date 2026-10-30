@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import styles from '../../app/Banner.module.css';
 import { localized } from '../../lib/i18n.ts';
 import common from '../../ui/common.module.css';
@@ -30,10 +31,13 @@ const NOTICE_MS = 8000;
  * it did, with "Annuler" for a few seconds.
  */
 export function EditsToast() {
-  return (
+  // Beside the app, not in it: the viewer makes the app inert while it is open, and "Annuler"
+  // must answer there too.
+  return createPortal(
     <div className={layer.layer}>
       <EditsToastContent />
-    </div>
+    </div>,
+    document.body,
   );
 }
 

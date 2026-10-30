@@ -36,6 +36,8 @@ const t = localized({
     deleted: (count: string) => `${count} dans la corbeille`,
     moved: (count: string, album: string) => `${count} dans « ${album} »`,
     restored: (count: string) => `${count} remis en place`,
+    elsewhere: (count: string) =>
+      `${count} hors de tes dossiers : son album n’existe plus, regarde dans OneDrive`,
     created: (name: string) => `Album « ${name} » créé`,
     renamed: (name: string) => `Album renommé « ${name} »`,
     albumDeleted: 'Album supprimé',
@@ -57,6 +59,8 @@ const t = localized({
     deleted: (count: string) => `${count} in the recycle bin`,
     moved: (count: string, album: string) => `${count} in “${album}”`,
     restored: (count: string) => `${count} put back`,
+    elsewhere: (count: string) =>
+      `${count} outside your folders: its album no longer exists, look in OneDrive`,
     created: (name: string) => `Album “${name}” created`,
     renamed: (name: string) => `Album renamed “${name}”`,
     albumDeleted: 'Album deleted',
@@ -94,7 +98,7 @@ function failureText(failed: EditResult['failed']): string | null {
  * Each change shows at once, says what it did, and can be undone.
  */
 export function EditsProvider({ children }: { children: ReactNode }) {
-  const { mode, signedIn, source, thumbnails, state, showIndex } = useData();
+  const { mode, signedIn, source, thumbnails, state, showIndex, exclusive } = useData();
   const online = useOnline();
   const [enabled, setEnabled] = usePersistentState<boolean>(EDITS_ENABLED_KEY, false);
   const [granted] = usePersistentState<boolean>(EDITS_GRANTED_KEY, false);
@@ -103,6 +107,9 @@ export function EditsProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState<EditProgress | null>(null);
   const [notice, setNotice] = useState<EditNotice | null>(null);
   const noticeId = useRef(0);
+  /** One change at a time, from the tap on: a double tap or a second action waits for none. */
+  const busy = useRef(false);
+  const [working, setWorking] = useState(false);
   const edits = source.edits;
   const available = !!edits && (mode === 'demo' || signedIn);
   const trashCache = useMemo(() => createOfflineCache(trashCacheName(mode)), [mode]);
@@ -113,7 +120,7 @@ export function EditsProvider({ children }: { children: ReactNode }) {
       : mode === 'demo' || (granted && !permissionLost)
         ? 'on'
         : 'needs-permission';
-  const usable = status === 'on' && (mode === 'demo' || online) && progress === null;
+  const usable = status === 'on' && (mode === 'demo' || online) && !working;
   const index = state.status === 'ready' ? state.index : null;
 
   const say = useCallback((message: string, undo?: () => void) => {
@@ -147,13 +154,16 @@ export function EditsProvider({ children }: { children: ReactNode }) {
       setEnabled(true);
       return;
     }
-    try {
-      await getEditToken({ deviceOnly: true });
-      writePersistent(EDITS_GRANTED_KEY, true);
-      setEnabled(true);
-      return;
-    } catch {
-      // Microsoft's page asks the user; coming back tells what they said.
+    // Refused by Microsoft just now: the token kept on the device is no answer, its page is.
+    if (!permissionLost) {
+      try {
+        await getEditToken({ deviceOnly: true });
+        writePersistent(EDITS_GRANTED_KEY, true);
+        setEnabled(true);
+        return;
+      } catch {
+        // Microsoft's page asks the user; coming back tells what they said.
+      }
     }
     writePersistent(EDITS_GRANTED_KEY, false);
     writePersistent(EDITS_ASKING_KEY, true);
@@ -165,9 +175,25 @@ export function EditsProvider({ children }: { children: ReactNode }) {
       setEnabled(false);
       say(t.failed(error instanceof Error ? error.message : String(error)));
     }
-  }, [mode, setEnabled, say]);
+  }, [mode, permissionLost, setEnabled, say]);
 
   const disable = useCallback(() => setEnabled(false), [setEnabled]);
+
+  /** Runs one change, apart from the background sync; none when one is under way. */
+  const guard = useCallback(
+    async <T,>(task: () => Promise<T>, none: T): Promise<T> => {
+      if (busy.current) return none;
+      busy.current = true;
+      setWorking(true);
+      try {
+        return await exclusive(task);
+      } finally {
+        busy.current = false;
+        setWorking(false);
+      }
+    },
+    [exclusive],
+  );
 
   /** Shows the new index, and remembers when Microsoft said no. */
   const settle = useCallback(
@@ -205,132 +231,154 @@ export function EditsProvider({ children }: { children: ReactNode }) {
   );
 
   const restore = useCallback(
-    async (ids: readonly string[]) => {
-      if (!edits) return;
-      const result = await run('restore', (onProgress) => edits.restoreItems(ids, onProgress));
-      if (!result) return;
-      // Back, or gone for good: either way, no longer in the app's list.
-      const forgotten = [
-        ...result.done,
-        ...result.failed
-          .filter((failure) => failure.reason === 'gone')
-          .map((failure) => failure.id),
-      ];
-      writePersistent(
-        trashKey(mode),
-        without(parseTrash(readPersistent(trashKey(mode), []), Date.now()), forgotten),
-      );
-      void trashCache.delete(forgotten);
-      const done = result.done.length > 0 ? t.restored(formatItemCount(result.done.length)) : null;
-      say([done, failureText(result.failed)].filter(Boolean).join(' · '));
-    },
-    [edits, run, mode, trashCache, say],
+    (ids: readonly string[]) =>
+      guard(async () => {
+        if (!edits) return;
+        const result = await run('restore', (onProgress) => edits.restoreItems(ids, onProgress));
+        if (!result) return;
+        // Back, or gone for good: either way, no longer in the app's list.
+        const forgotten = [
+          ...result.done,
+          ...result.failed
+            .filter((failure) => failure.reason === 'gone')
+            .map((failure) => failure.id),
+        ];
+        writePersistent(
+          trashKey(mode),
+          without(parseTrash(readPersistent(trashKey(mode), []), Date.now()), forgotten),
+        );
+        void trashCache.delete(forgotten);
+        // Back in OneDrive, but where the index does not look (its album was deleted too).
+        const shown = new Set((result.index ?? index)?.items.map((item) => item.id));
+        const elsewhere = result.done.filter((id) => !shown.has(id)).length;
+        const done =
+          result.done.length > 0 ? t.restored(formatItemCount(result.done.length)) : null;
+        say(
+          [
+            done,
+            elsewhere > 0 ? t.elsewhere(formatItemCount(elsewhere)) : null,
+            failureText(result.failed),
+          ]
+            .filter(Boolean)
+            .join(' · '),
+        );
+      }, undefined),
+    [guard, edits, run, mode, trashCache, index, say],
   );
 
   const deletePhotos = useCallback(
-    async (items: readonly MediaItem[]) => {
-      if (!edits || items.length === 0) return false;
-      // Their thumbnails stay with the app's list: the grid's cache may let them go.
-      await Promise.all(
-        items.map(async (item) => {
-          const blob = await thumbnails.disk
-            .get(thumbnailKey(item, TRASH_THUMBNAIL))
-            .catch(() => null);
-          if (blob) await trashCache.put(item.id, blob).catch(() => undefined);
-        }),
-      );
-      const before = index;
-      const result = await run('delete', (onProgress) =>
-        edits.deleteItems(
-          items.map((item) => item.id),
-          onProgress,
-        ),
-      );
-      if (!result) return false;
-      const done = new Set(result.done);
-      const deleted = items.filter((item) => done.has(item.id));
-      writePersistent(
-        trashKey(mode),
-        withDeleted(
-          parseTrash(readPersistent(trashKey(mode), []), Date.now()),
-          deleted,
-          (item) => albumName(item.albumId, before),
-          Date.now(),
-        ),
-      );
-      void trashCache.delete(items.filter((item) => !done.has(item.id)).map((item) => item.id));
-      const text = deleted.length > 0 ? t.deleted(formatItemCount(deleted.length)) : null;
-      say(
-        [text, failureText(result.failed)].filter(Boolean).join(' · '),
-        deleted.length > 0 ? () => void restore(result.done) : undefined,
-      );
-      return deleted.length > 0;
-    },
-    [edits, thumbnails, trashCache, index, run, mode, albumName, say, restore],
+    (items: readonly MediaItem[]) =>
+      guard(async () => {
+        if (!edits || items.length === 0) return false;
+        // Their thumbnails stay with the app's list: the grid's cache may let them go.
+        await Promise.all(
+          items.map(async (item) => {
+            const blob = await thumbnails.disk
+              .get(thumbnailKey(item, TRASH_THUMBNAIL))
+              .catch(() => null);
+            if (blob) await trashCache.put(item.id, blob).catch(() => undefined);
+          }),
+        );
+        const before = index;
+        const result = await run('delete', (onProgress) =>
+          edits.deleteItems(
+            items.map((item) => item.id),
+            onProgress,
+          ),
+        );
+        if (!result) return false;
+        const done = new Set(result.done);
+        const deleted = items.filter((item) => done.has(item.id));
+        writePersistent(
+          trashKey(mode),
+          withDeleted(
+            parseTrash(readPersistent(trashKey(mode), []), Date.now()),
+            deleted,
+            (item) => albumName(item.albumId, before),
+            Date.now(),
+          ),
+        );
+        void trashCache.delete(items.filter((item) => !done.has(item.id)).map((item) => item.id));
+        const text = deleted.length > 0 ? t.deleted(formatItemCount(deleted.length)) : null;
+        say(
+          [text, failureText(result.failed)].filter(Boolean).join(' · '),
+          deleted.length > 0 ? () => void restore(result.done) : undefined,
+        );
+        return deleted.length > 0;
+      }, false),
+    [guard, edits, thumbnails, trashCache, index, run, mode, albumName, say, restore],
   );
 
   const movePhotos = useCallback(
-    async (items: readonly MediaItem[], folderId: string) => {
-      if (!edits || items.length === 0) return false;
-      const result = await run('move', (onProgress) =>
-        edits.moveItems(
-          items.map((item) => item.id),
-          folderId,
-          onProgress,
-        ),
-      );
-      if (!result) return false;
-      const done = new Set(result.done);
-      // Each back to its own folder.
-      const from = new Map<string, string[]>();
-      for (const item of items) {
-        if (!done.has(item.id) || item.folderId === folderId) continue;
-        from.set(item.folderId, [...(from.get(item.folderId) ?? []), item.id]);
-      }
-      const undo = async () => {
-        for (const [origin, ids] of from) {
-          const back = await run('move', (onProgress) => edits.moveItems(ids, origin, onProgress));
-          if (!back || back.failed.length > 0) {
-            if (back) say(failureText(back.failed) ?? '');
-            return;
-          }
+    (items: readonly MediaItem[], folderId: string) =>
+      guard(async () => {
+        if (!edits || items.length === 0) return false;
+        const result = await run('move', (onProgress) =>
+          edits.moveItems(
+            items.map((item) => item.id),
+            folderId,
+            onProgress,
+          ),
+        );
+        if (!result) return false;
+        const done = new Set(result.done);
+        // Each back to its own folder.
+        const from = new Map<string, string[]>();
+        for (const item of items) {
+          if (!done.has(item.id) || item.folderId === folderId) continue;
+          from.set(item.folderId, [...(from.get(item.folderId) ?? []), item.id]);
         }
-        setNotice(null);
-      };
-      const text =
-        result.done.length > 0
-          ? t.moved(formatItemCount(result.done.length), albumName(folderId, result.index ?? index))
-          : null;
-      say(
-        [text, failureText(result.failed)].filter(Boolean).join(' · '),
-        from.size > 0 ? () => void undo() : undefined,
-      );
-      return result.done.length > 0;
-    },
-    [edits, run, albumName, index, say],
+        // Back where each came from, a year or a month folder included; every group is tried.
+        const undo = () =>
+          guard(async () => {
+            const failed: EditResult['failed'] = [];
+            for (const [origin, ids] of from) {
+              const back = await run('move', (onProgress) =>
+                edits.moveBack(ids, origin, onProgress),
+              );
+              if (back) failed.push(...back.failed);
+              else return;
+            }
+            if (failed.length > 0) say(failureText(failed) ?? '');
+          }, undefined);
+        const text =
+          result.done.length > 0
+            ? t.moved(
+                formatItemCount(result.done.length),
+                albumName(folderId, result.index ?? index),
+              )
+            : null;
+        say(
+          [text, failureText(result.failed)].filter(Boolean).join(' · '),
+          from.size > 0 ? () => void undo() : undefined,
+        );
+        return result.done.length > 0;
+      }, false),
+    [guard, edits, run, albumName, index, say],
   );
 
   /** An album change: shown at once, or said why not. */
   const albumChange = useCallback(
-    async <T,>(change: () => Promise<T>, done: (value: T) => string): Promise<T | null> => {
-      try {
-        const value = await change();
-        say(done(value));
-        return value;
-      } catch (error) {
-        const reason = failureOf(error);
-        if (reason === 'permission') setPermissionLost(true);
-        say(
-          reason === 'nameTaken'
-            ? t.albumNameTaken
-            : error instanceof EditRefused
-              ? t.albumNotEmpty
-              : t.reasons[reason],
-        );
-        return null;
-      }
-    },
-    [say],
+    async <T,>(change: () => Promise<T>, done: (value: T) => string): Promise<T | null> =>
+      guard(async () => {
+        try {
+          const value = await change();
+          say(done(value));
+          return value;
+        } catch (error) {
+          const reason = failureOf(error);
+          if (reason === 'permission') setPermissionLost(true);
+          say(
+            reason === 'nameTaken'
+              ? t.albumNameTaken
+              : error instanceof EditRefused
+                ? t.albumNotEmpty
+                : t.reasons[reason],
+          );
+          return null;
+        }
+      }, null),
+    [guard, say],
   );
 
   const createAlbum = useCallback(
@@ -373,6 +421,8 @@ export function EditsProvider({ children }: { children: ReactNode }) {
     [edits, albumChange, showIndex],
   );
 
+  const dismissNotice = useCallback(() => setNotice(null), []);
+
   const trashThumbnail = useCallback(
     async (id: string) => {
       const blob = await trashCache.get(id);
@@ -407,7 +457,7 @@ export function EditsProvider({ children }: { children: ReactNode }) {
         disable,
         progress,
         notice,
-        dismissNotice: () => setNotice(null),
+        dismissNotice,
         deletePhotos,
         movePhotos,
         trash,

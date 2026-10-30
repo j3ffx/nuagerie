@@ -17,7 +17,8 @@ const t = localized({
     problems: {
       empty: 'Donne-lui un nom.',
       tooLong: 'Ce nom est trop long.',
-      characters: 'Pas de " * : < > ? / \\ | dans le nom, ni de point à la fin.',
+      characters:
+        'OneDrive refuse ce nom : pas de " * : < > ? / \\ |, pas de point à la fin, pas de nom réservé (CON, desktop.ini…).',
       technical:
         'Ce nom en ferait un dossier technique (une année, un mois, « Sans date ») : choisis-en un autre.',
       taken: 'Un album de ce nom est déjà là.',
@@ -37,7 +38,8 @@ const t = localized({
     problems: {
       empty: 'Give it a name.',
       tooLong: 'This name is too long.',
-      characters: 'No " * : < > ? / \\ | in the name, nor a full stop at the end.',
+      characters:
+        'OneDrive refuses this name: no " * : < > ? / \\ |, no full stop at the end, no reserved name (CON, desktop.ini…).',
       technical:
         'This name would make it a technical folder (a year, a month, “Undated”): pick another one.',
       taken: 'An album of that name is already there.',
