@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GraphError } from '../graph/client.ts';
+import { GraphError, type DriveWriter } from '../graph/client.ts';
 import type { GraphDriveItem } from '../graph/types.ts';
 import type { MediaIndex } from '../model.ts';
 import { buildIndex } from '../normalize.ts';
@@ -49,9 +49,9 @@ function drive(): GraphDriveItem[] {
 
 const build = (items: GraphDriveItem[]): MediaIndex => buildIndex(items, ['pics'], () => null);
 
-function setup() {
+function setup(wrap: (writer: DriveWriter) => DriveWriter = (writer) => writer) {
   const items = drive();
-  const writer = createMemoryWriter(items);
+  const writer = wrap(createMemoryWriter(items));
   let index = build(items);
   const edits = createDriveEdits({
     writer,
@@ -138,6 +138,31 @@ describe('createDriveEdits', () => {
     expect(result.done).toEqual(['p3']);
     expect(result.failed).toEqual([{ id: 'never-deleted', reason: 'gone' }]);
     expect(current().items.find((item) => item.id === 'p3')?.albumId).toBe('holidays');
+  });
+
+  it('counts a restore done when OneDrive did it but answered badly, now and on a retry', async () => {
+    let answered = 0;
+    const { edits, current } = setup((writer) => ({
+      ...writer,
+      restoreItem: async (id, parentId) => {
+        await writer.restoreItem(id, parentId).catch(() => undefined);
+        answered++;
+        throw answered === 1 ? new SyntaxError('Unexpected end of JSON input') : conflict;
+      },
+    }));
+    const conflict = new GraphError(409, 'nameAlreadyExists', 'Already there');
+    await edits.deleteItems(['p1', 'p3']);
+    const first = await edits.restoreItems([{ id: 'p3', folderId: 'holidays' }]);
+    expect(first).toMatchObject({ done: ['p3'], failed: [] });
+    expect(current().items.some((item) => item.id === 'p3')).toBe(true);
+    // Already back (restored before this fix): done, not "already there".
+    expect(await edits.restoreItems([{ id: 'p3', folderId: 'holidays' }])).toMatchObject({
+      done: ['p3'],
+    });
+    // Still in the recycle bin: the failure stands.
+    expect((await edits.restoreItems([{ id: 'gone-for-good' }])).failed).toEqual([
+      { id: 'gone-for-good', reason: 'nameTaken' },
+    ]);
   });
 
   it('brings photos back into their album made again, once, when it was deleted too', async () => {

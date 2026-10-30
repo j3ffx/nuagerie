@@ -167,7 +167,19 @@ export function createDriveEdits({ writer, index, apply }: DriveEditsOptions): D
       const result = await each(
         items.map((item) => item.id),
         new Set(items.map((item) => item.id)),
-        async (id) => ({ upsert: await writer.restoreItem(id, homes.parents.get(id)) }),
+        async (id) => {
+          try {
+            return { upsert: await writer.restoreItem(id, homes.parents.get(id)) };
+          } catch (error) {
+            // Graph may restore it and still answer badly (seen with a parent given): "not done",
+            // then "already there" on a retry. What the drive says now counts.
+            const reason = failureOf(error);
+            if (reason !== 'error' && reason !== 'nameTaken') throw error;
+            const item = await writer.getItem(id).catch(() => null);
+            if (!item || item.deleted) throw error;
+            return { upsert: item };
+          }
+        },
         onProgress,
       );
       return { ...result, index: result.index ?? homes.index, albums: homes.albums };
