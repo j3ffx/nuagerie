@@ -24,8 +24,11 @@ export function createMemoryWriter(items: GraphDriveItem[]): DriveWriter {
   const conflict = () => new GraphError(409, 'nameAlreadyExists', 'Name already exists');
 
   return {
-    async deleteItem(id) {
+    async deleteItem(id, { ifMatch } = {}) {
       const index = find(id);
+      if (ifMatch && items[index]?.eTag !== ifMatch) {
+        throw new GraphError(412, 'preconditionFailed', 'Changed meanwhile');
+      }
       const [item] = items.splice(index, 1);
       if (item) bin.set(id, item);
       // A folder takes what is inside along, as OneDrive does.

@@ -32,6 +32,8 @@ export interface DriveEdits {
   /** Back from the recycle bin, to where they were (ids the app put there). */
   restoreItems(ids: readonly string[], onProgress?: Progress): Promise<EditResult>;
   moveItems(ids: readonly string[], folderId: string, onProgress?: Progress): Promise<EditResult>;
+  /** Undoes a move: back to any folder of the index, a year or a month folder included. */
+  moveBack(ids: readonly string[], folderId: string, onProgress?: Progress): Promise<EditResult>;
   createAlbum(parentId: string, name: string): Promise<{ id: string; index: MediaIndex }>;
   renameAlbum(id: string, name: string): Promise<MediaIndex>;
   /** Only an empty album: what OneDrive says, not only what the index knows. */

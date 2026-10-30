@@ -29,19 +29,28 @@ export function failureOf(error: unknown): EditFailure {
   if (error instanceof GraphError) {
     if (error.status === 409 || error.code === 'nameAlreadyExists') return 'nameTaken';
     if (error.status === 404) return 'gone';
-    if (error.status === 401 || error.status === 403) return 'permission';
+    // Expired or withdrawn. A 403 is about the item (the Personal Vault, a shared one): the rest
+    // can go on.
+    if (error.status === 401) return 'permission';
+    if (error.status === 403 || error.status === 412) return 'refused';
   }
   return 'error';
 }
 
 export function createDriveEdits({ writer, index, apply }: DriveEditsOptions): DriveEdits {
-  /** Runs `change` on each id; applies what went through in one go. */
+  /**
+   * Runs `change` on each id (once, even when given twice); applies what went
+   * through in one go. With `dropGone`, an item OneDrive no longer has leaves
+   * the index too (deleted elsewhere meanwhile).
+   */
   async function each(
-    ids: readonly string[],
+    given: readonly string[],
     allowed: ReadonlySet<string>,
     change: (id: string) => Promise<{ upsert?: GraphDriveItem; deleted?: string } | null>,
     onProgress?: Progress,
+    dropGone = false,
   ): Promise<EditResult> {
+    const ids = [...new Set(given)];
     const done: string[] = [];
     const failed: EditResult['failed'] = [];
     const upserts: GraphDriveItem[] = [];
@@ -61,6 +70,7 @@ export function createDriveEdits({ writer, index, apply }: DriveEditsOptions): D
       } catch (error) {
         const reason = failureOf(error);
         if (reason === 'permission') permissionLost = true;
+        if (reason === 'gone' && dropGone) deleted.push(id);
         failed.push({ id, reason });
       } finally {
         onProgress?.(++finished, ids.length);
@@ -68,6 +78,25 @@ export function createDriveEdits({ writer, index, apply }: DriveEditsOptions): D
     });
     const changed = upserts.length > 0 || deleted.length > 0;
     return { done, failed, index: changed ? await apply(upserts, deleted) : null };
+  }
+
+  function moveWithin(
+    current: MediaIndex,
+    ids: readonly string[],
+    folderId: string,
+    onProgress?: Progress,
+  ): Promise<EditResult> {
+    const inFolder = new Set(
+      current.items.filter((item) => item.folderId === folderId).map((item) => item.id),
+    );
+    return each(
+      ids,
+      new Set(mediaIdsIn(current, ids)),
+      async (id) =>
+        // Already there: nothing to ask.
+        inFolder.has(id) ? null : { upsert: await writer.updateItem(id, { parentId: folderId }) },
+      onProgress,
+    );
   }
 
   return {
@@ -81,6 +110,7 @@ export function createDriveEdits({ writer, index, apply }: DriveEditsOptions): D
           return { deleted: id };
         },
         onProgress,
+        true,
       );
     },
 
@@ -99,17 +129,15 @@ export function createDriveEdits({ writer, index, apply }: DriveEditsOptions): D
       if (!moveTargets(current).some((target) => target.id === folderId)) {
         throw new EditRefused('refused');
       }
-      const inFolder = new Set(
-        current.items.filter((item) => item.folderId === folderId).map((item) => item.id),
-      );
-      return each(
-        ids,
-        new Set(mediaIdsIn(current, ids)),
-        async (id) =>
-          // Already there: nothing to ask.
-          inFolder.has(id) ? null : { upsert: await writer.updateItem(id, { parentId: folderId }) },
-        onProgress,
-      );
+      return moveWithin(current, ids, folderId, onProgress);
+    },
+
+    async moveBack(ids, folderId, onProgress) {
+      // Undo: back to the folder they came from, a year or a month folder included, never
+      // outside the index.
+      const current = await index();
+      if (!current.folders.has(folderId)) throw new EditRefused('refused');
+      return moveWithin(current, ids, folderId, onProgress);
     },
 
     async createAlbum(parentId, name) {
@@ -136,10 +164,11 @@ export function createDriveEdits({ writer, index, apply }: DriveEditsOptions): D
       if (!isEditableAlbum(current, id) || !looksEmpty(current, id)) {
         throw new EditRefused('refused');
       }
-      // Other files (a PDF, a text file) are not in the index: OneDrive tells.
+      // Other files (a PDF, a text file) are not in the index: OneDrive tells. Its eTag changes
+      // with what it holds: a file added meanwhile (another device) makes the delete fail.
       const folder = await writer.getItem(id);
       if ((folder.folder?.childCount ?? 1) !== 0) throw new EditRefused('refused');
-      await writer.deleteItem(id);
+      await writer.deleteItem(id, folder.eTag ? { ifMatch: folder.eTag } : {});
       return apply([], [id]);
     },
   };

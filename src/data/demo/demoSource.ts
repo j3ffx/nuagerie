@@ -85,7 +85,7 @@ export function createDemoSource(): DataSource {
   const drive = () => (memory ??= createMemoryWriter(generate().dataset.items));
   const edits = createDriveEdits({
     writer: {
-      deleteItem: (id) => drive().deleteItem(id),
+      deleteItem: (id, options) => drive().deleteItem(id, options),
       updateItem: (id, change) => drive().updateItem(id, change),
       createFolder: (parentId, name) => drive().createFolder(parentId, name),
       restoreItem: (id) => drive().restoreItem(id),

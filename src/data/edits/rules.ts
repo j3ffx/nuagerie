@@ -51,7 +51,10 @@ export function moveTargets(index: MediaIndex): MoveTarget[] {
 
 export type NameProblem = 'empty' | 'tooLong' | 'characters' | 'technical' | 'taken';
 
-const FORBIDDEN = /["*:<>?/\\|]/;
+// eslint-disable-next-line no-control-regex -- control characters are what it looks for
+const FORBIDDEN = /["*:<>?/\\|\u0000-\u001f]/;
+/** Names OneDrive refuses whatever the characters. */
+const RESERVED = /^(con|prn|aux|nul|com\d|lpt\d|desktop\.ini|\.lock)$|^~\$|_vti_/i;
 const MAX_NAME = 120;
 
 /**
@@ -68,7 +71,9 @@ export function albumNameProblem(
   const trimmed = name.trim();
   if (!trimmed) return 'empty';
   if (trimmed.length > MAX_NAME) return 'tooLong';
-  if (FORBIDDEN.test(trimmed) || trimmed.endsWith('.')) return 'characters';
+  if (FORBIDDEN.test(trimmed) || RESERVED.test(trimmed) || trimmed.endsWith('.')) {
+    return 'characters';
+  }
   if (isTechnicalFolderName(trimmed, index.folders.get(parentId)?.name ?? null)) return 'technical';
   const lower = trimmed.toLocaleLowerCase(locale);
   for (const folder of index.folders.values()) {

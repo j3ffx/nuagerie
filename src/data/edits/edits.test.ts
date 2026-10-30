@@ -96,6 +96,10 @@ describe('rules', () => {
     expect(albumNameProblem(index, 'pics', '   ')).toBe('empty');
     expect(albumNameProblem(index, 'pics', 'a/b')).toBe('characters');
     expect(albumNameProblem(index, 'pics', 'fin.')).toBe('characters');
+    for (const reserved of ['CON', 'desktop.ini', '~$brouillon', 'a_vti_b', 'tab\there']) {
+      expect(albumNameProblem(index, 'pics', reserved), reserved).toBe('characters');
+    }
+    expect(albumNameProblem(index, 'pics', 'Console')).toBeNull();
     expect(albumNameProblem(index, 'pics', 'x'.repeat(121))).toBe('tooLong');
     expect(albumNameProblem(index, 'pics', '2023')).toBe('technical');
     expect(albumNameProblem(index, 'pics', 'Sans date')).toBe('technical');
@@ -147,6 +151,33 @@ describe('createDriveEdits', () => {
     await expect(edits.moveItems(['p2'], 'outside')).rejects.toMatchObject({ reason: 'refused' });
   });
 
+  it('undoes a move back into a year or month folder, which cannot be a target otherwise', async () => {
+    const { edits, current } = setup();
+    await edits.moveItems(['p4'], 'holidays');
+    expect(current().items.find((item) => item.id === 'p4')?.folderId).toBe('holidays');
+    const back = await edits.moveBack(['p4'], 'year');
+    expect(back.done).toEqual(['p4']);
+    expect(current().items.find((item) => item.id === 'p4')).toMatchObject({
+      folderId: 'year',
+      albumId: 'pics',
+    });
+    await expect(edits.moveBack(['p4'], 'outside')).rejects.toMatchObject({ reason: 'refused' });
+  });
+
+  it('changes each photo once, even given twice, and lets go of one deleted elsewhere', async () => {
+    const { items, edits, current } = setup();
+    const result = await edits.deleteItems(['p1', 'p1']);
+    expect(result).toMatchObject({ done: ['p1'], failed: [] });
+    // Gone from OneDrive already (deleted on another device): out of the index too.
+    items.splice(
+      items.findIndex((item) => item.id === 'p2'),
+      1,
+    );
+    const gone = await edits.deleteItems(['p2']);
+    expect(gone.failed).toEqual([{ id: 'p2', reason: 'gone' }]);
+    expect(ids(current())).toEqual(['p3', 'p4']);
+  });
+
   it('reports a photo whose name is taken in the album, and moves the others', async () => {
     const { items, edits } = setup();
     items.push(photo('twin', 'holidays', 'p1.jpg'));
@@ -184,6 +215,29 @@ describe('createDriveEdits', () => {
     expect(current().folders.has('docs')).toBe(true);
   });
 
+  it('does not delete an album that changed since OneDrive said it was empty', async () => {
+    const items = drive();
+    items.push({ ...folder('fresh', 'Neuf', 'pics'), eTag: 'v1' });
+    let index = build(items);
+    const memory = createMemoryWriter(items);
+    const edits = createDriveEdits({
+      writer: {
+        ...memory,
+        // A file comes in from another device between the check and the delete.
+        getItem: async (id) => {
+          const found = await memory.getItem(id);
+          items[items.findIndex((item) => item.id === id)] = { ...found, eTag: 'v2' };
+          return found;
+        },
+      },
+      index: async () => index,
+      apply: async () => (index = build(items)),
+    });
+    const error = await edits.deleteAlbum('fresh').catch((caught: unknown) => caught);
+    expect(failureOf(error)).toBe('refused');
+    expect(items.some((item) => item.id === 'fresh')).toBe(true);
+  });
+
   it('stops asking once Microsoft no longer grants the permission', async () => {
     let calls = 0;
     const index = build(drive());
@@ -207,7 +261,10 @@ describe('createDriveEdits', () => {
   it('names what Graph answers', () => {
     expect(failureOf(new GraphError(409, 'nameAlreadyExists', ''))).toBe('nameTaken');
     expect(failureOf(new GraphError(404, 'itemNotFound', ''))).toBe('gone');
-    expect(failureOf(new GraphError(403, 'accessDenied', ''))).toBe('permission');
+    expect(failureOf(new GraphError(401, 'InvalidAuthenticationToken', ''))).toBe('permission');
+    // About the item (the Personal Vault…): the rest goes on.
+    expect(failureOf(new GraphError(403, 'accessDenied', ''))).toBe('refused');
+    expect(failureOf(new GraphError(412, 'preconditionFailed', ''))).toBe('refused');
     expect(failureOf(new GraphError(500, 'generalException', ''))).toBe('error');
   });
 });
