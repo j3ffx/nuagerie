@@ -1,5 +1,8 @@
 import { currentDateContext, resolveCaptureDate } from '../dates.ts';
 import { summarize } from '../diagnostics.ts';
+import { createDriveEdits } from '../edits/driveEdits.ts';
+import { createMemoryWriter } from '../edits/memoryWriter.ts';
+import type { DriveWriter } from '../graph/client.ts';
 import { buildIndex } from '../normalize.ts';
 import { childPath, readRootPaths } from '../roots.ts';
 import type { DataSource, DriveFolder } from '../source.ts';
@@ -77,8 +80,24 @@ export function createDemoSource(): DataSource {
     return { dataset, index };
   };
 
+  // Changes are made in memory: the demo's drive is drawn again as the page reloads.
+  let memory: DriveWriter | null = null;
+  const drive = () => (memory ??= createMemoryWriter(generate().dataset.items));
+  const edits = createDriveEdits({
+    writer: {
+      deleteItem: (id) => drive().deleteItem(id),
+      updateItem: (id, change) => drive().updateItem(id, change),
+      createFolder: (parentId, name) => drive().createFolder(parentId, name),
+      restoreItem: (id) => drive().restoreItem(id),
+      getItem: (id) => drive().getItem(id),
+    },
+    index: async () => load().index,
+    apply: async () => load().index,
+  });
+
   return {
     mode: 'demo',
+    edits,
 
     async loadIndex(onProgress) {
       // Let the loading state paint before the (synchronous) generation.

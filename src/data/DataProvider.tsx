@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { isOnline } from '../lib/online.ts';
 import { DataContext, type DataState, type SyncState } from './dataContext.ts';
+import type { MediaIndex } from './model.ts';
 import type { DataMode, DataSource } from './source.ts';
 import { createThumbnails } from './thumbnails/setup.ts';
 
@@ -93,9 +94,13 @@ export function DataProvider({
     [source],
   );
 
+  const showIndex = useCallback((index: MediaIndex) => {
+    setState((s) => (s.status === 'ready' ? { ...s, index } : s));
+  }, []);
+
   return (
     <DataContext.Provider
-      value={{ mode, signedIn, source, thumbnails, state, sync, refresh, resetIndex }}
+      value={{ mode, signedIn, source, thumbnails, state, sync, refresh, resetIndex, showIndex }}
     >
       {children}
     </DataContext.Provider>

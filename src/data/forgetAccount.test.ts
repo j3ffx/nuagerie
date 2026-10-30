@@ -21,6 +21,10 @@ const KEYS: Record<string, boolean> = {
   'sync.asking': true,
   'search.recent.onedrive': true,
   'map.view': true,
+  'edits.enabled': true,
+  'edits.granted': true,
+  'edits.asking': true,
+  'edits.trash.onedrive': true,
   // The look of the app stays with the device.
   theme: false,
   language: false,

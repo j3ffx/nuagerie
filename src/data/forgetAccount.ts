@@ -1,4 +1,5 @@
 import { removePersistent } from '../lib/persistent.ts';
+import { trashCacheName, trashKey } from './edits/trash.ts';
 import { DEFAULT_ROOT_PATH_KEY } from './roots.ts';
 import { SYNCED_PREFERENCES } from './sync/state.ts';
 import { SYNC_ENABLED_KEY, SYNC_GRANTED_KEY, syncStateKey } from './sync/syncContext.ts';
@@ -23,8 +24,18 @@ export const ACCOUNT_PREFERENCES: readonly string[] = [
   'search.recent.onedrive',
   'map.view',
   DEFAULT_ROOT_PATH_KEY,
+  // The changes start off again for whoever signs in next, with nothing in the app's bin.
+  'edits.enabled',
+  'edits.granted',
+  'edits.asking',
+  trashKey('onedrive'),
 ];
 
 export function forgetAccountPreferences(): void {
   ACCOUNT_PREFERENCES.forEach(removePersistent);
+}
+
+/** The thumbnails kept with the app's list of what it put in the recycle bin. */
+export async function forgetTrashThumbnails(): Promise<void> {
+  if (typeof caches !== 'undefined') await caches.delete(trashCacheName('onedrive'));
 }

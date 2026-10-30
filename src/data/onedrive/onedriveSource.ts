@@ -1,6 +1,12 @@
 import { currentDateContext, resolveCaptureDate } from '../dates.ts';
 import { summarize } from '../diagnostics.ts';
-import { createGraphClient, GraphError, type GraphClient } from '../graph/client.ts';
+import { createDriveEdits } from '../edits/driveEdits.ts';
+import {
+  createGraphClient,
+  GraphError,
+  type DriveWriter,
+  type GraphClient,
+} from '../graph/client.ts';
 import { detectScope, photosFolderPath, resolveFolder, syncRoot } from '../graph/sync.ts';
 import {
   createThumbnailFetcher,
@@ -260,10 +266,13 @@ export interface OneDriveSourceOptions {
    */
   accountId: string | null;
   getToken: () => Promise<string>;
+  /** A token allowing changes (Réglages → Modifications); without it, nothing can be changed. */
+  getEditToken?: () => Promise<string>;
   /** The copy of the index shared with the user's other devices, when the sync allows it. */
   snapshots?: IndexSnapshots;
   /** For tests. */
   client?: GraphClient;
+  writer?: DriveWriter;
   store?: IndexStore;
 }
 
@@ -403,6 +412,31 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
   }
 
   const signedIn = options.accountId !== null;
+  const getEditToken = options.getEditToken;
+  const writer =
+    options.writer ?? (getEditToken ? createGraphClient({ getToken: getEditToken }) : null);
+  const edits =
+    signedIn && writer
+      ? createDriveEdits({
+          writer,
+          index: async () => {
+            const store = await getStore();
+            const meta = await store.getMeta();
+            if (!meta) throw new Error('Index not loaded yet');
+            return buildFromStore(store, meta);
+          },
+          apply: async (upserts, deletedIds) => {
+            const store = await getStore();
+            await store.applyChanges(upserts, deletedIds);
+            const meta = await store.getMeta();
+            if (!meta) throw new Error('Index not loaded yet');
+            // The copy left for the other devices falls behind, as after a delta.
+            if (meta.snapshot)
+              await store.setMeta({ ...meta, snapshot: { ...meta.snapshot, stale: true } });
+            return buildFromStore(store, meta);
+          },
+        })
+      : undefined;
   const webUrls = new Map<string, string | null>();
   /** Off after a reindex asked for: the drive is listed again, the copy is not trusted. */
   let useSharedCopy = true;
@@ -459,6 +493,7 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
 
   return {
     mode: 'onedrive',
+    ...(edits && { edits }),
 
     async loadIndex(onProgress) {
       const store = await getStore();

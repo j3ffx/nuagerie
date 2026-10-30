@@ -31,6 +31,8 @@ export interface DataContextValue {
    * copy another device shared, when `useSharedCopy`).
    */
   resetIndex: (options?: { useSharedCopy?: boolean }) => Promise<void>;
+  /** Shows the index a change of the user's made (src/data/edits/), without waiting for a sync. */
+  showIndex: (index: MediaIndex) => void;
 }
 
 export const DataContext = createContext<DataContextValue | null>(null);

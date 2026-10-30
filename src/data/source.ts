@@ -1,4 +1,5 @@
 import type { DiagnosticReport } from './diagnostics.ts';
+import type { DriveEdits } from './edits/types.ts';
 import type { IndexProgress, MediaIndex, MediaItem, ThumbnailSize } from './model.ts';
 
 export type DataMode = 'demo' | 'onedrive';
@@ -39,6 +40,11 @@ export interface DataSource {
    * null when there is none to give (demo videos).
    */
   getOriginalUrl(item: MediaItem): Promise<string | null>;
+  /**
+   * The changes the user can make to the drive, once they turned them on
+   * (src/data/edits/); none when started offline without an account.
+   */
+  edits?: DriveEdits;
   /** The page of a file or folder (by id) on OneDrive's website (none in the demo). */
   getWebUrl?(id: string): Promise<string | null>;
 }
