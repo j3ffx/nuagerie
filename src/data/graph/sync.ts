@@ -73,9 +73,13 @@ export async function photosFolderPath(client: GraphClient): Promise<string | nu
       '/me/drive/special/photos?$select=id,name,parentReference',
     );
     // "/drive/root:" for a folder at the top of the drive, "/drive/root:/Documents" below one.
-    const parent = decodeURIComponent(
-      (folder.parentReference?.path ?? '/drive/root:').replace(/^\/drive\/root:/, ''),
-    );
+    const encoded = (folder.parentReference?.path ?? '/drive/root:').replace(/^\/drive\/root:/, '');
+    let parent = encoded;
+    try {
+      parent = decodeURIComponent(encoded);
+    } catch {
+      // A "%" that encodes nothing ("100% vacances"): the path was not encoded.
+    }
     return `${parent}/${folder.name}`;
   } catch (error) {
     if (error instanceof GraphError && error.status === 404) return null;

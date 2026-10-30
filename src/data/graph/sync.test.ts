@@ -178,6 +178,16 @@ describe('photosFolderPath', () => {
       },
     });
     expect(await photosFolderPath(below.client)).toBe('/Mes documents/Bilder');
+
+    // A "%" that encodes nothing: the path is taken as it is, and indexing goes on.
+    const percent = fakeGraph({
+      '/me/drive/special/photos': {
+        id: 'p',
+        name: 'Photos',
+        parentReference: { path: '/drive/root:/100% vacances' },
+      },
+    });
+    expect(await photosFolderPath(percent.client)).toBe('/100% vacances/Photos');
   });
 
   it('says there is none when the drive has no Photos folder, and lets other errors through', async () => {
