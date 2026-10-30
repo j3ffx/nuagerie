@@ -29,15 +29,17 @@ const scope = self as unknown as {
   postMessage(message: PlaceResponse): void;
 };
 
-/** Names in the language; without them (English, offline), the list's own names. */
+/**
+ * Names in the language (none in English: the list's own). A failure fails the
+ * whole list, like the list's own: places found with the wrong names would be
+ * kept for good (src/data/places/photoPlaces.ts), and the next request tries
+ * again.
+ */
 const localNames = async (): Promise<Map<number, string>> => {
   if (!PLACE_NAME_LANGUAGES.includes(scope.name)) return new Map();
-  try {
-    const response = await fetch(placeNamesUrl(scope.name));
-    return response.ok ? parsePlaceNames(await response.text()) : new Map();
-  } catch {
-    return new Map();
-  }
+  const response = await fetch(placeNamesUrl(scope.name));
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return parsePlaceNames(await response.text());
 };
 
 let index: Promise<PlaceIndex> | null = null;
