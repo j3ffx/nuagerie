@@ -4,7 +4,9 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
-## Depuis la dernière version
+## 1.1.0 — 2026-10-30
+
+Nuagerie peut ranger ton OneDrive, si tu le lui permets : elle reste en lecture seule tant que tu n’actives pas les modifications.
 
 ### Nouveautés
 

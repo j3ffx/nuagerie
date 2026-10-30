@@ -4,7 +4,9 @@ The changes of each Nuagerie version, the most recent first. The numbers follow
 [semantic versioning](https://semver.org/): while they start with 0, the app still changes a lot.
 The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
 
-## Since the last version
+## 1.1.0 — 2026-10-30
+
+Nuagerie can tidy up your OneDrive, if you let it: it stays read-only until you turn on the changes.
 
 ### New
 
