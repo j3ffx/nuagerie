@@ -98,6 +98,15 @@ function compareExifAndName(
     }));
 }
 
+/**
+ * A root folder as the report shows it: the drive's root as it is, any other
+ * folder by its rank and depth only, since its name can be personal.
+ */
+export function maskedPath(path: string, index: number): string {
+  const depth = path.split('/').filter(Boolean).length;
+  return depth === 0 ? '/' : `<folder ${index + 1}, depth ${depth}>`;
+}
+
 export function summarize(
   raw: readonly GraphDriveItem[],
   index: MediaIndex,
@@ -143,6 +152,7 @@ export function summarize(
   return {
     generatedAt: new Date().toISOString(),
     ...extra,
+    channels: extra.channels.map(({ path, scope }, i) => ({ path: maskedPath(path, i), scope })),
     counts,
     undatedNameShapes: topShapes(
       index.items.filter((item) => item.takenAt === null).map((item) => item.name),

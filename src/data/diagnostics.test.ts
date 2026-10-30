@@ -38,8 +38,24 @@ describe('summarize', () => {
       raw,
       index,
       { nowWallClock: Date.UTC(2026, 9, 6), timeZone: 'UTC' },
-      { mode: 'test', channels: [], apiChecks: [], lastSyncAt: null, lastFullSync: null },
+      {
+        mode: 'test',
+        channels: [
+          { path: '/', scope: 'drive' },
+          { path: '/Pictures/Famille Martin', scope: 'folder' },
+        ],
+        apiChecks: [],
+        lastSyncAt: null,
+        lastFullSync: null,
+      },
     );
+
+    // The root folders by rank and depth only: a folder's name can be personal.
+    expect(report.channels).toEqual([
+      { path: '/', scope: 'drive' },
+      { path: '<folder 2, depth 2>', scope: 'folder' },
+    ]);
+    expect(JSON.stringify(report)).not.toContain('Martin');
 
     expect(report.counts).toMatchObject({
       indexedMedia: 2,
