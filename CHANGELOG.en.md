@@ -9,6 +9,7 @@ The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
 ### New
 
 - Memories have a background of their own, and a tap anywhere on them opens all of today’s.
+- Changes, to turn on in the settings (off by default): delete photos (they go to OneDrive’s recycle bin), move them to an album, create, rename or delete empty albums. Each change can be undone, and the Recycle bin screen restores what the app deleted, for 30 days.
 
 ### Fixes
 

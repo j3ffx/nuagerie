@@ -2,14 +2,15 @@
 
 **English** · [Français](README.fr.md)
 
-A personal photo gallery for OneDrive, **read-only**: your photos and videos sorted by album,
+A personal photo gallery for OneDrive, **read-only by default**: your photos and videos sorted by album,
 found by date and by place. A PWA made for the phone, pleasant on a PC too.
 
 - 100% client-side, no server, no tracking.
-- Read-only: Microsoft Graph permissions limited to `Files.Read`, `User.Read`,
-  `offline_access`. The one exception, to turn on yourself: the sync of favourites and
+- Read-only by default: Microsoft Graph permissions limited to `Files.Read`, `User.Read`,
+  `offline_access`. Two exceptions, each to turn on yourself: the sync of favourites and
   preferences, kept in a folder of their own (`Apps/Nuagerie`), with a permission limited to that
-  folder. Settings → Permissions shows what Microsoft really allows.
+  folder; and the changes (delete, move and restore photos, manage albums), which ask for the
+  right to change your files. Settings → Permissions shows what Microsoft really allows.
 - A **demo mode** with ~20,000 made-up photos lets you try everything without an account.
 - In **English** and **French**, following the phone's language or chosen in the settings.
 
@@ -25,6 +26,10 @@ found by date and by place. A PWA made for the phone, pleasant on a PC too.
 - **Grids.** Pinch to change the number of columns. A long press selects photos (sliding takes
   several, tapping a month takes it whole) to share them, add them to the favourites or download
   them in one go.
+- **Changes.** Off by default; once turned on in the settings, delete photos (they go to
+  OneDrive's recycle bin), move them to an album, create, rename or delete empty albums, from
+  the viewer, a selection or an album's menu. Each change says what it did, with "Undo", and a
+  recycle bin screen lists what the app deleted, to restore it within 30 days.
 - **Memories.** At the top of the home screen, the photos taken on the same day in earlier
   years ("3 years ago"). Closed, the section comes back the next day, on every synced device. A
   notification on memory days, to turn on in the settings (Chrome, installed app): at most one a

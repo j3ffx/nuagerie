@@ -190,7 +190,10 @@ annuaire par défaut (**Default Directory**). L’inscription d’application es
    `Files.Read`, `User.Read`, `offline_access`. La synchronisation (favoris, préférences, dossiers)
    demande en plus, au moment où on l’active, `Files.ReadWrite.AppFolder` (écriture dans le seul dossier `Applis/Nuagerie`) : Microsoft
    accepte cette demande sans qu’elle soit déclarée ici, mais on peut l’ajouter à la liste pour la
-   transparence. Aucune autre permission.
+   transparence. De même, les modifications (Réglages → Modifications : supprimer, déplacer et
+   restaurer des photos, gérer les albums) demandent `Files.ReadWrite.All` seulement quand on les
+   active : c’est la permission qu’exige la restauration depuis la corbeille d’un OneDrive
+   personnel. Aucune autre permission.
 9. **Personnalisation et propriétés** (_Branding & properties_) → **URL de la déclaration de
    confidentialité** : l’adresse de l’instance suivie de `/confidentialite`, par exemple
    `https://nuagerie.app/confidentialite`. La page se lit sans être connecté, en français

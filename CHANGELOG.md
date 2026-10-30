@@ -9,6 +9,7 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 ### Nouveautés
 
 - Les Souvenirs ont leur propre fond, et toucher n’importe où dessus ouvre ceux du jour en entier.
+- Modifications, à activer dans les réglages (désactivées par défaut) : supprimer des photos (elles vont dans la corbeille de OneDrive), les déplacer dans un album, créer, renommer ou supprimer des albums vides. Chaque modification peut s’annuler, et l’écran Corbeille permet de restaurer ce que l’appli a supprimé pendant 30 jours.
 
 ### Corrections
 

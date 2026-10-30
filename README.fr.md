@@ -2,15 +2,16 @@
 
 [English](README.md) · **Français**
 
-Galerie photo personnelle pour OneDrive, en **lecture seule** : les photos et vidéos
+Galerie photo personnelle pour OneDrive, en **lecture seule par défaut** : les photos et vidéos
 rangées par albums, retrouvées par date et par lieu. Une PWA pensée pour le téléphone,
 agréable aussi sur PC.
 
 - 100 % côté client, sans serveur, sans suivi.
-- Lecture seule : permissions Microsoft Graph limitées à `Files.Read`, `User.Read`,
-  `offline_access`. Seule exception, à activer soi-même : la synchronisation des favoris et des
-  préférences, rangés dans un dossier à part (`Applis/Nuagerie`), avec une permission limitée à ce
-  dossier. Réglages → Permissions montre ce
+- Lecture seule par défaut : permissions Microsoft Graph limitées à `Files.Read`, `User.Read`,
+  `offline_access`. Deux exceptions, chacune à activer soi-même : la synchronisation des favoris
+  et des préférences, rangés dans un dossier à part (`Applis/Nuagerie`), avec une permission
+  limitée à ce dossier ; et les modifications (supprimer, déplacer et restaurer des photos, gérer
+  les albums), qui demandent le droit de modifier les fichiers. Réglages → Permissions montre ce
   que Microsoft autorise réellement.
 - Un **mode démo** avec ~20 000 photos factices permet de tout essayer sans compte.
 - En **français** et en **anglais**, selon la langue du téléphone ou au choix dans les réglages.
@@ -27,6 +28,11 @@ agréable aussi sur PC.
 - **Grilles.** Pincer change le nombre de colonnes. Un appui long sélectionne des photos
   (glisser en prend plusieurs, toucher un mois le prend en entier) pour les partager, les
   mettre en favoris ou les télécharger d’un coup.
+- **Modifications.** Désactivées par défaut ; une fois activées dans les réglages, supprimer
+  des photos (elles vont dans la corbeille de OneDrive), les déplacer dans un album, créer,
+  renommer ou supprimer des albums vides, depuis la visionneuse, une sélection ou le menu d’un
+  album. Chaque modification dit ce qu’elle a fait, avec « Annuler », et un écran Corbeille
+  liste ce que l’appli a supprimé, pour le restaurer pendant 30 jours.
 - **Souvenirs.** En haut de l’accueil, les photos prises le même jour les années passées
   (« Il y a 3 ans »). Fermée, la section revient le lendemain, sur tous les appareils
   synchronisés. Une notification les jours de souvenirs, à activer dans les réglages (Chrome,
