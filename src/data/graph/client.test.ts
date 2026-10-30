@@ -206,17 +206,12 @@ describe('DriveWriter', () => {
 
     await expect(client.updateItem('A!1', { parentId: 'F!9' })).resolves.toEqual({ id: 'A!1' });
     expect(calls[1]?.url.startsWith(`${base}A!1?$select=id,name,parentReference`)).toBe(true);
+    expect(calls[1]?.url.endsWith('&@microsoft.graph.conflictBehavior=fail')).toBe(true);
     expect(calls[1]?.init?.method).toBe('PATCH');
-    expect(body(calls[1])).toEqual({
-      parentReference: { id: 'F!9' },
-      '@microsoft.graph.conflictBehavior': 'fail',
-    });
+    expect(body(calls[1])).toEqual({ parentReference: { id: 'F!9' } });
 
     await client.updateItem('F!2', { name: 'Vacances' });
-    expect(body(calls[2])).toEqual({
-      name: 'Vacances',
-      '@microsoft.graph.conflictBehavior': 'fail',
-    });
+    expect(body(calls[2])).toEqual({ name: 'Vacances' });
 
     await client.createFolder('F!9', 'Nouvel album');
     expect(calls[3]?.url.startsWith(`${base}F!9/children?`)).toBe(true);
@@ -228,7 +223,33 @@ describe('DriveWriter', () => {
     });
 
     await client.restoreItem('A!1');
-    expect(calls[4]).toMatchObject({ url: `${base}A!1/restore`, init: { method: 'POST' } });
+    expect(calls[4]?.url.startsWith(`${base}A!1/restore?$select=`)).toBe(true);
+    expect(calls[4]?.init?.method).toBe('POST');
+  });
+
+  it('deletes only the version it was given, when told', async () => {
+    const { client, calls } = setup([new Response(null, { status: 204 })]);
+    await client.deleteItem('F!2', { ifMatch: '"e7"' });
+    expect(calls[0]?.init?.headers).toMatchObject({ 'If-Match': '"e7"' });
+  });
+
+  it('never sends a delete, a new folder or a restore twice, unless Graph said it did nothing', async () => {
+    const lost = setup([new TypeError('network'), new Response(null, { status: 204 })]);
+    await expect(lost.client.deleteItem('A!1')).rejects.toThrow('network');
+    expect(lost.calls).toHaveLength(1);
+
+    const busy = setup([json({ error: { code: 'serviceNotAvailable' } }, 503)]);
+    await expect(busy.client.createFolder('F!9', 'X')).rejects.toMatchObject({ status: 503 });
+    expect(busy.calls).toHaveLength(1);
+
+    const throttled = setup([json({}, 429, { 'Retry-After': '1' }), json({ id: 'A!1' })]);
+    await throttled.client.restoreItem('A!1');
+    expect(throttled.calls).toHaveLength(2);
+
+    // A move asked twice ends the same: it is sent again.
+    const moved = setup([new TypeError('network'), json({ id: 'A!1' })]);
+    await moved.client.updateItem('A!1', { parentId: 'F!9' });
+    expect(moved.calls).toHaveLength(2);
   });
 
   it('never reaches past one item, nor the drive root', async () => {

@@ -43,6 +43,12 @@ interface Request {
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
   body?: string | Blob;
+  /**
+   * Done twice, it would not do the same (a delete, a new folder, a restore):
+   * never sent again once it may have reached Graph, only after a refusal
+   * that says it did nothing (429).
+   */
+  once?: boolean;
 }
 
 /** A plain file name: no path, so no way out of the app's folder. */
@@ -74,7 +80,8 @@ export type AppFileWrite = { ifMatch: string | null } | { overwrite: true };
  * Which items may be changed is the caller's to check (src/data/edits/).
  */
 export interface DriveWriter {
-  deleteItem(id: string): Promise<void>;
+  /** With `ifMatch`, only that version of it (a folder's eTag changes with what it holds). */
+  deleteItem(id: string, options?: { ifMatch?: string }): Promise<void>;
   /** Moves (to `parentId`) or renames; fails rather than replace an item of the same name. */
   updateItem(id: string, change: { name?: string; parentId?: string }): Promise<GraphDriveItem>;
   /** A new folder in `parentId`; fails if one of that name is there. */
@@ -188,14 +195,18 @@ export function createGraphClient(
       } catch (error) {
         // Network failure (DNS, flaky link…): retry, then give up with the original error.
         // Offline, waiting is pointless: the app tries again once the connection is back.
-        if (attempt >= maxRetries || !online()) throw error;
+        if (attempt >= maxRetries || !online() || request.once) throw error;
         await sleep(retryDelay(attempt, null));
         continue;
       } finally {
         clearTimeout(timer);
       }
       if (response.ok) return response;
-      if (RETRYABLE.has(response.status) && attempt < maxRetries) {
+      if (
+        RETRYABLE.has(response.status) &&
+        attempt < maxRetries &&
+        (!request.once || response.status === 429)
+      ) {
         await sleep(retryDelay(attempt, response.headers.get('Retry-After')));
         continue;
       }
@@ -209,6 +220,7 @@ export function createGraphClient(
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        once: method !== 'PATCH',
       })
     ).json()) as GraphDriveItem;
   const selected = `?$select=${DELTA_SELECT}`;
@@ -218,16 +230,24 @@ export function createGraphClient(
       return (await (await send(pathOrUrl)).json()) as T;
     },
 
-    async deleteItem(id) {
-      await send(itemPath(id), { method: 'DELETE' });
+    async deleteItem(id, { ifMatch } = {}) {
+      await send(itemPath(id), {
+        method: 'DELETE',
+        once: true,
+        ...(ifMatch ? { headers: { 'If-Match': ifMatch } } : {}),
+      });
     },
 
     updateItem(id, { name, parentId }) {
-      return sendJson(`${itemPath(id)}${selected}`, 'PATCH', {
-        ...(name === undefined ? {} : { name }),
-        ...(parentId === undefined ? {} : { parentReference: { id: parentId } }),
-        ...FAIL_ON_CONFLICT,
-      });
+      // For a PATCH, Graph reads the conflict rule from the query.
+      return sendJson(
+        `${itemPath(id)}${selected}&@microsoft.graph.conflictBehavior=fail`,
+        'PATCH',
+        {
+          ...(name === undefined ? {} : { name }),
+          ...(parentId === undefined ? {} : { parentReference: { id: parentId } }),
+        },
+      );
     },
 
     createFolder(parentId, name) {
@@ -239,7 +259,7 @@ export function createGraphClient(
     },
 
     restoreItem(id) {
-      return sendJson(`${itemPath(id)}/restore`, 'POST', {});
+      return sendJson(`${itemPath(id)}/restore${selected}`, 'POST', {});
     },
 
     async getItem(id) {
