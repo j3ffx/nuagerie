@@ -192,6 +192,12 @@ const SCREENS: {
     ready: (page) => expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible(),
   },
   {
+    name: 'recycle bin',
+    path: '/corbeille',
+    ready: (page) =>
+      expect(page.getByRole('heading', { level: 1, name: 'Corbeille' })).toBeVisible(),
+  },
+  {
     name: 'privacy',
     path: '/confidentialite',
     ready: (page) => expect(page.getByRole('heading', { name: 'Confidentialité' })).toBeVisible(),
