@@ -3,14 +3,8 @@ import { signOut } from '../../auth/msal.ts';
 import { useSignIn } from '../../auth/useSignIn.ts';
 import { useData } from '../../data/dataContext.ts';
 import { photoPlaces } from '../../data/places/photoPlaces.ts';
-import { DEFAULT_ROOT_PATH_KEY } from '../../data/roots.ts';
-import {
-  SYNC_ENABLED_KEY,
-  SYNC_GRANTED_KEY,
-  SYNC_TURNED_OFF_KEY,
-  syncStateKey,
-} from '../../data/sync/syncContext.ts';
-import { removePersistent } from '../../lib/persistent.ts';
+import { forgetAccountPreferences } from '../../data/forgetAccount.ts';
+import { forgetMemoryState } from '../../data/memoryNotifier.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
 import { useConfirm } from '../../ui/confirmContext.ts';
@@ -77,14 +71,10 @@ export function AccountSection() {
       photoPlaces().clear(),
     ]);
     thumbnails.store.clearMemory();
-    // This device's copy of the favourites and preferences; OneDrive's copy stays.
-    removePersistent(syncStateKey('onedrive'));
-    removePersistent(SYNC_ENABLED_KEY);
-    removePersistent(SYNC_GRANTED_KEY);
-    removePersistent(SYNC_TURNED_OFF_KEY);
-    removePersistent('search.recent.onedrive');
-    // Another account has its Photos folder elsewhere.
-    removePersistent(DEFAULT_ROOT_PATH_KEY);
+    // This device's copy of the favourites and preferences (OneDrive's copy stays), and the
+    // memories already told.
+    forgetAccountPreferences();
+    await forgetMemoryState().catch(() => undefined);
     await signOut();
   };
 

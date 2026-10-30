@@ -1,4 +1,4 @@
-import { openDB, type IDBPDatabase } from 'idb';
+import { deleteDB, openDB, type IDBPDatabase } from 'idb';
 import type { Language } from '../lib/i18n.ts';
 import { currentDateContext, resolveCaptureDate } from './dates.ts';
 import { dayKey, memoryNotification, NOTIFY_FROM_HOUR } from './memories.ts';
@@ -46,6 +46,9 @@ export const openMemoryState = () =>
       database.createObjectStore('state');
     },
   });
+
+/** Signing out: nothing of the account's memories stays (the language comes back at start). */
+export const forgetMemoryState = () => deleteDB('nuagerie-memories');
 
 const TOLD_KEY = 'notifiedOn';
 
