@@ -9,7 +9,7 @@ import styles from './PrivacyScreen.module.css';
 export const PRIVACY_PATH = '/confidentialite';
 
 /** Updated with the page: the date it was last changed. */
-const UPDATED = '2026-10-30';
+const UPDATED = '2026-11-01';
 
 interface Part {
   title: string;
@@ -44,6 +44,14 @@ const t = localized({
           'Pour s’ouvrir vite, et sans réseau, Nuagerie garde dans ton navigateur l’index de tes photos, leurs miniatures, les albums que tu gardes hors connexion, les lieux de tes photos, tes favoris, tes dernières recherches, tes préférences, la liste des photos supprimées depuis l’appli (avec leurs miniatures) et ta connexion Microsoft (nom du compte, adresse e-mail et jetons, gardés par la bibliothèque de connexion de Microsoft).',
           'Se déconnecter efface tout cela, sauf l’apparence de l’appli (thème, langue, colonnes). Effacer les données du site dans le navigateur aussi.',
           'La notification des souvenirs est préparée sur l’appareil et montre une de tes photos parmi tes notifications. Partager envoie une photo seulement à l’appli que tu choisis.',
+        ],
+      },
+      {
+        title: 'Recherche dans les photos',
+        paragraphs: [
+          'Seulement si tu l’actives (Réglages → Recherche dans les photos). Le modèle qui comprend ce que montrent les photos est téléchargé une fois depuis Hugging Face, qui voit ton adresse IP comme tout site qui sert un fichier, et rien d’autre.',
+          'Ensuite tout se calcule sur tes appareils : l’analyse lit les miniatures de tes photos et garde pour chacune une suite de nombres, et tes recherches ne quittent pas l’appareil. Avec la synchronisation, ces nombres vont aussi dans Applis/Nuagerie, pour tes autres appareils.',
+          'Désactiver cette recherche ou se déconnecter efface le modèle et l’analyse de l’appareil.',
         ],
       },
       {
@@ -98,6 +106,14 @@ const t = localized({
           'To open fast, and without a network, Nuagerie keeps in your browser the index of your photos, their thumbnails, the albums you keep offline, the places of your photos, your favourites, your latest searches, your preferences, the list of photos deleted from the app (with their thumbnails) and your Microsoft sign-in (account name, email address and tokens, kept by Microsoft’s sign-in library).',
           'Signing out erases all of it, except the look of the app (theme, language, columns). So does clearing the site’s data in the browser.',
           'The memories notification is made on the device and shows one of your photos among your notifications. Sharing sends a photo only to the app you choose.',
+        ],
+      },
+      {
+        title: 'Search in the photos',
+        paragraphs: [
+          'Only if you turn it on (Settings → Search in the photos). The model that understands what photos show is downloaded once from Hugging Face, which sees your IP address as any site serving a file does, and nothing else.',
+          'After that, everything is worked out on your devices: the analysis reads your photos’ thumbnails and keeps a series of numbers for each, and your searches do not leave the device. With the sync, those numbers also go to Apps/Nuagerie, for your other devices.',
+          'Turning this search off or signing out erases the model and the analysis from the device.',
         ],
       },
       {

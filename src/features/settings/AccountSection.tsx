@@ -8,6 +8,7 @@ import { forgetMemoryState } from '../../data/memoryNotifier.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
 import { useConfirm } from '../../ui/confirmContext.ts';
+import { useContentSearch } from '../content/contentContext.ts';
 import { useOffline } from '../offline/offlineContext.ts';
 import { localized } from '../../lib/i18n.ts';
 
@@ -54,6 +55,7 @@ export function AccountSection() {
   const confirm = useConfirm();
   const reconnect = useSignIn();
   const offline = useOffline();
+  const { search: content } = useContentSearch();
 
   /** Signing out leaves nothing of the drive on the device: index, thumbnails and places go too. */
   const signOutAndForget = async () => {
@@ -70,6 +72,7 @@ export function AccountSection() {
       offline.clear(),
       photoPlaces().clear(),
       forgetTrashThumbnails().catch(() => undefined),
+      content.disable().catch(() => undefined),
     ]);
     thumbnails.store.clearMemory();
     // This device's copy of the favourites and preferences (OneDrive's copy stays), and the

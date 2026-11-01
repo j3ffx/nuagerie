@@ -1,6 +1,7 @@
 import {
   useCallback,
   useDeferredValue,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -11,8 +12,9 @@ import { useLocation, useSearchParams } from 'wouter';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
 import type { PhotoPlaces } from '../../data/places/photoPlaces.ts';
-import { parseQuery } from '../../data/search/query.ts';
+import { inPeriod, parseQuery } from '../../data/search/query.ts';
 import {
+  fits,
   placesOf,
   searchItems,
   suggest,
@@ -27,6 +29,7 @@ import { CalendarIcon, ClockIcon, CloseIcon, MapIcon, SearchIcon } from '../../u
 import { IndexStatus } from '../../ui/IndexStatus.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import { Thumbnail } from '../../ui/Thumbnail.tsx';
+import { useContentSearch } from '../content/contentContext.ts';
 import { PhotoBrowser } from '../viewer/PhotoBrowser.tsx';
 import { useRecentSearches } from './recent.ts';
 import styles from './SearchScreen.module.css';
@@ -69,6 +72,12 @@ const t = localized({
     noPhoto: 'Aucune photo ne correspond.',
     tryOther: 'Retire un filtre ou essaie d’autres mots.',
     results: 'Résultats de la recherche',
+    inPhotos: (text: string) => `Chercher « ${text} » dans les photos`,
+    inPhotosDetail: 'Ce que montrent les photos',
+    searching: 'Recherche dans les photos…',
+    closest: 'Les plus proches d’abord',
+    failed: 'La recherche dans les photos a échoué. Vérifie ta connexion et réessaie.',
+    noneAnalysed: 'Aucune photo analysée ici pour l’instant.',
   },
   en: {
     title: 'Search',
@@ -98,6 +107,12 @@ const t = localized({
     noPhoto: 'No photo matches.',
     tryOther: 'Remove a filter or try other words.',
     results: 'Search results',
+    inPhotos: (text: string) => `Search for “${text}” in the photos`,
+    inPhotosDetail: 'What the photos show',
+    searching: 'Searching in the photos…',
+    closest: 'Closest first',
+    failed: 'The search in the photos failed. Check your connection and try again.',
+    noneAnalysed: 'No photo analysed here yet.',
   },
 });
 
@@ -117,6 +132,7 @@ export function SearchScreen() {
   const href = targetHref(target);
   const [, navigate] = useLocation();
   const { recent, remember, forget } = useRecentSearches();
+  const { available } = useContentSearch();
 
   // The field shows the search in the URL, until something else is typed.
   const [draft, setDraft] = useState(target.q);
@@ -153,7 +169,10 @@ export function SearchScreen() {
             onSubmit={(event) => {
               event.preventDefault();
               const q = draft.trim();
-              if (q) go({ q, album: null, place: null });
+              if (!q) return;
+              // Nothing by name, date or place: the words are about what the photos show.
+              const content = available && searchItems(search, parseQuery(q)).length === 0;
+              go({ q, album: null, place: null, ...(content && { content }) });
             }}
           >
             <SearchIcon className={styles.formIcon} />
@@ -187,7 +206,11 @@ export function SearchScreen() {
           </form>
           <PlacesStatus places={places} items={index.items} />
           {showResults ? (
-            <Results key={href} search={search} target={target} go={go} />
+            target.content ? (
+              <ContentResults key={href} search={search} target={target} go={go} />
+            ) : (
+              <Results key={href} search={search} target={target} go={go} />
+            )
           ) : typed ? (
             <Suggestions search={search} text={typed} go={go} />
           ) : (
@@ -432,8 +455,21 @@ function Suggestions({ search, text, go }: { search: SearchIndex; text: string; 
     period ? `${period.label} · ${formatItemCount(count)}` : formatItemCount(count);
   const onlyDate = query.date !== null && query.terms.length === 0;
   const places = [...found.towns, ...found.countries];
+  const { available } = useContentSearch();
+  const inPhotos = available && query.terms.length > 0 && (
+    <ul className={styles.rows}>
+      <Row
+        target={{ q: text, album: null, place: null, content: true }}
+        go={go}
+        icon={<SearchIcon />}
+        title={t.inPhotos(text)}
+        detail={t.inPhotosDetail}
+      />
+    </ul>
+  );
 
   if (total.length === 0 && found.albums.length === 0 && places.length === 0) {
+    if (inPhotos) return <div className={styles.start}>{inPhotos}</div>;
     return (
       <div className={styles.start}>
         <p className={`${common.muted} ${styles.hint}`} role="status">
@@ -445,6 +481,7 @@ function Suggestions({ search, text, go }: { search: SearchIndex; text: string; 
 
   return (
     <div className={styles.start}>
+      {inPhotos}
       {total.length > 0 && (
         <ul className={styles.rows}>
           <Row
@@ -512,6 +549,7 @@ function Results({ search, target, go }: { search: SearchIndex; target: SearchTa
   const inside = useMemo(() => placesOf(search, items), [search, items]);
   const albumName = target.album ? search.index.folders.get(target.album)?.name : null;
   const place = target.place ? search.places.get(target.place) : null;
+  const { available } = useContentSearch();
   // Countries when the results span several, then the towns of the one chosen.
   const narrowing =
     !target.place && inside.countries.length > 1
@@ -557,6 +595,19 @@ function Results({ search, target, go }: { search: SearchIndex; target: SearchTa
         {formatItemCount(items.length)}
         {query.date && ` · ${query.date.label}`}
       </p>
+      {available && query.terms.length > 0 && (
+        <div className={styles.start}>
+          <ul className={styles.rows}>
+            <Row
+              target={{ ...target, content: true }}
+              go={go}
+              icon={<SearchIcon />}
+              title={t.inPhotos(target.q)}
+              detail={t.inPhotosDetail}
+            />
+          </ul>
+        </div>
+      )}
       {narrowing && (
         <PlaceChips hits={narrowing.hits} go={go} base={target} title={narrowing.title} scroll />
       )}
@@ -570,6 +621,84 @@ function Results({ search, target, go }: { search: SearchIndex; target: SearchTa
       ) : (
         <PhotoBrowser items={items} label={t.results} />
       )}
+    </>
+  );
+}
+
+const NO_WORDS = { words: [], terms: [], date: null };
+
+/** The photos closest to the words, closest first, among those of the date, album and place. */
+function ContentResults({
+  search,
+  target,
+  go,
+}: {
+  search: SearchIndex;
+  target: SearchTarget;
+  go: Go;
+}) {
+  const { search: content, state } = useContentSearch();
+  const query = useMemo(() => parseQuery(target.q), [target.q]);
+  const among = useMemo(() => {
+    const filters = { albumId: target.album, place: target.place };
+    return search.index.items.filter(
+      (item) =>
+        fits(search, item, NO_WORDS, filters) &&
+        (!query.date || inPeriod(item.takenAt, query.date)),
+    );
+  }, [search, query, target.album, target.place]);
+  // A date is left out of the words; otherwise they stay as typed, accents included.
+  const words = query.date ? query.terms.join(' ') : target.q;
+  const [found, setFound] = useState<{ ids: readonly string[] } | 'failed' | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    content
+      .find(words, among)
+      .then((ids) => {
+        if (live) setFound({ ids });
+      })
+      .catch(() => {
+        if (live) setFound('failed');
+      });
+    return () => {
+      live = false;
+    };
+  }, [content, words, among]);
+
+  const items = useMemo(() => {
+    if (!found || found === 'failed') return [];
+    const byId = new Map(among.map((item) => [item.id, item]));
+    return found.ids.flatMap((id) => byId.get(id) ?? []);
+  }, [found, among]);
+
+  if (found === null) {
+    return (
+      <p className={`${common.muted} ${styles.status}`} role="status">
+        {t.searching}
+      </p>
+    );
+  }
+  if (found === 'failed' || items.length === 0) {
+    return (
+      <div className={common.page}>
+        <div className={`${common.card} ${common.stack}`}>
+          <p role="status">{found === 'failed' ? t.failed : t.noneAnalysed}</p>
+          <TargetLink target={{ ...target, content: false }} go={go} className={styles.forget}>
+            {t.everything(target.q)}
+          </TargetLink>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <>
+      <p className={`${common.muted} ${styles.summary}`}>
+        {formatItemCount(items.length)}
+        {query.date && ` · ${query.date.label}`}
+        {state.done < state.total && ` · ${formatCount(state.done)} / ${formatCount(state.total)}`}
+      </p>
+      <PhotoBrowser items={items} label={t.results} rankedTitle={t.closest} />
     </>
   );
 }

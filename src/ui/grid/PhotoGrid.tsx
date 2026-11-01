@@ -69,6 +69,7 @@ export function PhotoGrid({
   onOpen,
   reveal,
   selection = null,
+  rankedTitle,
 }: {
   items: readonly MediaItem[];
   label: string;
@@ -78,8 +79,16 @@ export function PhotoGrid({
   reveal?: { id: string } | null;
   /** Lets photos be picked (long press, Ctrl / Shift + click); null: a tap only opens. */
   selection?: GridSelection | null;
+  /** The items are ranked, not by date: one section under this title instead of months. */
+  rankedTitle?: string | undefined;
 }) {
-  const sections = useMemo(() => groupByMonth(items), [items]);
+  const sections = useMemo(
+    () =>
+      rankedTitle === undefined
+        ? groupByMonth(items)
+        : [{ key: 'ranked', title: rankedTitle, items: [...items] }],
+    [items, rankedTitle],
+  );
   const rowsRef = useRef<HTMLDivElement>(null);
   const { width, gridTop } = useGridPlacement(rowsRef);
   const wide = useMediaQuery(WIDE_QUERY);

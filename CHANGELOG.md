@@ -4,6 +4,14 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## 1.2.0 — 2026-11-01
+
+Cherche tes photos avec tes propres mots, sur tes appareils, si tu l’actives.
+
+### Nouveautés
+
+- Recherche dans les photos, à activer dans les réglages (désactivée par défaut) : tape « gâteau avec des bougies » et Nuagerie trouve les photos qui le montrent, les plus proches d’abord, dans toutes tes photos. Un modèle est téléchargé une fois (environ 320 Mo), puis l’analyse se fait sur l’appareil. Faite une fois sur un ordinateur, elle suit sur tes autres appareils avec la synchronisation. Ni tes photos ni tes recherches ne quittent tes appareils.
+
 ## 1.1.0 — 2026-10-30
 
 Nuagerie peut ranger ton OneDrive, si tu le lui permets : elle reste en lecture seule tant que tu n’actives pas les modifications.

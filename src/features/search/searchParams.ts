@@ -12,6 +12,8 @@ export interface SearchTarget {
   q: string;
   album: string | null;
   place: PlaceKey | null;
+  /** The words are looked for in what the photos show (`contenu=1`), closest first. */
+  content?: boolean;
 }
 
 export const SEARCH_PATH = '/recherche';
@@ -25,6 +27,7 @@ export function readTarget(params: URLSearchParams): SearchTarget {
     q: params.get('q')?.trim() ?? '',
     album: params.get('album') || null,
     place: isPlaceKey(lieu) ? lieu : null,
+    ...(params.get('contenu') === '1' && { content: true }),
   };
 }
 
@@ -37,12 +40,13 @@ export function targetHref(target: SearchTarget): string {
   if (target.q) params.set('q', target.q);
   if (target.album) params.set('album', target.album);
   if (target.place) params.set('lieu', target.place);
+  if (target.content) params.set('contenu', '1');
   const query = params.toString();
   return query ? `${SEARCH_PATH}?${query}` : SEARCH_PATH;
 }
 
 export const sameTarget = (a: SearchTarget, b: SearchTarget) =>
-  a.q === b.q && a.album === b.album && a.place === b.place;
+  a.q === b.q && a.album === b.album && a.place === b.place && !a.content === !b.content;
 
 /** "Lyon · Été 2023": what a search was, from its album, place and words. */
 export function describeTarget(search: SearchIndex, target: SearchTarget): string {

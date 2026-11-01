@@ -13,6 +13,7 @@ import { useConfirm } from '../../ui/confirmContext.ts';
 import { checkForUpdate } from '../../app/updates.ts';
 import { AboutSection } from './AboutSection.tsx';
 import { AccountSection } from './AccountSection.tsx';
+import { ContentSection } from './ContentSection.tsx';
 import { EditsSection } from './EditsSection.tsx';
 import { MemoriesNotificationSection } from './MemoriesNotificationSection.tsx';
 import { OfflineSection } from './OfflineSection.tsx';
@@ -182,6 +183,8 @@ export function SettingsScreen() {
         </section>
 
         <SyncSection />
+
+        <ContentSection />
 
         <EditsSection />
 

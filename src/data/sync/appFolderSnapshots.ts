@@ -1,5 +1,6 @@
 import { getSyncToken } from '../../auth/msal.ts';
 import { readPersistent } from '../../lib/persistent.ts';
+import { createVectorSnapshots, type VectorSnapshots } from '../content/vectorSnapshot.ts';
 import { createGraphClient } from '../graph/client.ts';
 import { createIndexSnapshots, type IndexSnapshots } from './indexSnapshot.ts';
 import { SYNC_ENABLED_KEY, SYNC_GRANTED_KEY, SYNC_TURNED_OFF_KEY } from './syncContext.ts';
@@ -12,6 +13,18 @@ import { SYNC_ENABLED_KEY, SYNC_GRANTED_KEY, SYNC_TURNED_OFF_KEY } from './syncC
  */
 export function createAppFolderSnapshots(): IndexSnapshots {
   return createIndexSnapshots(
+    createGraphClient({ getToken: () => getSyncToken({ deviceOnly: true }) }),
+    {
+      load: () => !readPersistent(SYNC_TURNED_OFF_KEY, false),
+      save: () =>
+        readPersistent(SYNC_ENABLED_KEY, false) && readPersistent(SYNC_GRANTED_KEY, false),
+    },
+  );
+}
+
+/** The photos' vectors, with the same rules as the copy of the index. */
+export function createAppFolderVectorSnapshots(): VectorSnapshots {
+  return createVectorSnapshots(
     createGraphClient({ getToken: () => getSyncToken({ deviceOnly: true }) }),
     {
       load: () => !readPersistent(SYNC_TURNED_OFF_KEY, false),

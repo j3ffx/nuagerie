@@ -12,7 +12,15 @@ import { Viewer } from './Viewer.tsx';
  * the last photo seen. A long press picks photos instead (useSelection), to
  * share, favour or download several at once.
  */
-export function PhotoBrowser({ items, label }: { items: readonly MediaItem[]; label: string }) {
+export function PhotoBrowser({
+  items,
+  label,
+  rankedTitle,
+}: {
+  items: readonly MediaItem[];
+  label: string;
+  rankedTitle?: string;
+}) {
   const { photoId, open, show, close } = useViewer();
   const index = useMemo(
     () => (photoId === null ? -1 : items.findIndex((item) => item.id === photoId)),
@@ -68,6 +76,7 @@ export function PhotoBrowser({ items, label }: { items: readonly MediaItem[]; la
         onOpen={onOpen}
         reveal={reveal}
         selection={selection}
+        rankedTitle={rankedTitle}
       />
       {index >= 0 && <Viewer items={items} index={index} onShow={show} onClose={close} />}
     </>

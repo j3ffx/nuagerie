@@ -5,16 +5,19 @@ import { defineConfig } from 'vite';
 import { minimal2023Preset } from '@vite-pwa/assets-generator/config';
 import { VitePWA } from 'vite-plugin-pwa';
 import { lanQrCode } from './build/lan-qr.ts';
+import { ortRuntime, ortRuntimeUrls } from './build/ort-runtime.ts';
 import { currentCommit, versionFile } from './build/version.ts';
 
 export default defineConfig(({ mode }) => {
   const lan = mode === 'lan';
   const commit = currentCommit();
   const version = process.env.npm_package_version ?? '0.0.0';
+  const ort = ortRuntimeUrls();
 
   return {
     plugins: [
       react(),
+      ortRuntime(),
       lan && basicSsl({ name: 'nuagerie-dev' }),
       lan && lanQrCode(),
       versionFile({ version, commit }),
@@ -71,7 +74,11 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(version),
       __APP_COMMIT__: JSON.stringify(commit),
+      __ORT_GLUE_URL__: JSON.stringify(ort.glue),
+      __ORT_WASM_URL__: JSON.stringify(ort.wasm),
     },
+    resolve: { alias: { 'onnxruntime-web/webgpu': ort.entry } },
+    worker: { format: 'es' },
     server: {
       host: lan ? true : 'localhost',
       port: 5173,

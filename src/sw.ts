@@ -7,6 +7,7 @@ import {
   type PrecacheEntry,
 } from 'workbox-precaching';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
+import { RUNTIME_CACHE } from './data/content/cacheNames.ts';
 import { currentDateContext } from './data/dates.ts';
 import type { MediaItem } from './data/model.ts';
 import { thumbnailKey } from './data/thumbnails/thumbnailStore.ts';
@@ -39,6 +40,23 @@ precacheAndRoute(self.__WB_MANIFEST);
 
 // SPA: every navigation is answered with the cached index.html.
 registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html')));
+
+// The model's runtime: only for who turned the search in the photos on, too big to precache, and
+// needed for that search offline.
+registerRoute(
+  ({ url }) => url.origin === self.location.origin && url.pathname.startsWith('/assets/ort-'),
+  async ({ request }) => {
+    const cache = await caches.open(RUNTIME_CACHE);
+    const kept = await cache.match(request);
+    if (kept) return kept;
+    const response = await fetch(request);
+    if (!response.ok) return response;
+    // Read whole, not cloned: a clone of a big file waits for its other half, and neither ends.
+    const body = await response.blob();
+    await cache.put(request, new Response(body, { headers: response.headers }));
+    return new Response(body, { headers: response.headers });
+  },
+);
 
 // Thumbnails are cached by the page itself (src/data/thumbnails/), in Cache Storage:
 // the page holds the Graph token, and the cache works in development too.

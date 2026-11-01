@@ -16,20 +16,11 @@ import {
   NOTHING_KEPT,
   type KeptChoice,
 } from '../../data/offline/offline.ts';
+import { connection, onMobileData } from '../../lib/connection.ts';
 import { isOnline } from '../../lib/online.ts';
 import { usePersistentState } from '../../lib/persistent.ts';
 import { FAVORITES_ALBUM_ID, useStoredFavoriteItems } from '../favorites/useFavorites.ts';
 import { keptKey, OfflineContext, type OfflineContextValue } from './offlineContext.ts';
-
-/** The Network Information API (Chrome on Android): not in the DOM types everywhere. */
-type Connection = EventTarget & { type?: string; saveData?: boolean };
-const connection = (): Connection | undefined =>
-  (navigator as Navigator & { connection?: Connection }).connection;
-/** Mobile data, or the user asked to save data: then wait for Wi-Fi. */
-const onMobileData = () => {
-  const current = connection();
-  return current?.type === 'cellular' || current?.saveData === true;
-};
 
 /**
  * Keeps the chosen albums and the favourites on this device, for offline

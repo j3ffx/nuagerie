@@ -2,6 +2,8 @@
 
 declare const __APP_VERSION__: string;
 declare const __APP_COMMIT__: string;
+declare const __ORT_GLUE_URL__: string;
+declare const __ORT_WASM_URL__: string;
 
 interface ImportMetaEnv {
   readonly VITE_MSAL_CLIENT_ID?: string;

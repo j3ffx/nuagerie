@@ -13,6 +13,11 @@ import { SYNC_ENABLED_KEY, SYNC_GRANTED_KEY, syncStateKey } from './sync/syncCon
  * cache size) stays with the device, and so does the choice to keep the sync
  * off on it (signing back in must not turn it on by itself).
  */
+/** The search in the photos (src/data/content/): turned on, and whether this device analysed. */
+export const CONTENT_ENABLED_KEY = 'content.enabled';
+export const CONTENT_ANALYSED_KEY = 'content.analysed';
+export const CONTENT_DEVICE_KEY = 'content.device';
+
 export const ACCOUNT_PREFERENCES: readonly string[] = [
   ...SYNCED_PREFERENCES,
   syncStateKey('onedrive'),
@@ -29,6 +34,9 @@ export const ACCOUNT_PREFERENCES: readonly string[] = [
   'edits.granted',
   'edits.asking',
   trashKey('onedrive'),
+  CONTENT_ENABLED_KEY,
+  CONTENT_ANALYSED_KEY,
+  CONTENT_DEVICE_KEY,
 ];
 
 export function forgetAccountPreferences(): void {

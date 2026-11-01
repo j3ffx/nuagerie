@@ -4,6 +4,14 @@ The changes of each Nuagerie version, the most recent first. The numbers follow
 [semantic versioning](https://semver.org/): while they start with 0, the app still changes a lot.
 The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
 
+## 1.2.0 — 2026-11-01
+
+Search your photos in your own words, on your devices, if you turn it on.
+
+### New
+
+- Search in the photos, to turn on in the settings (off by default): type “cake with candles” and Nuagerie finds the photos that show it, closest first, among all your photos. A model is downloaded once (about 320 MB), then the analysis runs on the device. Done once on a computer, it follows on your other devices with the sync. Neither your photos nor your searches leave your devices.
+
 ## 1.1.0 — 2026-10-30
 
 Nuagerie can tidy up your OneDrive, if you let it: it stays read-only until you turn on the changes.

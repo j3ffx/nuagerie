@@ -38,6 +38,9 @@ found by date and by place. A PWA made for the phone, pleasant on a PC too.
   "July 2024", "14 July", "summer 2023", "2019 to 2021"), in English or French, and all
   together: "Lyon summer 2023". The places in the results narrow them down. It covers the whole
   OneDrive looked through, hidden albums included.
+- **Search in the photos**, if you turn it on. Type what a photo shows ("cake with candles"), in
+  French or English: a model running on your devices finds the closest photos. Analyse once on a
+  computer, and the sync brings the result to your other devices.
 - **Map.** The photos with a place, grouped by place; tapping a group zooms in, and a strip
   shows the photos of the area.
 - **Viewer.** Full screen, swipe from one photo to the next, pinch to zoom, videos. Tapping the
@@ -68,8 +71,10 @@ found by date and by place. A PWA made for the phone, pleasant on a PC too.
 The details, readable without an account:
 [nuagerie.app/confidentialite](https://nuagerie.app/confidentialite).
 
-- The only network traffic goes to Microsoft (sign-in and Graph) and to the map backgrounds of
-  [OpenStreetMap](https://www.openstreetmap.org/copyright).
+- The only network traffic goes to Microsoft (sign-in and Graph), to the map backgrounds of
+  [OpenStreetMap](https://www.openstreetmap.org/copyright) and, if you turn on the search in the
+  photos, to Hugging Face for the model's files, once. That search runs on the device: photos and
+  searches stay there.
 - Place names are worked out on the device: the photos' coordinates are sent nowhere.
 - The index, the thumbnails and the places of the photos are kept in the browser (IndexedDB,
   Cache Storage), and erased on sign-out, like the recent searches.
