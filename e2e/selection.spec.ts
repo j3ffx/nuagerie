@@ -31,6 +31,9 @@ async function longPress(page: Page, on: Locator, dragTo?: Locator) {
 }
 
 test.beforeEach(async ({ page }) => {
+  // The demo's photos run up to today: on the 1st, the newest month holds only a few, and the
+  // tests below take a whole month (over 30). A day well into a month keeps it full.
+  await page.clock.install({ time: new Date('2026-10-20T10:00:00+02:00') });
   await page.goto('/?demo=1');
   await page.goto('/tout');
   await expect(cells(page).first().locator('img')).toBeVisible();
