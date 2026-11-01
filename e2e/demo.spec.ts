@@ -106,7 +106,7 @@ test('is an installable PWA with an active service worker', async ({ page }) => 
 });
 
 test('checks for updates on demand and reports when up to date', async ({ page }) => {
-  await page.goto('/reglages');
+  await page.goto('/reglages/a-propos');
   await expect
     .poll(() => page.evaluate(async () => (await navigator.serviceWorker.ready).active?.state))
     .toBe('activated');

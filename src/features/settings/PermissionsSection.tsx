@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { grantedScopes, MANAGE_CONSENT_URL } from '../../auth/msal.ts';
 import common from '../../ui/common.module.css';
 import styles from './SettingsScreen.module.css';
-import { locale, localized } from '../../lib/i18n.ts';
+import { localized } from '../../lib/i18n.ts';
 
 const t = localized({
   fr: {
@@ -56,6 +56,13 @@ const DESCRIPTIONS: Record<string, string> = {
  * The permissions Microsoft has actually granted the app, as its tokens say
  * (not what the app believes it asked for), and where to withdraw them.
  */
+/** What touches the files first, then the rest: the list reads by what matters. */
+const IMPORTANCE = [t.read, t.appFolder, t.edit, t.user, t.stay, t.signIn];
+const importance = (line: string) => {
+  const at = IMPORTANCE.indexOf(line);
+  return at < 0 ? IMPORTANCE.length : at;
+};
+
 export function PermissionsSection() {
   const [scopes, setScopes] = useState<string[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -76,8 +83,8 @@ export function PermissionsSection() {
   }, []);
 
   const lines = scopes
-    ? [...new Set(scopes.map((scope) => DESCRIPTIONS[scope] ?? scope))].sort((a, b) =>
-        a.localeCompare(b, locale),
+    ? [...new Set(scopes.map((scope) => DESCRIPTIONS[scope] ?? scope))].sort(
+        (a, b) => importance(a) - importance(b),
       )
     : [];
   const edits = scopes?.includes('Files.ReadWrite.All') ?? false;

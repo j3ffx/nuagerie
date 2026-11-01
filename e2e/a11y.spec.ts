@@ -162,6 +162,20 @@ const SCREENS: {
     path: '/reglages',
     ready: (page) => expect(page.getByRole('heading', { name: 'Apparence' })).toBeVisible(),
   },
+  ...[
+    'synchronisation',
+    'recherche',
+    'modifications',
+    'souvenirs',
+    'appareil',
+    'donnees',
+    'a-propos',
+  ].map((section) => ({
+    name: `settings ${section}`,
+    path: `/reglages/${section}`,
+    ready: (page: Page) =>
+      expect(page.getByRole('link', { name: 'Retour aux réglages' })).toBeVisible(),
+  })),
   {
     name: 'folders',
     path: '/reglages/dossiers',

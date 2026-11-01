@@ -66,6 +66,7 @@ test('keeps thumbnails on the device and can empty the cache', async ({ page }) 
     .getByRole('navigation', { name: 'Navigation principale' })
     .getByRole('link', { name: 'Réglages' })
     .click();
+  await page.getByRole('link', { name: /^Sur cet appareil/ }).click();
   const usage = page.getByRole('status').filter({ hasText: /sur 500 Mo$/ });
   await expect(usage).not.toHaveText(/^0 Mo/);
   await expect(usage).toHaveText(/^\d+(,\d)? Mo sur 500 Mo$/);

@@ -4,6 +4,12 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## Depuis la dernière version
+
+### Nouveautés
+
+- Les réglages sont plus clairs : une liste courte qui dit où en est chaque option, et un écran par sujet.
+
 ## 1.2.0 — 2026-11-01
 
 Cherche tes photos avec tes propres mots, sur tes appareils, si tu l’actives.

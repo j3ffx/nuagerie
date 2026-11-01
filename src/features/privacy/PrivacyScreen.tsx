@@ -34,8 +34,8 @@ const t = localized({
           'Tu te connectes avec ton compte Microsoft. Nuagerie demande à lire tes fichiers OneDrive (lecture seule), ton nom et ton adresse e-mail (pour les afficher dans les réglages) et à rester connectée.',
           'Seulement si tu actives la synchronisation, elle demande aussi à écrire dans un seul dossier, Applis/Nuagerie, pour y ranger tes favoris, tes préférences, tes dossiers et une copie de l’index de tes photos. La synchronisation ne touche à rien d’autre.',
           'Seulement si tu actives les modifications (Réglages → Modifications), elle demande le droit de modifier tes fichiers. Elle s’en sert uniquement quand tu le lui demandes : supprimer une photo (elle va dans la corbeille de OneDrive), la restaurer, la déplacer dans un album, créer, renommer ou supprimer un album vide.',
-          'Une fois activée, la synchronisation suit sur tes autres appareils connectés au même compte ; Réglages → Synchronisation la coupe appareil par appareil. La couper, ou retirer la permission, laisse ce dossier dans ton OneDrive : supprime Applis/Nuagerie pour l’effacer.',
-          'Réglages → Permissions montre ce que Microsoft autorise vraiment, avec un lien pour le retirer.',
+          'Une fois activée, la synchronisation suit sur tes autres appareils connectés au même compte ; Réglages → Favoris et synchronisation la coupe appareil par appareil. La couper, ou retirer la permission, laisse ce dossier dans ton OneDrive : supprime Applis/Nuagerie pour l’effacer.',
+          'Réglages → Compte montre ce que Microsoft autorise vraiment, avec un lien pour le retirer.',
         ],
       },
       {
@@ -96,8 +96,8 @@ const t = localized({
           'You sign in with your Microsoft account. Nuagerie asks to read your OneDrive files (read-only), your name and email address (to show them in the settings) and to stay signed in.',
           'Only if you turn on the sync does it also ask to write in one folder, Apps/Nuagerie, to keep your favourites, your preferences, your folders and a copy of your photos’ index there. The sync touches nothing else.',
           'Only if you turn on the changes (Settings → Changes) does it ask for the right to change your files. It uses it only when you ask it to: delete a photo (it goes to OneDrive’s recycle bin), restore it, move it to an album, create, rename or delete an empty album.',
-          'Once on, the sync follows on your other devices signed in to the same account; Settings → Sync turns it off device by device. Turning it off, or withdrawing the permission, leaves this folder in your OneDrive: delete Apps/Nuagerie to erase it.',
-          'Settings → Permissions shows what Microsoft really allows, with a link to withdraw it.',
+          'Once on, the sync follows on your other devices signed in to the same account; Settings → Favourites and sync turns it off device by device. Turning it off, or withdrawing the permission, leaves this folder in your OneDrive: delete Apps/Nuagerie to erase it.',
+          'Settings → Account shows what Microsoft really allows, with a link to withdraw it.',
         ],
       },
       {

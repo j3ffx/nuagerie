@@ -26,7 +26,7 @@ test('keeps an album offline, marks its tile, and lets it go', async ({ page }) 
   await expect(tile(page, 'Tapo')).toHaveAccessibleName(/, gardé hors connexion$/);
   await expect(tile(page, 'Messages')).not.toHaveAccessibleName(/gardé hors connexion/);
 
-  await page.goto('/reglages');
+  await page.goto('/reglages/appareil');
   const section = offlineSection(page);
   await expect(section.getByRole('list', { name: 'Gardés hors connexion' })).toHaveText(/Tapo/);
   // A grid thumbnail and a large image for each of the 288 photos.
@@ -47,7 +47,7 @@ test('keeps an album offline, marks its tile, and lets it go', async ({ page }) 
 
 test('opens a kept photo in large offline', async ({ page, context }) => {
   await keep(page, 'Tapo');
-  await page.goto('/reglages');
+  await page.goto('/reglages/appareil');
   await expect(offlineSection(page).getByText(/· 576 images$/)).toBeVisible({ timeout: 30_000 });
 
   await context.setOffline(true);
@@ -67,7 +67,7 @@ test('waits for Wi-Fi on mobile data, unless told to go on', async ({ page }) =>
   });
   await page.reload();
   await keep(page, 'Tapo');
-  await page.goto('/reglages');
+  await page.goto('/reglages/appareil');
   const section = offlineSection(page);
   await expect(
     section.getByText(/^En attente du Wi-Fi : 576 images à télécharger\.$/),
@@ -89,7 +89,7 @@ test('keeps the favourites, and takes everything back at once', async ({ page })
     .click();
   await keep(page, 'Tapo');
 
-  await page.goto('/reglages');
+  await page.goto('/reglages/appareil');
   const section = offlineSection(page);
   await expect(section.getByRole('listitem')).toHaveText(['FavorisRetirer', 'TapoRetirer']);
   await expect(section.getByText(/· 578 images$/)).toBeVisible({ timeout: 30_000 });

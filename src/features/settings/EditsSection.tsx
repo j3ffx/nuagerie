@@ -23,7 +23,7 @@ const t = localized({
     needsPermission: 'Microsoft ne donne plus la permission : redonne-la pour modifier.',
     turnOff: 'Désactiver',
     offNote:
-      'Désactiver ne retire pas la permission chez Microsoft : passe par « Permissions » pour ça.',
+      'Désactiver ne retire pas la permission chez Microsoft : passe par Compte → Permissions pour ça.',
     trash: 'Corbeille',
     trashCount: (count: string) => `Corbeille (${count})`,
   },
@@ -84,7 +84,7 @@ export function EditsSection() {
             <p className={common.muted}>{mode === 'demo' ? `${t.what} ${t.demo}` : t.what}</p>
             <button
               type="button"
-              className={common.buttonSoft}
+              className={common.button}
               onClick={() => void turnOn()}
               disabled={mode !== 'demo' && !online}
             >

@@ -91,6 +91,7 @@
 /* Segmented control built on a native radio group. */
 .segmented {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-1);
   margin: 0;
   padding: var(--space-1);
@@ -106,7 +107,7 @@
   flex: 1 1 auto;
   place-items: center;
   min-height: var(--tap-min);
-  padding: 0 var(--space-3);
+  padding: 0 var(--space-2);
   white-space: nowrap;
   border-radius: var(--radius-pill);
   font-weight: 700;
@@ -143,7 +144,9 @@
 }
 
 .definitionList dd {
+  min-width: 0;
   margin: 0;
+  overflow-wrap: anywhere;
   text-align: right;
   font-weight: 700;
   font-variant-numeric: tabular-nums;

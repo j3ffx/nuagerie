@@ -22,16 +22,16 @@ const t = localized({
     onConfirm: 'Activer',
     offTitle: 'Désactiver la synchronisation ?',
     offMessage:
-      'Sur cet appareil, tes favoris ne s’affichent plus. Ce qui est rangé dans ton OneDrive y reste et revient si tu la réactives. Pour retirer aussi la permission donnée à Nuagerie, passe par « Permissions ».',
+      'Sur cet appareil, tes favoris ne s’affichent plus. Ce qui est rangé dans ton OneDrive y reste et revient si tu la réactives. Pour retirer aussi la permission donnée à Nuagerie, passe par Compte → Permissions.',
     offConfirm: 'Désactiver',
     title: 'Synchronisation',
     favorites: 'Favoris',
-    kept: 'Gardés',
+    kept: 'Où',
     state: 'État',
     onDevice: 'sur cet appareil',
     demo: 'En démo, les favoris et les préférences restent sur cet appareil.',
     signIn: 'Connecte-toi pour synchroniser tes favoris et tes préférences.',
-    what: 'Tes favoris, tes préférences (albums affichés, tris, filtre de « Tout »), tes dossiers et l’index de tes photos se rangent dans ton OneDrive, dans un dossier à part (Applis/Nuagerie) : rien ne se perd, tes autres appareils suivent et s’ouvrent en quelques secondes. Les favoris en ont besoin.',
+    what: 'Tes favoris, tes préférences (albums affichés, tris, filtre de « Tout »), tes dossiers et l’index de tes photos se rangent dans ton OneDrive, dans un dossier à part (Applis/Nuagerie) : rien ne se perd, tes autres appareils suivent et s’ouvrent en quelques secondes. Sans elle, pas de favoris.',
     turnOn: 'Activer la synchronisation',
     on: 'Favoris, préférences, dossiers et index rangés dans Applis/Nuagerie, dans ton OneDrive. Tes autres appareils connectés à ce compte suivent tout seuls.',
     grant: 'Accorder la permission',
@@ -53,16 +53,16 @@ const t = localized({
     onConfirm: 'Turn on',
     offTitle: 'Turn off the sync?',
     offMessage:
-      'On this device, your favourites no longer show. What is kept in your OneDrive stays there and comes back if you turn it on again. To withdraw the permission given to Nuagerie too, go through “Permissions”.',
+      'On this device, your favourites no longer show. What is kept in your OneDrive stays there and comes back if you turn it on again. To withdraw the permission given to Nuagerie too, go through Account → Permissions.',
     offConfirm: 'Turn off',
     title: 'Sync',
     favorites: 'Favourites',
-    kept: 'Kept',
+    kept: 'Where',
     state: 'State',
     onDevice: 'on this device',
     demo: 'In the demo, favourites and preferences stay on this device.',
     signIn: 'Sign in to sync your favourites and preferences.',
-    what: 'Your favourites, your preferences (albums shown, sorting, the “All” filter), your folders and the index of your photos are kept in your OneDrive, in a folder of their own (Apps/Nuagerie): nothing gets lost, your other devices follow and open in a few seconds. Favourites need it.',
+    what: 'Your favourites, your preferences (albums shown, sorting, the “All” filter), your folders and the index of your photos are kept in your OneDrive, in a folder of their own (Apps/Nuagerie): nothing gets lost, your other devices follow and open in a few seconds. No favourites without it.',
     turnOn: 'Turn on the sync',
     on: 'Favourites, preferences, folders and index kept in Apps/Nuagerie, in your OneDrive. Your other devices signed in to this account follow on their own.',
     grant: 'Grant the permission',
@@ -136,7 +136,7 @@ export function SyncSection() {
             <p className={common.muted}>{t.what}</p>
             <button
               type="button"
-              className={common.buttonSoft}
+              className={common.button}
               onClick={() => void turnOn()}
               disabled={!online}
             >

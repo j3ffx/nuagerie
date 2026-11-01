@@ -15,6 +15,7 @@ import { localized } from '../../lib/i18n.ts';
 const t = localized({
   fr: {
     status: {
+      idle: 'pas encore vérifiée',
       checking: 'recherche…',
       upToDate: 'à jour',
       downloading: 'téléchargement…',
@@ -36,6 +37,7 @@ const t = localized({
   },
   en: {
     status: {
+      idle: 'not checked yet',
       checking: 'checking…',
       upToDate: 'up to date',
       downloading: 'downloading…',
@@ -58,7 +60,7 @@ const t = localized({
 });
 
 const STATUS_LABELS: Record<UpdateStatus, string> = {
-  idle: '—',
+  idle: t.status.idle,
   checking: t.status.checking,
   'up-to-date': t.status.upToDate,
   downloading: t.status.downloading,
@@ -116,7 +118,7 @@ export function AboutSection() {
             {t.check}
           </button>
         )}
-        <Link href="/nouveautes?retour=%2Freglages" className={common.buttonSoft}>
+        <Link href="/nouveautes?retour=%2Freglages%2Fa-propos" className={common.buttonSoft}>
           {t.news}
         </Link>
         {/* A page of its own, readable signed out too (src/main.tsx). */}

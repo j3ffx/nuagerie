@@ -1,90 +1,125 @@
+import { useAccount } from '@azure/msal-react';
+import { useEffect, useState } from 'react';
 import { Link } from 'wouter';
+import { useUpdateState } from '../../app/updates.ts';
 import { useData } from '../../data/dataContext.ts';
 import { isDemoForced, leaveDemoMode } from '../../data/mode.ts';
 import { folderName, useRootPaths } from '../../data/roots.ts';
-import { formatCount, formatDateTime } from '../../lib/format.ts';
-import { useOnline } from '../../lib/online.ts';
+import { useSync, type SyncStatus } from '../../data/sync/syncContext.ts';
+import { formatCount } from '../../lib/format.ts';
 import { localized, type LanguagePreference } from '../../lib/i18n.ts';
 import { useLanguagePreference } from '../../lib/languagePreference.ts';
 import { useThemePreference, type ThemePreference } from '../../lib/theme.ts';
 import common from '../../ui/common.module.css';
+import { ChevronIcon } from '../../ui/icons.tsx';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
-import { useConfirm } from '../../ui/confirmContext.ts';
-import { checkForUpdate } from '../../app/updates.ts';
-import { AboutSection } from './AboutSection.tsx';
-import { AccountSection } from './AccountSection.tsx';
-import { ContentSection } from './ContentSection.tsx';
-import { EditsSection } from './EditsSection.tsx';
-import { MemoriesNotificationSection } from './MemoriesNotificationSection.tsx';
-import { OfflineSection } from './OfflineSection.tsx';
-import { PermissionsSection } from './PermissionsSection.tsx';
-import { SyncSection } from './SyncSection.tsx';
-import { ThumbnailCacheSection } from './ThumbnailCacheSection.tsx';
+import { useContentSearch } from '../content/contentContext.ts';
+import { useEdits } from '../edits/editsContext.ts';
+import { memoriesNotificationAvailable, memoriesNotificationOn } from './memoriesNotification.ts';
+import styles from './SettingsScreen.module.css';
 
 const t = localized({
   fr: {
     auto: 'Automatique',
     light: 'Clair',
     dark: 'Sombre',
-    resetTitle: 'Tout réindexer ?',
-    resetMessage:
-      'Nuagerie relit tout le contenu de OneDrive, ce qui prend environ une minute. Les miniatures déjà gardées restent.',
-    resetConfirm: 'Réindexer',
     title: 'Réglages',
     appearance: 'Apparence',
     theme: 'Thème',
     language: 'Langue',
-    photos: 'Photos',
-    folders: 'Dossiers',
-    folder: 'Dossier',
+    demoNote: 'Tu es dans la démo : des photos factices, et rien ne sort de cet appareil.',
+    leaveDemo: 'Quitter la démo',
+    photos: 'Mes photos',
     chooseFolders: 'Choisir les dossiers',
     chooseAlbums: 'Choisir les albums',
+    chooseAlbumsDetail: 'Ceux qui s’affichent dans Albums',
+    options: 'Options',
+    readOnlyNote: 'Par défaut, Nuagerie ne fait que lire ton OneDrive.',
+    on: 'Activée',
+    off: 'Désactivée',
+    needsSignIn: 'Connexion nécessaire',
+    permissionToGrant: 'Permission à accorder',
+    sync: 'Favoris et synchronisation',
+    syncStatus: {
+      off: 'Désactivée, sans elle pas de favoris',
+      syncing: 'En cours…',
+      ok: 'À jour',
+      offline: 'En attente du réseau',
+      error: 'Échec',
+    },
+    onDevice: 'Sur cet appareil',
+    content: 'Recherche dans les photos',
+    contentReady: 'Prête',
+    contentAnalysing: (done: string, total: string) => `Analyse en cours : ${done} / ${total}`,
+    contentDone: (done: string, total: string) => `${done} photos analysées sur ${total}`,
+    edits: 'Modifications',
+    editsOn: 'Activées',
+    editsOff: 'Désactivées',
+    memories: 'Notification de souvenirs',
+    memoriesNo: 'Non disponible ici',
+    account: 'Compte',
+    microsoftAccount: 'Compte Microsoft',
+    accountOn: 'Connecté',
+    accountOff: 'Non connecté',
+    app: 'Application',
+    device: 'Sur cet appareil',
+    deviceDetail: 'Albums hors connexion, miniatures',
     data: 'Données',
-    source: 'Source',
-    demo: 'Démo (photos factices)',
-    items: 'Éléments',
-    shownIn: 'Affiché en',
-    update: 'Mise à jour',
-    offline: 'hors connexion',
-    paused: 'en pause',
-    running: (progress: string) => `en cours${progress}`,
-    failed: 'échec',
-    updateNow: 'Mettre à jour maintenant',
-    reindex: 'Relancer l’indexation complète',
-    diagnostic: 'Diagnostic de l’index',
-    leaveDemo: 'Quitter la démo',
+    dataDetail: (count: string) => `${count} photos et vidéos lues dans OneDrive`,
+    about: 'À propos',
+    version: (version: string) => `Version ${version}`,
+    updateReady: (version: string) => `Version ${version} · nouvelle version prête`,
   },
   en: {
     auto: 'Automatic',
     light: 'Light',
     dark: 'Dark',
-    resetTitle: 'Reindex everything?',
-    resetMessage:
-      'Nuagerie reads all of OneDrive again, which takes about a minute. The thumbnails already kept stay.',
-    resetConfirm: 'Reindex',
     title: 'Settings',
     appearance: 'Appearance',
     theme: 'Theme',
     language: 'Language',
-    photos: 'Photos',
-    folders: 'Folders',
-    folder: 'Folder',
+    demoNote: 'You are in the demo: made-up photos, and nothing leaves this device.',
+    leaveDemo: 'Leave the demo',
+    photos: 'My photos',
     chooseFolders: 'Choose the folders',
     chooseAlbums: 'Choose the albums',
+    chooseAlbumsDetail: 'Those shown in Albums',
+    options: 'Options',
+    readOnlyNote: 'By default, Nuagerie only reads your OneDrive.',
+    on: 'On',
+    off: 'Off',
+    needsSignIn: 'Sign-in needed',
+    permissionToGrant: 'Permission to grant',
+    sync: 'Favourites and sync',
+    syncStatus: {
+      off: 'Off, and no favourites without it',
+      syncing: 'In progress…',
+      ok: 'Up to date',
+      offline: 'Waiting for the network',
+      error: 'Failed',
+    },
+    onDevice: 'On this device',
+    content: 'Search in the photos',
+    contentReady: 'Ready',
+    contentAnalysing: (done: string, total: string) => `Analysis under way: ${done} / ${total}`,
+    contentDone: (done: string, total: string) => `${done} photos analysed out of ${total}`,
+    edits: 'Changes',
+    editsOn: 'On',
+    editsOff: 'Off',
+    memories: 'Memories notification',
+    memoriesNo: 'Not available here',
+    account: 'Account',
+    microsoftAccount: 'Microsoft account',
+    accountOn: 'Signed in',
+    accountOff: 'Not signed in',
+    app: 'App',
+    device: 'On this device',
+    deviceDetail: 'Offline albums, thumbnails',
     data: 'Data',
-    source: 'Source',
-    demo: 'Demo (made-up photos)',
-    items: 'Items',
-    shownIn: 'Shown in',
-    update: 'Update',
-    offline: 'offline',
-    paused: 'paused',
-    running: (progress: string) => `in progress${progress}`,
-    failed: 'failed',
-    updateNow: 'Update now',
-    reindex: 'Run the full indexing again',
-    diagnostic: 'Index diagnostic',
-    leaveDemo: 'Leave the demo',
+    dataDetail: (count: string) => `${count} photos and videos read from OneDrive`,
+    about: 'About',
+    version: (version: string) => `Version ${version}`,
+    updateReady: (version: string) => `Version ${version} · new version ready`,
   },
 });
 
@@ -101,182 +136,226 @@ const LANGUAGES: { value: LanguagePreference; label: string; lang?: string }[] =
   { value: 'en', label: 'English', lang: 'en' },
 ];
 
+/** One line of the settings: what it is, how it stands, and the way in. */
+function Row({ href, title, status }: { href: string; title: string; status: string }) {
+  return (
+    <li>
+      <Link href={href} className={styles.row}>
+        <span className={styles.rowText}>
+          <span className={styles.rowTitle}>
+            {title}
+            <span className="hidden-inline">, </span>
+          </span>
+          <span className={styles.rowStatus}>{status}</span>
+        </span>
+        <ChevronIcon className={styles.rowChevron} width={20} height={20} aria-hidden="true" />
+      </Link>
+    </li>
+  );
+}
+
+function Group({
+  id,
+  title,
+  note,
+  children,
+}: {
+  id: string;
+  title: string;
+  note?: string | null;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={common.section} aria-labelledby={id}>
+      <h2 id={id} className={common.sectionTitle}>
+        {title}
+      </h2>
+      {note && <p className={`${common.muted} ${styles.note}`}>{note}</p>}
+      <ul className={styles.rows}>{children}</ul>
+    </section>
+  );
+}
+
+function useSyncLine(): string {
+  const sync = useSync();
+  const { mode } = useData();
+  if (mode === 'demo') return t.onDevice;
+  if (!sync.available) return t.needsSignIn;
+  const labels: Record<SyncStatus, string> = {
+    off: t.syncStatus.off,
+    syncing: t.syncStatus.syncing,
+    ok: t.syncStatus.ok,
+    offline: t.syncStatus.offline,
+    'needs-permission': t.permissionToGrant,
+    error: t.syncStatus.error,
+  };
+  return labels[sync.status];
+}
+
+function useContentLine(): string {
+  const { state } = useContentSearch();
+  const done = formatCount(state.done);
+  const total = formatCount(state.total);
+  if (!state.enabled) return t.off;
+  if (state.analysing) return t.contentAnalysing(done, total);
+  return state.total > 0 && state.done >= state.total ? t.contentReady : t.contentDone(done, total);
+}
+
+function useEditsLine(): string {
+  const edits = useEdits();
+  if (!edits.available) return t.needsSignIn;
+  if (edits.status === 'off') return t.editsOff;
+  return edits.status === 'needs-permission' ? t.permissionToGrant : t.editsOn;
+}
+
+function useMemoriesLine(): string {
+  const { mode } = useData();
+  const available = mode !== 'demo' && memoriesNotificationAvailable();
+  const [on, setOn] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!available) return;
+    let live = true;
+    memoriesNotificationOn().then(
+      (value) => live && setOn(value),
+      () => live && setOn(false),
+    );
+    return () => {
+      live = false;
+    };
+  }, [available]);
+  if (!available) return t.memoriesNo;
+  return on === null ? '…' : on ? t.on : t.off;
+}
+
+/**
+ * The settings at a glance: each line says how something stands and leads to a screen of its
+ * own (SettingsDetailScreen), so that nothing here needs explaining. Only the look of the app,
+ * which is one tap each, is changed from here.
+ */
 export function SettingsScreen() {
   const [theme, setTheme] = useThemePreference();
   const [language, setLanguage] = useLanguagePreference();
-  const { mode, signedIn, state, sync, refresh, resetIndex } = useData();
-  const online = useOnline();
+  const { mode, signedIn, state } = useData();
   const roots = useRootPaths();
+  const account = useAccount();
+  const sync = useSync();
+  const edits = useEdits();
+  const { status: updateStatus } = useUpdateState();
+  const syncLine = useSyncLine();
+  const contentLine = useContentLine();
+  const editsLine = useEditsLine();
+  const memoriesLine = useMemoriesLine();
   const index = state.status === 'ready' ? state.index : null;
-  const confirm = useConfirm();
-
-  const confirmReset = async () => {
-    const answer = await confirm({
-      title: t.resetTitle,
-      message: t.resetMessage,
-      confirmLabel: t.resetConfirm,
-    });
-    if (answer) void resetIndex();
-  };
+  const readOnly = mode === 'onedrive' && !sync.enabled && edits.status === 'off';
 
   return (
     <>
       <ScreenHeader title={t.title} />
       <div className={common.page}>
-        <section className={common.section} aria-labelledby="settings-appearance">
-          <h2 id="settings-appearance" className={common.sectionTitle}>
-            {t.appearance}
-          </h2>
-          <div className={`${common.card} ${common.stack}`}>
-            <fieldset className={common.segmented}>
-              <legend className="visually-hidden">{t.theme}</legend>
-              {THEMES.map(({ value, label }) => (
-                <label key={value}>
-                  <input
-                    type="radio"
-                    name="theme"
-                    value={value}
-                    checked={theme === value}
-                    onChange={() => setTheme(value)}
-                  />
-                  {label}
-                </label>
-              ))}
-            </fieldset>
-            <fieldset className={common.segmented}>
-              <legend className="visually-hidden">{t.language}</legend>
-              {LANGUAGES.map(({ value, label, lang }) => (
-                <label key={value} lang={lang}>
-                  <input
-                    type="radio"
-                    name="language"
-                    value={value}
-                    checked={language === value}
-                    onChange={() => setLanguage(value)}
-                  />
-                  {label}
-                </label>
-              ))}
-            </fieldset>
-          </div>
-        </section>
-
-        {mode === 'onedrive' && <AccountSection />}
-        {mode === 'onedrive' && signedIn && <PermissionsSection />}
-
-        <section className={common.section} aria-labelledby="settings-photos">
-          <h2 id="settings-photos" className={common.sectionTitle}>
-            {t.photos}
-          </h2>
-          <div className={`${common.card} ${common.stack}`}>
-            <dl className={common.definitionList}>
-              <dt>{roots.length > 1 ? t.folders : t.folder}</dt>
-              <dd>{roots.map(folderName).join(', ')}</dd>
-            </dl>
-            <Link href="/reglages/dossiers" className={common.buttonSoft}>
-              {t.chooseFolders}
-            </Link>
-            <Link href="/albums/choisir?retour=reglages" className={common.buttonSoft}>
-              {t.chooseAlbums}
-            </Link>
-          </div>
-        </section>
-
-        <SyncSection />
-
-        <ContentSection />
-
-        <EditsSection />
-
-        <MemoriesNotificationSection />
-
-        <section className={common.section} aria-labelledby="settings-data">
-          <h2 id="settings-data" className={common.sectionTitle}>
-            {t.data}
-          </h2>
-          <div className={`${common.card} ${common.stack}`}>
-            <dl className={common.definitionList}>
-              <dt>{t.source}</dt>
-              <dd>{mode === 'demo' ? t.demo : 'OneDrive'}</dd>
-              {index && (
-                <>
-                  <dt>{t.items}</dt>
-                  <dd>{formatCount(index.items.length)}</dd>
-                  <dt>{t.folders}</dt>
-                  <dd>{formatCount(index.folders.size)}</dd>
-                </>
-              )}
-              {state.status === 'ready' && (
-                <>
-                  <dt>{t.shownIn}</dt>
-                  <dd>{formatCount(Math.round(state.loadedInMs))} ms</dd>
-                </>
-              )}
-              {mode === 'onedrive' && (
-                <>
-                  <dt>{t.update}</dt>
-                  <dd>
-                    <span role="status">
-                      {!online
-                        ? t.offline
-                        : !signedIn
-                          ? t.paused
-                          : sync.status === 'running'
-                            ? t.running(
-                                sync.progress ? ` (${formatCount(sync.progress.loaded)})` : '…',
-                              )
-                            : sync.status === 'error'
-                              ? t.failed
-                              : sync.lastSyncAt
-                                ? formatDateTime(sync.lastSyncAt)
-                                : '—'}
-                    </span>
-                  </dd>
-                </>
-              )}
-            </dl>
-            {sync.status === 'error' && sync.message && (
-              <p className={common.muted}>{sync.message}</p>
-            )}
-            {mode === 'onedrive' && signedIn && (
-              <>
-                <button
-                  type="button"
-                  className={common.buttonSoft}
-                  onClick={() => {
-                    refresh();
-                    void checkForUpdate({ quiet: true });
-                  }}
-                  disabled={!online || sync.status === 'running' || state.status !== 'ready'}
-                >
-                  {t.updateNow}
-                </button>
-                <button
-                  type="button"
-                  className={common.buttonSoft}
-                  onClick={() => void confirmReset()}
-                  disabled={!online}
-                >
-                  {t.reindex}
-                </button>
-                <Link href="/diagnostic" className={common.buttonSoft}>
-                  {t.diagnostic}
-                </Link>
-              </>
-            )}
-            {mode === 'demo' && !isDemoForced() && (
+        {mode === 'demo' && (
+          <div className={`${common.card} ${common.stack} ${styles.demo}`}>
+            <p>{t.demoNote}</p>
+            {!isDemoForced() && (
               <button type="button" className={common.buttonSoft} onClick={leaveDemoMode}>
                 {t.leaveDemo}
               </button>
             )}
           </div>
+        )}
+
+        <section className={common.section} aria-labelledby="settings-appearance">
+          <h2 id="settings-appearance" className={common.sectionTitle}>
+            {t.appearance}
+          </h2>
+          <div className={`${common.card} ${common.stack}`}>
+            <div className={styles.choice}>
+              <span id="settings-theme" className={styles.choiceLabel}>
+                {t.theme}
+              </span>
+              <fieldset className={common.segmented} aria-labelledby="settings-theme">
+                {THEMES.map(({ value, label }) => (
+                  <label key={value}>
+                    <input
+                      type="radio"
+                      name="theme"
+                      value={value}
+                      checked={theme === value}
+                      onChange={() => setTheme(value)}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </fieldset>
+            </div>
+            <div className={styles.choice}>
+              <span id="settings-language" className={styles.choiceLabel}>
+                {t.language}
+              </span>
+              <fieldset className={common.segmented} aria-labelledby="settings-language">
+                {LANGUAGES.map(({ value, label, lang }) => (
+                  <label key={value} lang={lang}>
+                    <input
+                      type="radio"
+                      name="language"
+                      value={value}
+                      checked={language === value}
+                      onChange={() => setLanguage(value)}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </fieldset>
+            </div>
+          </div>
         </section>
 
-        <OfflineSection />
+        <Group id="settings-photos" title={t.photos}>
+          <Row
+            href="/reglages/dossiers"
+            title={t.chooseFolders}
+            status={roots.map(folderName).join(', ')}
+          />
+          <Row
+            href="/albums/choisir?retour=reglages"
+            title={t.chooseAlbums}
+            status={t.chooseAlbumsDetail}
+          />
+        </Group>
 
-        <ThumbnailCacheSection />
+        <Group id="settings-options" title={t.options} note={readOnly ? t.readOnlyNote : null}>
+          <Row href="/reglages/synchronisation" title={t.sync} status={syncLine} />
+          <Row href="/reglages/recherche" title={t.content} status={contentLine} />
+          <Row href="/reglages/modifications" title={t.edits} status={editsLine} />
+          <Row href="/reglages/souvenirs" title={t.memories} status={memoriesLine} />
+        </Group>
 
-        <AboutSection />
+        {mode === 'onedrive' && (
+          <Group id="settings-account" title={t.account}>
+            <Row
+              href="/reglages/compte"
+              title={t.microsoftAccount}
+              status={signedIn ? (account?.name ?? account?.username ?? t.accountOn) : t.accountOff}
+            />
+          </Group>
+        )}
+
+        <Group id="settings-app" title={t.app}>
+          <Row href="/reglages/appareil" title={t.device} status={t.deviceDetail} />
+          {index && (
+            <Row
+              href="/reglages/donnees"
+              title={t.data}
+              status={t.dataDetail(formatCount(index.items.length))}
+            />
+          )}
+          <Row
+            href="/reglages/a-propos"
+            title={t.about}
+            status={
+              updateStatus === 'ready' ? t.updateReady(__APP_VERSION__) : t.version(__APP_VERSION__)
+            }
+          />
+        </Group>
       </div>
     </>
   );

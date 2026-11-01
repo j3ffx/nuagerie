@@ -9,18 +9,18 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('lists what each version brought, from the settings', async ({ page }) => {
-  await page.goto('/reglages');
+  await page.goto('/reglages/a-propos');
   await page.getByRole('link', { name: 'Nouveautés' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Nouveautés' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: /^Version 0\.1\.0/ })).toBeVisible();
   await page.getByRole('link', { name: 'Retour aux réglages' }).click();
-  await expect(page).toHaveURL('/reglages');
+  await expect(page).toHaveURL('/reglages/a-propos');
 });
 
 test('reports a problem on GitHub with the version and device, nothing personal', async ({
   page,
 }) => {
-  await page.goto('/reglages');
+  await page.goto('/reglages/a-propos');
   const href = await page.getByRole('link', { name: 'Signaler un problème' }).getAttribute('href');
   const url = new URL(href ?? '');
   expect(`${url.origin}${url.pathname}`).toBe('https://github.com/j3ffx/nuagerie/issues/new');

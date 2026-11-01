@@ -15,9 +15,9 @@ const t = localized({
     demo: 'En démo, c’est simulé à partir du nom des albums : rien n’est téléchargé.',
     onTitle: 'Activer la recherche dans les photos ?',
     onMessage:
-      'Nuagerie télécharge une fois un modèle d’environ 320 Mo depuis Hugging Face (de préférence en Wi-Fi), gardé sur cet appareil. Hugging Face voit seulement ton adresse IP, comme tout site qui sert un fichier. Rien sur tes photos ne lui est envoyé.',
+      'Nuagerie télécharge une fois un modèle d’environ 320 Mo depuis Hugging Face (de préférence en Wi-Fi), gardé sur cet appareil. Hugging Face voit seulement ton adresse IP, comme tout site qui sert un fichier. Rien sur tes photos ne lui est envoyé.',
     onConfirm: 'Activer',
-    turnOn: 'Activer',
+    turnOn: 'Activer la recherche',
     downloading: (done: string, total: string) => `Téléchargement du modèle : ${done} / ${total}`,
     loading: 'Préparation du modèle…',
     downloadLabel: 'Téléchargement du modèle',
@@ -25,15 +25,13 @@ const t = localized({
     count: (done: string, total: string) => `${done} photos analysées sur ${total}`,
     allDone: 'Toutes tes photos sont analysées : cherche-les depuis l’écran Recherche.',
     howTo:
-      'L’analyse se fait une fois, puis pour chaque nouvelle photo. Fais-la plutôt sur un ordinateur (environ 45 min pour 20 000 photos, et quelque 190 Mo de plus à télécharger). Sur un téléphone, compte au moins 3 h, branché, en Wi-Fi, écran allumé.',
+      'L’analyse se fait une fois, puis pour chaque nouvelle photo. Fais-la plutôt sur un ordinateur (environ 45 min pour 20 000 photos, et quelque 190 Mo de plus à télécharger). Sur un téléphone, compte au moins 3 h, branché, en Wi-Fi, écran allumé.',
     share:
       'Avec la synchronisation active, l’analyse terminée va dans ton dossier Applis/Nuagerie : tes autres appareils la reprennent sans rien refaire.',
     analyse: 'Analyser les photos',
     resume: 'Reprendre l’analyse',
     stop: 'Arrêter',
-    running: (device: string) => `Analyse en cours, ${device}. Garde l’appli ouverte.`,
-    gpu: 'sur la carte graphique',
-    cpu: 'sur le processeur',
+    running: 'Analyse en cours. Garde l’appli ouverte.',
     starting: 'Préparation de l’analyse…',
     progress: 'Analyse des photos',
     failed: (count: string) =>
@@ -45,7 +43,7 @@ const t = localized({
     offMessage:
       'Le modèle et l’analyse sont effacés de cet appareil. Une copie de l’analyse reste dans Applis/Nuagerie si la synchronisation l’y a mise.',
     offConfirm: 'Désactiver',
-    turnOff: 'Désactiver',
+    turnOff: 'Désactiver la recherche',
   },
   en: {
     title: 'Search in the photos',
@@ -53,9 +51,9 @@ const t = localized({
     demo: 'In the demo, this is simulated from the album names: nothing is downloaded.',
     onTitle: 'Turn on the search in the photos?',
     onMessage:
-      'Nuagerie downloads a model of about 320 MB from Hugging Face once (on Wi-Fi if you can), and keeps it on this device. Hugging Face only sees your IP address, as any site serving a file does. Nothing about your photos is sent to it.',
+      'Nuagerie downloads a model of about 320 MB from Hugging Face once (on Wi-Fi if you can), and keeps it on this device. Hugging Face only sees your IP address, as any site serving a file does. Nothing about your photos is sent to it.',
     onConfirm: 'Turn on',
-    turnOn: 'Turn on',
+    turnOn: 'Turn on the search',
     downloading: (done: string, total: string) => `Downloading the model: ${done} / ${total}`,
     loading: 'Getting the model ready…',
     downloadLabel: 'Downloading the model',
@@ -63,15 +61,13 @@ const t = localized({
     count: (done: string, total: string) => `${done} photos analysed out of ${total}`,
     allDone: 'All your photos are analysed: search for them from the Search screen.',
     howTo:
-      'The analysis runs once, then for each new photo. Better do it on a computer (about 45 min for 20,000 photos, and some 190 MB more to download). On a phone, expect 3 hours at least, plugged in, on Wi-Fi, screen on.',
+      'The analysis runs once, then for each new photo. Better do it on a computer (about 45 min for 20,000 photos, and some 190 MB more to download). On a phone, expect 3 hours at least, plugged in, on Wi-Fi, screen on.',
     share:
       'With the sync on, the finished analysis goes to your Apps/Nuagerie folder: your other devices pick it up without doing it again.',
     analyse: 'Analyse the photos',
     resume: 'Resume the analysis',
     stop: 'Stop',
-    running: (device: string) => `Analysis under way, ${device}. Keep the app open.`,
-    gpu: 'on the graphics card',
-    cpu: 'on the processor',
+    running: 'Analysis under way. Keep the app open.',
     starting: 'Getting the analysis ready…',
     progress: 'Analysing the photos',
     failed: (count: string) => `${count} could not be read: run the analysis again to retry.`,
@@ -82,7 +78,7 @@ const t = localized({
     offMessage:
       'The model and the analysis are erased from this device. A copy of the analysis stays in Apps/Nuagerie if the sync put it there.',
     offConfirm: 'Turn off',
-    turnOff: 'Turn off',
+    turnOff: 'Turn off the search',
   },
 });
 
@@ -131,7 +127,7 @@ export function ContentSection() {
             <p className={common.muted}>{demo ? `${t.what} ${t.demo}` : t.what}</p>
             <button
               type="button"
-              className={common.buttonSoft}
+              className={common.button}
               onClick={() => void turnOn()}
               disabled={!demo && !online}
             >
@@ -164,9 +160,7 @@ export function ContentSection() {
             </p>
             {state.analysing && (
               <div className={common.stack}>
-                <p className={common.muted}>
-                  {state.device ? t.running(state.device === 'webgpu' ? t.gpu : t.cpu) : t.starting}
-                </p>
+                <p className={common.muted}>{state.device ? t.running : t.starting}</p>
                 <progress
                   className={styles.progress}
                   max={state.total}
@@ -188,16 +182,16 @@ export function ContentSection() {
             )}
             {!complete && !state.analysing && (
               <>
-                <p className={common.muted}>{t.howTo}</p>
-                <p className={common.muted}>{t.share}</p>
                 <button
                   type="button"
-                  className={common.buttonSoft}
+                  className={common.button}
                   onClick={() => void search.analyse()}
                   disabled={(!demo && !online) || state.preparing}
                 >
                   {state.done > 0 ? t.resume : t.analyse}
                 </button>
+                <p className={common.muted}>{t.howTo}</p>
+                <p className={common.muted}>{t.share}</p>
               </>
             )}
             <button

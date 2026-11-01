@@ -118,7 +118,7 @@ test('moves the focus on to the sort when the memories close', async ({ page }) 
 });
 
 test('explains the morning notification, off in the demo', async ({ page }) => {
-  await page.goto('/reglages');
+  await page.goto('/reglages/souvenirs');
   const memories = page.getByRole('region', { name: 'Souvenirs' });
   await expect(memories.getByText(/jamais avant 8 h/)).toBeVisible();
   await expect(memories.getByText(/^En démo, pas de notification/)).toBeVisible();

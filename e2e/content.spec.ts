@@ -4,7 +4,8 @@ const section = (page: Page) => page.getByRole('region', { name: 'Recherche dans
 const grid = (page: Page) => page.getByRole('main').locator('a[data-item-id]');
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/reglages?demo=1');
+  await page.goto('/?demo=1');
+  await page.goto('/reglages/recherche');
   await expect(section(page)).toBeVisible();
 });
 

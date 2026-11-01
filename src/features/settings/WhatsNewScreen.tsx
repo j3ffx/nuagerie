@@ -52,7 +52,7 @@ export function WhatsNewScreen() {
           <Link
             href={back}
             className={albumStyles.back}
-            aria-label={back === '/reglages' ? t.backToSettings : t.back}
+            aria-label={back.startsWith('/reglages') ? t.backToSettings : t.back}
           >
             <BackIcon />
           </Link>

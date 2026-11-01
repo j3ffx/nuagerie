@@ -30,6 +30,7 @@ import { SearchScreen } from '../features/search/SearchScreen.tsx';
 import { FoldersScreen } from '../features/settings/FoldersScreen.tsx';
 import { FavoritesScreen } from '../features/favorites/FavoritesScreen.tsx';
 import { SyncNotice } from '../features/favorites/SyncNotice.tsx';
+import { SettingsDetailScreen } from '../features/settings/SettingsDetailScreen.tsx';
 import { SettingsScreen } from '../features/settings/SettingsScreen.tsx';
 import { WhatsNewScreen } from '../features/settings/WhatsNewScreen.tsx';
 import { SignInScreen } from '../features/welcome/SignInScreen.tsx';
@@ -173,6 +174,7 @@ function ShellContent() {
           <Route path="/recherche" component={SearchScreen} />
           <Route path="/reglages" component={SettingsScreen} />
           <Route path="/reglages/dossiers" component={FoldersScreen} />
+          <Route path="/reglages/:section" component={SettingsDetailScreen} />
           <Route path="/nouveautes" component={WhatsNewScreen} />
           <Route path="/corbeille" component={TrashScreen} />
           <Route path="/diagnostic" component={DiagnosticScreen} />

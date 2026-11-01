@@ -4,6 +4,12 @@ The changes of each Nuagerie version, the most recent first. The numbers follow
 [semantic versioning](https://semver.org/): while they start with 0, the app still changes a lot.
 The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
 
+## Since the last version
+
+### New
+
+- The settings are clearer: a short list that says how each option stands, and one screen per topic.
+
 ## 1.2.0 — 2026-11-01
 
 Search your photos in your own words, on your devices, if you turn it on.

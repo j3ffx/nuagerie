@@ -63,7 +63,7 @@ commit metadata.
   user's files: requests are GETs, plus `POST /$batch` whose sub-requests are GETs. Every write is in
   `src/data/graph/client.ts`.
 - **Opt-in 1, the app's own folder.** The sync (favourites, preferences, root folders) goes
-  to OneDrive only once the user turns it on (Réglages → Synchronisation, or the first heart): only
+  to OneDrive only once the user turns it on (Réglages → Favoris et synchronisation, or the first heart): only
   then is `Files.ReadWrite.AppFolder` requested (incremental consent), which reaches `Apps/Nuagerie`
   (`special/approot`) and nothing else. Microsoft grants it to the account, so another device follows
   on its own when a silent token and the app folder's copy are both there, unless the user turned the
@@ -75,7 +75,7 @@ commit metadata.
   Its one write is `putAppFile`, which builds its path itself (the search in the photos' vectors go the
   same way, `src/data/content/vectorSnapshot.ts`); without the sync, there are no
   favourites in OneDrive mode (on the device only, they would be lost with the app; the demo keeps
-  them locally). Réglages → Permissions shows the scopes the tokens actually carry,
+  them locally). Réglages → Compte shows the scopes the tokens actually carry,
   and links to Microsoft's page to withdraw them.
 - **Opt-in 2, changes** (`src/data/edits/`, `src/features/edits/`): off by default, per device
   (Réglages → Modifications). Only then is `Files.ReadWrite.All` requested (Graph restores from a

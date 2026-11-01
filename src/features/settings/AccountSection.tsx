@@ -8,7 +8,9 @@ import { forgetMemoryState } from '../../data/memoryNotifier.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
 import { useConfirm } from '../../ui/confirmContext.ts';
+import { useSync } from '../../data/sync/syncContext.ts';
 import { useContentSearch } from '../content/contentContext.ts';
+import { useEdits } from '../edits/editsContext.ts';
 import { useOffline } from '../offline/offlineContext.ts';
 import { localized } from '../../lib/i18n.ts';
 
@@ -23,6 +25,8 @@ const t = localized({
     address: 'Adresse e-mail',
     access: 'Accès',
     readOnly: 'lecture seule',
+    readOnlyExcept: 'lecture seule, sauf Applis/Nuagerie',
+    changes: 'modifications activées',
     unreachable: 'Microsoft ne répond pas sur ce réseau',
     startedOffline: 'Démarré hors connexion',
     fromDevice: ' : les photos enregistrées sur l’appareil s’affichent, sans mise à jour.',
@@ -39,6 +43,8 @@ const t = localized({
     address: 'Email',
     access: 'Access',
     readOnly: 'read-only',
+    readOnlyExcept: 'read-only, except Apps/Nuagerie',
+    changes: 'changes on',
     unreachable: 'Microsoft does not answer on this network',
     startedOffline: 'Started offline',
     fromDevice: ': the photos saved on the device show, without updates.',
@@ -56,6 +62,8 @@ export function AccountSection() {
   const reconnect = useSignIn();
   const offline = useOffline();
   const { search: content } = useContentSearch();
+  const edits = useEdits();
+  const sync = useSync();
 
   /** Signing out leaves nothing of the drive on the device: index, thumbnails and places go too. */
   const signOutAndForget = async () => {
@@ -100,7 +108,9 @@ export function AccountSection() {
                 </>
               )}
               <dt>{t.access}</dt>
-              <dd>{t.readOnly}</dd>
+              <dd>
+                {edits.status !== 'off' ? t.changes : sync.enabled ? t.readOnlyExcept : t.readOnly}
+              </dd>
             </dl>
             <button
               type="button"

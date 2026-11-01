@@ -109,7 +109,7 @@ test.describe('in French', () => {
 
   test('shows the privacy page from the settings', async ({ page }) => {
     await page.goto('/?demo=1');
-    await page.goto('/reglages');
+    await page.goto('/reglages/a-propos');
     await page.getByRole('link', { name: 'Confidentialité' }).click();
     await expect(page.getByRole('heading', { name: 'Confidentialité', level: 1 })).toBeVisible();
   });

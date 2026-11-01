@@ -97,7 +97,7 @@ export function TrashScreen() {
       <ScreenHeader
         title={t.title}
         leading={
-          <Link href="/reglages" className={albumStyles.back} aria-label={t.back}>
+          <Link href="/reglages/modifications" className={albumStyles.back} aria-label={t.back}>
             <BackIcon />
           </Link>
         }

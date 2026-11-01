@@ -28,6 +28,7 @@ async function go(page: Page, tab: 'Albums' | 'Tout' | 'Réglages') {
 /** Réglages → Modifications → Activer (the demo asks no permission). */
 async function turnOnChanges(page: Page) {
   await go(page, 'Réglages');
+  await page.getByRole('link', { name: /^Modifications/ }).click();
   const section = page.getByRole('region', { name: 'Modifications' });
   await section.getByRole('button', { name: 'Activer les modifications' }).click();
   await expect(section.getByRole('button', { name: 'Désactiver' })).toBeVisible();
@@ -46,6 +47,7 @@ test('the changes are off by default: the app only reads', async ({ page }) => {
   await expect(viewer.getByRole('button', { name: 'Plus d’actions' })).toHaveCount(0);
   await page.goBack();
   await go(page, 'Réglages');
+  await page.getByRole('link', { name: /^Modifications/ }).click();
   await expect(
     page.getByRole('region', { name: 'Modifications' }).getByText(/ne fait que lire ton OneDrive/),
   ).toBeVisible();
@@ -74,6 +76,7 @@ test('deletes a photo from the viewer, moves on, and brings it back from the bin
   await expect(cells(page).first()).not.toHaveAttribute('data-item-id', first ?? '');
 
   await go(page, 'Réglages');
+  await page.getByRole('link', { name: /^Modifications/ }).click();
   await page.getByRole('link', { name: 'Corbeille (1)' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Corbeille' })).toBeVisible();
   const list = page.getByRole('list', { name: 'Éléments supprimés' });
@@ -247,6 +250,7 @@ test('brings a photo back into its album made again, when the album was deleted 
   await expect(albums(page).getByRole('link', { name: /^Brouillons/ })).toHaveCount(0);
 
   await go(page, 'Réglages');
+  await page.getByRole('link', { name: /^Modifications/ }).click();
   await page.getByRole('link', { name: 'Corbeille (1)' }).click();
   await page
     .getByRole('list', { name: 'Éléments supprimés' })
