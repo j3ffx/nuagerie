@@ -16,7 +16,11 @@ async function keep(page: Page, name: string) {
   await expect(menu).toHaveCount(0);
 }
 
+// The demo draws all 576 images: 15 s alone, more than 30 s while the whole suite runs.
+const DOWNLOAD_WAIT = { timeout: 90_000 };
+
 test.beforeEach(async ({ page }) => {
+  test.slow();
   await page.goto('/?demo=1');
   await expect(page.getByRole('list', { name: 'Albums' })).toBeVisible();
 });
@@ -30,7 +34,7 @@ test('keeps an album offline, marks its tile, and lets it go', async ({ page }) 
   const section = offlineSection(page);
   await expect(section.getByRole('list', { name: 'Gardés hors connexion' })).toHaveText(/Tapo/);
   // A grid thumbnail and a large image for each of the 288 photos.
-  await expect(section.getByText(/^[\d,\s]+ [MK]o · 576 images$/)).toBeVisible({ timeout: 30_000 });
+  await expect(section.getByText(/^[\d,\s]+ [MK]o · 576 images$/)).toBeVisible(DOWNLOAD_WAIT);
   expect(await keptImages(page)).toBe(576);
 
   // Still kept after a restart, with nothing downloaded again.
@@ -48,7 +52,7 @@ test('keeps an album offline, marks its tile, and lets it go', async ({ page }) 
 test('opens a kept photo in large offline', async ({ page, context }) => {
   await keep(page, 'Tapo');
   await page.goto('/reglages/appareil');
-  await expect(offlineSection(page).getByText(/· 576 images$/)).toBeVisible({ timeout: 30_000 });
+  await expect(offlineSection(page).getByText(/· 576 images$/)).toBeVisible(DOWNLOAD_WAIT);
 
   await context.setOffline(true);
   await page.goto('/');
@@ -74,7 +78,7 @@ test('waits for Wi-Fi on mobile data, unless told to go on', async ({ page }) =>
   ).toBeVisible();
   expect(await keptImages(page)).toBe(0);
   await section.getByRole('button', { name: 'Télécharger quand même' }).click();
-  await expect(section.getByText(/· 576 images$/)).toBeVisible({ timeout: 30_000 });
+  await expect(section.getByText(/· 576 images$/)).toBeVisible(DOWNLOAD_WAIT);
 });
 
 test('keeps the favourites, and takes everything back at once', async ({ page }) => {
@@ -92,7 +96,7 @@ test('keeps the favourites, and takes everything back at once', async ({ page })
   await page.goto('/reglages/appareil');
   const section = offlineSection(page);
   await expect(section.getByRole('listitem')).toHaveText(['FavorisRetirer', 'TapoRetirer']);
-  await expect(section.getByText(/· 578 images$/)).toBeVisible({ timeout: 30_000 });
+  await expect(section.getByText(/· 578 images$/)).toBeVisible(DOWNLOAD_WAIT);
   await section.getByRole('button', { name: 'Tout retirer' }).click();
   await page
     .getByRole('dialog', { name: 'Ne plus rien garder hors connexion ?' })
@@ -107,9 +111,10 @@ const badge = (page: Page) => page.getByRole('button', { name: /^Hors connexion 
 
 test('marks a kept album green once all is there, and tells the details', async ({ page }) => {
   await keep(page, 'Tapo');
-  await expect(badge(page)).toHaveAccessibleName('Hors connexion : à jour. Voir les détails', {
-    timeout: 30_000,
-  });
+  await expect(badge(page)).toHaveAccessibleName(
+    'Hors connexion : à jour. Voir les détails',
+    DOWNLOAD_WAIT,
+  );
   await expect(badge(page)).toHaveAttribute('data-phase', 'done');
   await badge(page).click();
   const details = page.getByRole('dialog', { name: 'Tapo' });
@@ -141,7 +146,7 @@ test('marks a kept album blue while waiting for Wi-Fi', async ({ page }) => {
     .getByRole('button', { name: 'Télécharger quand même' })
     .click();
   await page.getByRole('dialog', { name: 'Tapo' }).getByRole('button', { name: 'Fermer' }).click();
-  await expect(badge(page)).toHaveAttribute('data-phase', 'done', { timeout: 30_000 });
+  await expect(badge(page)).toHaveAttribute('data-phase', 'done', DOWNLOAD_WAIT);
 });
 
 test('marks a kept album red when the device is full, and says so', async ({ page }) => {
@@ -156,7 +161,7 @@ test('marks a kept album red when the device is full, and says so', async ({ pag
   });
   await page.reload();
   await keep(page, 'Tapo');
-  await expect(badge(page)).toHaveAttribute('data-phase', 'error', { timeout: 30_000 });
+  await expect(badge(page)).toHaveAttribute('data-phase', 'error', DOWNLOAD_WAIT);
   await expect(badge(page)).toHaveAccessibleName(/non gardées?\. Voir les détails$/);
   await badge(page).click();
   const details = page.getByRole('dialog', { name: 'Tapo' });
