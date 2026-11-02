@@ -11,7 +11,7 @@ agréable aussi sur PC.
   `offline_access`. Deux exceptions, chacune à activer soi-même : la synchronisation des favoris
   et des préférences, rangés dans un dossier à part (`Applis/Nuagerie`), avec une permission
   limitée à ce dossier ; et les modifications (supprimer, déplacer et restaurer des photos, gérer
-  les albums), qui demandent le droit de modifier les fichiers. Réglages → Permissions montre ce
+  les albums), qui demandent le droit de modifier les fichiers. Réglages → Compte montre ce
   que Microsoft autorise réellement.
 - Un **mode démo** avec ~20 000 photos factices permet de tout essayer sans compte.
 - En **français** et en **anglais**, selon la langue du téléphone ou au choix dans les réglages.
@@ -41,6 +41,10 @@ agréable aussi sur PC.
   (« 2019 », « juillet 2024 », « 14 juillet », « été 2023 », « 2019 à 2021 »), et tout
   ensemble : « Lyon été 2023 ». Les lieux des résultats permettent d’affiner. Elle porte sur
   tout le OneDrive parcouru, albums masqués compris.
+- **Recherche dans les photos**, si tu l’actives. Tape ce que montre une photo (« gâteau avec des
+  bougies »), en français ou en anglais : un modèle qui tourne sur tes appareils trouve les photos
+  les plus proches. L’analyse se fait une fois sur un ordinateur, et la synchronisation l’apporte
+  à tes autres appareils.
 - **Carte.** Les photos géolocalisées, regroupées par lieu ; toucher un groupe zoome dessus,
   et un bandeau montre les photos de la zone.
 - **Visionneuse.** Plein écran, glisser pour passer d’une photo à l’autre, pincer pour
@@ -62,16 +66,20 @@ agréable aussi sur PC.
   (`Applis/Nuagerie`), pour ne jamais être perdus et suivre d’un appareil à l’autre, avec une
   copie de l’index pour qu’un nouvel appareil s’ouvre en quelques secondes. Activée sur un
   appareil, elle s’active toute seule sur les autres. Les favoris en ont besoin.
-- **Réglages.** Les dossiers OneDrive parcourus (le dossier Images de OneDrive par défaut,
-  quel que soit son nom dans la langue du compte, d’autres à ajouter), le choix des albums, la langue, la synchronisation, le thème clair ou sombre, la taille du cache des
-  miniatures, et les permissions accordées à l’application.
+- **Réglages.** Une liste courte qui dit où en est chaque option, avec un écran par sujet : les
+  dossiers OneDrive parcourus (le dossier Images de OneDrive par défaut, quel que soit son nom
+  dans la langue du compte, d’autres à ajouter), le choix des albums, la langue, le thème clair
+  ou sombre, la synchronisation, la taille du cache des miniatures, et les permissions accordées
+  à l’application.
 
 ## Vie privée
 
 Le détail, lisible sans compte : [nuagerie.app/confidentialite](https://nuagerie.app/confidentialite).
 
-- Les seuls échanges réseau vont vers Microsoft (connexion et Graph) et vers les fonds de
-  carte d’[OpenStreetMap](https://www.openstreetmap.org/copyright).
+- Les seuls échanges réseau vont vers Microsoft (connexion et Graph), vers les fonds de carte
+  d’[OpenStreetMap](https://www.openstreetmap.org/copyright) et, si tu actives la recherche dans
+  les photos, vers Hugging Face pour les fichiers du modèle, une fois. Cette recherche tourne sur
+  l’appareil : les photos et les recherches y restent.
 - Les noms de lieux sont calculés sur l’appareil : les coordonnées des photos ne sont
   envoyées nulle part.
 - L’index, les miniatures et les lieux des photos sont gardés dans le navigateur (IndexedDB,
@@ -80,6 +88,8 @@ Le détail, lisible sans compte : [nuagerie.app/confidentialite](https://nuageri
   OneDrive de la personne connectée : `Applis/Nuagerie/nuagerie.json` (favoris, préférences,
   dossiers) et `Applis/Nuagerie/index.json.gz`, une copie de l’index (noms, dates et lieux des
   fichiers, sans les photos) qui permet à un autre appareil de s’ouvrir en quelques secondes.
+  Avec la recherche dans les photos, `Applis/Nuagerie/vectors.bin.gz` contient l’analyse (une
+  suite de nombres par photo).
 
 ## Essayer
 
@@ -106,7 +116,8 @@ directement dans les [issues](https://github.com/j3ffx/nuagerie/issues).
 React, TypeScript (strict) et Vite ; MSAL pour la connexion Microsoft ; vite-plugin-pwa
 (Workbox) pour l’installation et le hors-ligne ; `idb` pour l’index local ;
 `@tanstack/react-virtual` pour des grilles fluides de dizaines de milliers de photos ;
-Leaflet et supercluster pour la carte ; wouter pour la navigation. Tests : Vitest,
+Leaflet et supercluster pour la carte ; wouter pour la navigation ; ONNX Runtime Web et les tokenizers de Hugging Face pour la recherche
+dans les photos. Tests : Vitest,
 Playwright et axe-core (accessibilité).
 
 ## Crédits
@@ -115,6 +126,8 @@ Playwright et axe-core (accessibilité).
 - Noms de lieux : [GeoNames](https://www.geonames.org/) (licence CC BY 4.0), liste générée
   par `scripts/build-places.mjs`.
 - Police [Nunito](https://fonts.google.com/specimen/Nunito) (licence SIL Open Font).
+- Recherche dans les photos : [SigLIP 2](https://huggingface.co/google/siglip2-base-patch16-224)
+  de Google, dans sa [version ONNX](https://huggingface.co/onnx-community/siglip2-base-patch16-224-ONNX).
 
 ## Licence
 

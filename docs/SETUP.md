@@ -133,6 +133,9 @@ l’étape de déploiement est simplement sautée.
 Les en-têtes HTTP (sécurité, cache) sont dans `public/_headers`. Sans `404.html`,
 Cloudflare Pages sert `index.html` pour toutes les routes (application monopage).
 
+La recherche dans les photos ne demande aucune mise en place : son modèle vient de Hugging Face,
+trop lourd pour Pages (25 Mio par fichier), et le build y ajoute le moteur qui le fait tourner.
+
 ### Domaine à soi
 
 Une adresse à soi (par exemple `nuagerie.app`) plutôt que `<projet>.pages.dev`. À faire avant de
