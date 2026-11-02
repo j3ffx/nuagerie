@@ -9,6 +9,7 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 ### Nouveautés
 
 - Les réglages sont plus clairs : une liste courte qui dit où en est chaque option, et un écran par sujet.
+- Recherche dans les photos : une photo illisible ne relance plus l’analyse à chaque ouverture. Elle est nommée dans les réglages, avec « Réessayer », et l’appli essaie aussi sa grande miniature.
 
 ## 1.2.0 — 2026-11-01
 

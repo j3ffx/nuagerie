@@ -23,13 +23,19 @@ export interface ContentState {
   /** Photos of the index with a vector, out of `total`. */
   done: number;
   total: number;
-  /** Photos the last analysis could not read (another analysis tries them again). */
-  failed: number;
+  /** Photos of the index the last analysis could not read. They do not count as left to do. */
+  unreadable: readonly MediaItem[];
+  /** This device ran an analysis: it can try those again, and follows new photos. */
+  analysedHere: boolean;
   /** A copy of the vectors is coming from OneDrive. */
   fetching: boolean;
   /** What went wrong last, to show as is. */
   error: string | null;
 }
+
+/** Every photo that can be analysed has been. */
+export const analysisComplete = (state: ContentState) =>
+  state.total > 0 && state.done + state.unreadable.length >= state.total;
 
 export interface ContentSearch {
   subscribe(listener: () => void): () => void;
@@ -68,6 +74,9 @@ export interface ContentDeps {
    */
   readDevice(): EngineDevice | null;
   writeDevice(device: EngineDevice | null): void;
+  /** The ids of the photos the last analysis could not read, kept so as not to try on every start. */
+  readUnreadable(): readonly string[];
+  writeUnreadable(ids: readonly string[]): void;
   /** Waits between two passes over what failed. */
   pause(ms: number, signal: AbortSignal): Promise<void>;
 }
@@ -93,7 +102,8 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
     device: null,
     done: 0,
     total: 0,
-    failed: 0,
+    unreadable: [],
+    analysedHere: deps.read('analysed'),
     fetching: false,
     error: null,
   };
@@ -115,6 +125,13 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
     const ids = known;
     return ids ? items.filter((item) => ids.has(item.id)).length : 0;
   };
+  const unreadable = () => {
+    const ids = new Set(deps.readUnreadable());
+    return items.filter((item) => ids.has(item.id) && !known?.has(item.id));
+  };
+  /** Photos neither analysed nor known to be unreadable: something is left to do. */
+  const leftToDo = () => items.length - count() - unreadable().length;
+  const counts = () => ({ done: count(), unreadable: unreadable() });
   const progress = (loaded: number, total: number) => set({ download: { loaded, total } });
   const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
@@ -154,20 +171,21 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
         await store.putMany(missing.slice(i, i + STORE_BATCH));
       }
       for (const [id] of missing) ids.add(id);
+      deps.writeUnreadable(copy.unreadable);
       table = null;
     } catch {
       // The copy only saves time: without it, the device can analyse.
     } finally {
-      set({ fetching: false, done: count() });
+      set({ fetching: false, ...counts() });
     }
   }
 
   /** The photos without a vector, a few at a time; what failed stays out, for another pass. */
-  async function pass(signal: AbortSignal): Promise<number> {
+  async function pass(signal: AbortSignal): Promise<string[]> {
     const ids = known ?? new Set<string>();
     const todo = items.filter((item) => !ids.has(item.id));
     let next = 0;
-    let failed = 0;
+    const failed: string[] = [];
     const worker = async () => {
       while (next < todo.length && !signal.aborted) {
         const item = todo[next++];
@@ -179,7 +197,7 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
             AbortSignal.any([signal, AbortSignal.timeout(IMAGE_TIMEOUT_MS)]),
           );
         } catch {
-          if (!signal.aborted) failed++;
+          if (!signal.aborted) failed.push(item.id);
           continue;
         }
         // Past this point, a failure is the model's: no use going on.
@@ -200,7 +218,7 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
   async function shareVectors(device: EngineDevice): Promise<void> {
     if (!snapshots || !deps.isOnline()) return;
     try {
-      await snapshots.save(await store.table(DIMENSIONS), device);
+      await snapshots.save(await store.table(DIMENSIONS), device, deps.readUnreadable());
     } catch {
       // Next time: the other devices can wait, or analyse.
     }
@@ -215,19 +233,14 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
 
     update(next) {
       items = next;
-      set({ total: items.length, done: count() });
+      set({ total: items.length, ...counts() });
       if (!state.enabled) return;
       void (async () => {
         known ??= await store.ids();
-        set({ done: count() });
-        if (state.done < state.total) await fromAnotherDevice();
+        set(counts());
+        if (leftToDo() > 0) await fromAnotherDevice();
         // Where the photos were analysed, the new ones follow, unless on mobile data.
-        if (
-          state.done < state.total &&
-          deps.read('analysed') &&
-          deps.isOnline() &&
-          !deps.onMobileData()
-        ) {
+        if (leftToDo() > 0 && deps.read('analysed') && deps.isOnline() && !deps.onMobileData()) {
           await search.analyse();
         }
       })();
@@ -237,7 +250,7 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
       deps.write('enabled', true);
       set({ enabled: true, error: null });
       known ??= await store.ids();
-      set({ done: count() });
+      set(counts());
       try {
         await prepareText();
       } catch (error) {
@@ -255,13 +268,22 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
       deps.write('enabled', false);
       deps.write('analysed', false);
       deps.writeDevice(null);
+      deps.writeUnreadable([]);
       await Promise.all([store.clear(), engine.erase()]);
       known = new Set();
       table = null;
       textReady = null;
       capture = null;
       snapshotTried = false;
-      set({ enabled: false, done: 0, failed: 0, device: null, error: null, download: null });
+      set({
+        enabled: false,
+        done: 0,
+        unreadable: [],
+        analysedHere: false,
+        device: null,
+        error: null,
+        download: null,
+      });
     },
 
     async analyse() {
@@ -269,7 +291,7 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
       const release = deps.keepAwake();
       controller = new AbortController();
       const { signal } = controller;
-      set({ analysing: true, error: null, failed: 0 });
+      set({ analysing: true, error: null });
       try {
         known ??= await store.ids();
         const device = await engine.prepareImages(progress);
@@ -279,11 +301,14 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
         }
         deps.writeDevice(device);
         set({ device, download: null });
-        let failed = 0;
         for (let round = 0; round < PASSES && !signal.aborted; round++) {
-          failed = await pass(signal);
-          set({ done: count(), failed });
-          if (failed === 0 || round === PASSES - 1) break;
+          const before = new Set(deps.readUnreadable());
+          const failed = await pass(signal);
+          if (signal.aborted) break;
+          deps.writeUnreadable(failed);
+          set(counts());
+          // A photo that failed last time too will not be helped by waiting.
+          if (failed.every((id) => before.has(id)) || round === PASSES - 1) break;
           await deps.pause(PASS_PAUSE_MS, signal);
         }
         table = null;
@@ -296,6 +321,7 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
         }
         if (!signal.aborted) {
           deps.write('analysed', true);
+          set({ analysedHere: true });
           await shareVectors(device);
         }
       } catch (error) {
@@ -304,7 +330,7 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
         release();
         engine.releaseImages();
         controller = null;
-        set({ analysing: false, download: null, done: count() });
+        set({ analysing: false, download: null, ...counts() });
       }
     },
 

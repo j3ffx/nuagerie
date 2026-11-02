@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { MediaItem } from '../model.ts';
-import { ANALYSED_ELSEWHERE, createContentSearch, type ContentDeps } from './contentSearch.ts';
+import {
+  analysisComplete,
+  ANALYSED_ELSEWHERE,
+  createContentSearch,
+  type ContentDeps,
+} from './contentSearch.ts';
 import { createDemoEngine } from './demoEngine.ts';
 import type { ContentEngine, EngineDevice } from './engine.ts';
 import { DIMENSIONS, toBytes, type VectorTable } from './rank.ts';
@@ -32,6 +37,7 @@ function setup(over: Partial<ContentDeps> = {}) {
   };
   let awake = 0;
   let device: EngineDevice | null = null;
+  let unreadable: readonly string[] = [];
   const deps: ContentDeps = {
     engine,
     store: createMemoryVectorStore(),
@@ -47,6 +53,8 @@ function setup(over: Partial<ContentDeps> = {}) {
     write: (key, value) => void (prefs[key] = value),
     readDevice: () => device,
     writeDevice: (next) => void (device = next),
+    readUnreadable: () => unreadable,
+    writeUnreadable: (ids) => void (unreadable = ids),
     pause: () => Promise.resolve(),
     ...over,
   };
@@ -135,7 +143,10 @@ describe('content search', () => {
     });
     flaky.search.update(items);
     await flaky.search.analyse();
-    expect(flaky.search.getSnapshot()).toMatchObject({ done: 2, failed: 1, analysing: false });
+    const state = flaky.search.getSnapshot();
+    expect(state).toMatchObject({ done: 2, analysing: false });
+    expect(state.unreadable.map((item) => item.id)).toEqual(['plage']);
+    expect(analysisComplete(state)).toBe(true);
   });
 
   it('stops when asked, without calling it done', async () => {
@@ -207,6 +218,66 @@ describe('content search', () => {
     expect(phone.getSnapshot()).toMatchObject({ done: 0, analysing: false });
   });
 
+  it('does not start over on every launch for a photo it cannot read', async () => {
+    let pauses = 0;
+    const stuck = setup({
+      image: (item) =>
+        item.id === 'plage'
+          ? Promise.reject(new Error('no thumbnail'))
+          : Promise.resolve(new Blob([item.id])),
+      pause: () => {
+        pauses++;
+        return Promise.resolve();
+      },
+    });
+    stuck.search.update(items);
+    await stuck.search.analyse();
+    // It waits once, in case Microsoft was slowing down, then knows.
+    expect(pauses).toBe(1);
+
+    stuck.prefs.enabled = true;
+    const prepared: string[] = [];
+    const next = createContentSearch({
+      ...stuck.deps,
+      engine: {
+        ...stuck.deps.engine,
+        prepareImages: () => {
+          prepared.push('images');
+          return Promise.resolve('webgpu');
+        },
+      },
+    });
+    next.update(items);
+    await settled();
+    await settled();
+    expect(prepared).toEqual([]);
+    expect(analysisComplete(next.getSnapshot())).toBe(true);
+  });
+
+  it('tries an unreadable photo again when asked, without waiting', async () => {
+    let readable = false;
+    let pauses = 0;
+    const later = setup({
+      image: (item) =>
+        item.id === 'plage' && !readable
+          ? Promise.reject(new Error('no thumbnail'))
+          : Promise.resolve(new Blob([item.id])),
+      pause: () => {
+        pauses++;
+        return Promise.resolve();
+      },
+    });
+    later.search.update(items);
+    await later.search.analyse();
+    pauses = 0;
+    await later.search.analyse();
+    expect(pauses).toBe(0);
+    expect(later.search.getSnapshot().unreadable).toHaveLength(1);
+    readable = true;
+    await later.search.analyse();
+    expect(later.search.getSnapshot()).toMatchObject({ done: 3, unreadable: [] });
+  });
+
   it('does not mix vectors from a graphics card and a processor', async () => {
     await t.store.put('chat', new Int8Array(DIMENSIONS));
     const seen: string[] = [];
@@ -268,20 +339,33 @@ describe('sharing the vectors between devices', () => {
     bytes.set(vector, DIMENSIONS);
     bytes.set(vector, 2 * DIMENSIONS);
     const { snapshots } = shared({
-      load: () => Promise.resolve({ ids: ['chat', 'chien', 'plus là'], bytes, device: 'webgpu' }),
+      load: () =>
+        Promise.resolve({
+          ids: ['chat', 'chien', 'plus là'],
+          bytes,
+          device: 'webgpu',
+          unreadable: ['plage'],
+        }),
     });
     const t = setup({ snapshots });
     t.search.update(items);
     await t.search.enable();
     expect(t.search.getSnapshot()).toMatchObject({ done: 2, total: 3 });
     expect(await t.store.ids()).toEqual(new Set(['chat', 'chien']));
+    // The photo the computer could not read is not waited for here either.
+    expect(analysisComplete(t.search.getSnapshot())).toBe(true);
     expect(t.engineCalls).not.toContain('images');
   });
 
   it('keeps its own vectors over a copy from another kind of device', async () => {
     const { snapshots } = shared({
       load: () =>
-        Promise.resolve({ ids: ['chien'], bytes: new Int8Array(DIMENSIONS), device: 'webgpu' }),
+        Promise.resolve({
+          ids: ['chien'],
+          bytes: new Int8Array(DIMENSIONS),
+          device: 'webgpu',
+          unreadable: [],
+        }),
     });
     const t = setup({ snapshots, readDevice: () => 'wasm' });
     await t.store.put('chat', new Int8Array(DIMENSIONS));

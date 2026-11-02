@@ -9,6 +9,7 @@ The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
 ### New
 
 - The settings are clearer: a short list that says how each option stands, and one screen per topic.
+- Search in the photos: an unreadable photo no longer starts the analysis again at each launch. The settings name it, with “Try again”, and the app also tries its large thumbnail.
 
 ## 1.2.0 — 2026-11-01
 

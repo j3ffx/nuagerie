@@ -2,6 +2,7 @@ import { useAccount } from '@azure/msal-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { useUpdateState } from '../../app/updates.ts';
+import { analysisComplete } from '../../data/content/contentSearch.ts';
 import { useData } from '../../data/dataContext.ts';
 import { isDemoForced, leaveDemoMode } from '../../data/mode.ts';
 import { folderName, useRootPaths } from '../../data/roots.ts';
@@ -198,7 +199,7 @@ function useContentLine(): string {
   const total = formatCount(state.total);
   if (!state.enabled) return t.off;
   if (state.analysing) return t.contentAnalysing(done, total);
-  return state.total > 0 && state.done >= state.total ? t.contentReady : t.contentDone(done, total);
+  return analysisComplete(state) ? t.contentReady : t.contentDone(done, total);
 }
 
 function useEditsLine(): string {

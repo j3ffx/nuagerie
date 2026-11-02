@@ -10,13 +10,17 @@ import { DIMENSIONS, type VectorTable } from './rank.ts';
 export const VECTORS_FILE = 'vectors.bin.gz';
 
 /** Vectors, and where they were computed: see `ContentDeps.readDevice`. */
-export type SharedVectors = VectorTable & { device: EngineDevice };
+export type SharedVectors = VectorTable & {
+  device: EngineDevice;
+  /** Photos that device could not read: no use for another to wait for them. */
+  unreadable: readonly string[];
+};
 
 export interface VectorSnapshots {
   /** The copy another device left, or null (none, not allowed here, unreadable, other model). */
   load(): Promise<SharedVectors | null>;
   /** Leaves a copy; false when this device may not write it (sync off). */
-  save(table: VectorTable, device: EngineDevice): Promise<boolean>;
+  save(table: VectorTable, device: EngineDevice, unreadable: readonly string[]): Promise<boolean>;
 }
 
 interface Header {
@@ -25,16 +29,23 @@ interface Header {
   dimensions: number;
   device: EngineDevice;
   ids: readonly string[];
+  /** Absent from the first copies made. */
+  unreadable?: readonly string[];
 }
 
 /** The header's length (4 bytes), the header in JSON, then the vectors; gzipped. */
-export async function encodeVectors(table: VectorTable, device: EngineDevice): Promise<Blob> {
+export async function encodeVectors(
+  table: VectorTable,
+  device: EngineDevice,
+  unreadable: readonly string[] = [],
+): Promise<Blob> {
   const header: Header = {
     schema: 1,
     model: MODEL_ID,
     dimensions: DIMENSIONS,
     device,
     ids: table.ids,
+    unreadable,
   };
   const json = new TextEncoder().encode(JSON.stringify(header));
   const length = new Uint8Array(4);
@@ -60,7 +71,9 @@ export async function decodeVectors(
     (header.device === 'webgpu' || header.device === 'wasm') &&
     Array.isArray(header.ids) &&
     bytes.length === header.ids.length * DIMENSIONS;
-  return usable ? { ids: header.ids, bytes, device: header.device } : null;
+  return usable
+    ? { ids: header.ids, bytes, device: header.device, unreadable: header.unreadable ?? [] }
+    : null;
 }
 
 /** `may` tells, at each call, whether this device may read or write the copy (its sync choices). */
@@ -87,9 +100,9 @@ export function createVectorSnapshots(
       }
     },
 
-    async save(table, device) {
+    async save(table, device, unreadable) {
       if (!may.save()) return false;
-      await client.putAppFile(VECTORS_FILE, await encodeVectors(table, device), {
+      await client.putAppFile(VECTORS_FILE, await encodeVectors(table, device, unreadable), {
         overwrite: true,
         contentType: 'application/gzip',
       });

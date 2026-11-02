@@ -17,6 +17,7 @@ import { SYNC_ENABLED_KEY, SYNC_GRANTED_KEY, syncStateKey } from './sync/syncCon
 export const CONTENT_ENABLED_KEY = 'content.enabled';
 export const CONTENT_ANALYSED_KEY = 'content.analysed';
 export const CONTENT_DEVICE_KEY = 'content.device';
+export const CONTENT_UNREADABLE_KEY = 'content.unreadable';
 
 export const ACCOUNT_PREFERENCES: readonly string[] = [
   ...SYNCED_PREFERENCES,
@@ -37,6 +38,7 @@ export const ACCOUNT_PREFERENCES: readonly string[] = [
   CONTENT_ENABLED_KEY,
   CONTENT_ANALYSED_KEY,
   CONTENT_DEVICE_KEY,
+  CONTENT_UNREADABLE_KEY,
 ];
 
 export function forgetAccountPreferences(): void {

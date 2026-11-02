@@ -12,6 +12,7 @@ import { useLocation, useSearchParams } from 'wouter';
 import { useMediaIndex } from '../../data/dataContext.ts';
 import type { MediaItem } from '../../data/model.ts';
 import type { PhotoPlaces } from '../../data/places/photoPlaces.ts';
+import { analysisComplete } from '../../data/content/contentSearch.ts';
 import { inPeriod, parseQuery } from '../../data/search/query.ts';
 import {
   fits,
@@ -696,7 +697,7 @@ function ContentResults({
       <p className={`${common.muted} ${styles.summary}`}>
         {formatItemCount(items.length)}
         {query.date && ` · ${query.date.label}`}
-        {state.done < state.total && ` · ${formatCount(state.done)} / ${formatCount(state.total)}`}
+        {!analysisComplete(state) && ` · ${formatCount(state.done)} / ${formatCount(state.total)}`}
       </p>
       <PhotoBrowser items={items} label={t.results} rankedTitle={t.closest} />
     </>

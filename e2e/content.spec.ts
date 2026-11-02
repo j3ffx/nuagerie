@@ -12,7 +12,7 @@ test.beforeEach(async ({ page }) => {
 async function analysed(page: Page) {
   await section(page).getByRole('button', { name: 'Activer' }).click();
   await section(page).getByRole('button', { name: 'Analyser les photos' }).click();
-  await expect(section(page).getByText('Toutes tes photos sont analysées')).toBeVisible({
+  await expect(section(page).getByText('Analyse terminée')).toBeVisible({
     timeout: 45_000,
   });
 }

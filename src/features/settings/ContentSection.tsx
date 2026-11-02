@@ -1,4 +1,5 @@
-import { ANALYSED_ELSEWHERE } from '../../data/content/contentSearch.ts';
+import { analysisComplete, ANALYSED_ELSEWHERE } from '../../data/content/contentSearch.ts';
+import { Link } from 'wouter';
 import { useData } from '../../data/dataContext.ts';
 import { formatBytes, formatCount } from '../../lib/format.ts';
 import { localized } from '../../lib/i18n.ts';
@@ -23,7 +24,7 @@ const t = localized({
     downloadLabel: 'Téléchargement du modèle',
     fetching: 'Recherche d’une analyse faite sur un autre appareil…',
     count: (done: string, total: string) => `${done} photos analysées sur ${total}`,
-    allDone: 'Toutes tes photos sont analysées : cherche-les depuis l’écran Recherche.',
+    allDone: 'Analyse terminée : cherche tes photos depuis l’écran Recherche.',
     howTo:
       'L’analyse se fait une fois, puis pour chaque nouvelle photo. Fais-la plutôt sur un ordinateur (environ 45 min pour 20 000 photos, et quelque 190 Mo de plus à télécharger). Sur un téléphone, compte au moins 3 h, branché, en Wi-Fi, écran allumé.',
     share:
@@ -34,8 +35,12 @@ const t = localized({
     running: 'Analyse en cours. Garde l’appli ouverte.',
     starting: 'Préparation de l’analyse…',
     progress: 'Analyse des photos',
-    failed: (count: string) =>
-      `${count} n’ont pas pu être lues : relance l’analyse pour réessayer.`,
+    unreadable:
+      'Ces photos n’ont pas pu être lues : Microsoft n’en donne pas de miniature pour l’instant. La recherche ne les trouvera pas.',
+    unreadableElsewhere:
+      'L’appareil qui a fait l’analyse n’a pas pu lire ces photos : la recherche ne les trouvera pas.',
+    andMore: (count: string) => `Et ${count} de plus.`,
+    retry: 'Réessayer',
     error: (text: string) => `Échec : ${text}`,
     elsewhere:
       'Cette analyse vient d’un appareil d’un autre type (carte graphique ou processeur) : continue-la là-bas, ou désactive puis réactive pour tout refaire ici.',
@@ -59,7 +64,7 @@ const t = localized({
     downloadLabel: 'Downloading the model',
     fetching: 'Looking for an analysis made on another device…',
     count: (done: string, total: string) => `${done} photos analysed out of ${total}`,
-    allDone: 'All your photos are analysed: search for them from the Search screen.',
+    allDone: 'Analysis finished: search for your photos from the Search screen.',
     howTo:
       'The analysis runs once, then for each new photo. Better do it on a computer (about 45 min for 20,000 photos, and some 190 MB more to download). On a phone, expect 3 hours at least, plugged in, on Wi-Fi, screen on.',
     share:
@@ -70,7 +75,12 @@ const t = localized({
     running: 'Analysis under way. Keep the app open.',
     starting: 'Getting the analysis ready…',
     progress: 'Analysing the photos',
-    failed: (count: string) => `${count} could not be read: run the analysis again to retry.`,
+    unreadable:
+      'These photos could not be read: Microsoft gives no thumbnail for them for now. The search will not find them.',
+    unreadableElsewhere:
+      'The device that made the analysis could not read these photos: the search will not find them.',
+    andMore: (count: string) => `And ${count} more.`,
+    retry: 'Try again',
     error: (text: string) => `Failed: ${text}`,
     elsewhere:
       'This analysis comes from another kind of device (graphics card or processor): continue it there, or turn this off and on again to redo it all here.',
@@ -81,6 +91,9 @@ const t = localized({
     turnOff: 'Turn off the search',
   },
 });
+
+/** Enough to find them; beyond that, something else is wrong than a few files. */
+const MAX_LISTED = 20;
 
 /** Turns the search on, runs the analysis, says how far it went. */
 export function ContentSection() {
@@ -114,7 +127,7 @@ export function ContentSection() {
     if (answer) await search.disable();
   };
 
-  const complete = state.total > 0 && state.done >= state.total;
+  const complete = analysisComplete(state);
 
   return (
     <section className={common.section} aria-labelledby="settings-content">
@@ -172,8 +185,34 @@ export function ContentSection() {
                 </button>
               </div>
             )}
-            {!state.analysing && state.failed > 0 && (
-              <p className={common.muted}>{t.failed(formatCount(state.failed))}</p>
+            {!state.analysing && state.unreadable.length > 0 && (
+              <div className={common.stack}>
+                <p className={common.muted}>
+                  {state.analysedHere ? t.unreadable : t.unreadableElsewhere}
+                </p>
+                <ul className={styles.unreadable}>
+                  {state.unreadable.slice(0, MAX_LISTED).map((item) => (
+                    <li key={item.id}>
+                      <Link href={`/album/${encodeURIComponent(item.albumId)}`}>{item.name}</Link>
+                    </li>
+                  ))}
+                </ul>
+                {state.unreadable.length > MAX_LISTED && (
+                  <p className={common.muted}>
+                    {t.andMore(formatCount(state.unreadable.length - MAX_LISTED))}
+                  </p>
+                )}
+                {state.analysedHere && (
+                  <button
+                    type="button"
+                    className={common.buttonSoft}
+                    onClick={() => void search.analyse()}
+                    disabled={(!demo && !online) || state.preparing}
+                  >
+                    {t.retry}
+                  </button>
+                )}
+              </div>
             )}
             {state.error && (
               <p className={common.muted} role="alert">

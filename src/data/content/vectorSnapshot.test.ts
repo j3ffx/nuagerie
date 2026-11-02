@@ -21,9 +21,15 @@ describe('the vectors file', () => {
     const decoded = await decodeVectors(blob.stream());
     expect(decoded?.ids).toEqual(['a', 'b']);
     expect(decoded?.device).toBe('webgpu');
+    expect(decoded?.unreadable).toEqual([]);
     expect(decoded?.bytes[0]).toBe(12);
     expect(decoded?.bytes[DIMENSIONS]).toBe(-34);
     expect(decoded?.bytes.length).toBe(2 * DIMENSIONS);
+  });
+
+  it('says which photos its device could not read', async () => {
+    const blob = await encodeVectors(table(), 'wasm', ['c']);
+    expect((await decodeVectors(blob.stream()))?.unreadable).toEqual(['c']);
   });
 
   it('is refused when it does not hold what it says', async () => {
@@ -49,10 +55,14 @@ describe('the copy in the app folder', () => {
       },
     });
     expect(
-      await createVectorSnapshots(graph, { ...always, save: () => false }).save(table(), 'wasm'),
+      await createVectorSnapshots(graph, { ...always, save: () => false }).save(
+        table(),
+        'wasm',
+        [],
+      ),
     ).toBe(false);
     expect(written).toEqual([]);
-    expect(await createVectorSnapshots(graph, always).save(table(), 'wasm')).toBe(true);
+    expect(await createVectorSnapshots(graph, always).save(table(), 'wasm', [])).toBe(true);
     expect(written).toEqual([VECTORS_FILE]);
   });
 

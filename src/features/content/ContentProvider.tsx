@@ -4,7 +4,7 @@ import { createDemoEngine } from '../../data/content/demoEngine.ts';
 import { createWorkerEngine, type EngineDevice } from '../../data/content/engine.ts';
 import { createMemoryVectorStore, createVectorStore } from '../../data/content/vectorStore.ts';
 import { useData, useMediaIndex } from '../../data/dataContext.ts';
-import type { MediaIndex, MediaItem } from '../../data/model.ts';
+import type { MediaIndex, MediaItem, ThumbnailSize } from '../../data/model.ts';
 import type { DataSource } from '../../data/source.ts';
 import { createAppFolderVectorSnapshots } from '../../data/sync/appFolderSnapshots.ts';
 import type { Thumbnails } from '../../data/thumbnails/setup.ts';
@@ -16,6 +16,7 @@ import {
   CONTENT_ANALYSED_KEY,
   CONTENT_DEVICE_KEY,
   CONTENT_ENABLED_KEY,
+  CONTENT_UNREADABLE_KEY,
 } from '../../data/forgetAccount.ts';
 import { ContentContext } from './contentContext.ts';
 
@@ -63,6 +64,8 @@ function create(
     write: (key: keyof typeof KEYS, value: boolean) => writePersistent(KEYS[key], value),
     readDevice: () => readPersistent<EngineDevice | null>(CONTENT_DEVICE_KEY, null),
     writeDevice: (device: EngineDevice | null) => writePersistent(CONTENT_DEVICE_KEY, device),
+    readUnreadable: () => readPersistent<readonly string[]>(CONTENT_UNREADABLE_KEY, []),
+    writeUnreadable: (ids: readonly string[]) => writePersistent(CONTENT_UNREADABLE_KEY, ids),
   };
   const follow = (index: MediaIndex) => {
     shown = index;
@@ -85,9 +88,13 @@ function create(
           // The same thumbnail as the grid's: already seen, no need to download it again.
           const seen = await thumbnails.disk.get(thumbnailKey(item, 'medium'));
           if (seen) return seen;
-          const data = await source.fetchThumbnail(item, 'medium', signal);
-          if ('blob' in data) return data.blob;
-          throw new Error('Thumbnail not readable');
+          const read = async (size: ThumbnailSize) => {
+            const data = await source.fetchThumbnail(item, size, signal);
+            if ('blob' in data) return data.blob;
+            throw new Error('Thumbnail not readable');
+          };
+          // A file Microsoft cannot crop may still have its large thumbnail.
+          return read('medium').catch(() => read('large'));
         },
       });
   return { search, follow };
