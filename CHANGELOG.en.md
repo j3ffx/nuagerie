@@ -4,11 +4,14 @@ The changes of each Nuagerie version, the most recent first. The numbers follow
 [semantic versioning](https://semver.org/): while they start with 0, the app still changes a lot.
 The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
 
-## Since the last version
+## 1.2.1 — 2026-11-02
 
 ### New
 
 - The settings are clearer: a short list that says how each option stands, and one screen per topic.
+
+### Fixes
+
 - Search in the photos: an unreadable photo no longer starts the analysis again at each launch. The settings name it, with “Try again”, and the app also tries its large thumbnail.
 
 ## 1.2.0 — 2026-11-01
