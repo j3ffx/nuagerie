@@ -29,11 +29,11 @@
     "deploy": "npm run build && npm run check:dist && wrangler pages deploy dist --project-name nuagerie"
   },
   "dependencies": {
-    "@azure/msal-browser": "^5.27.0",
-    "@azure/msal-react": "^5.7.4",
+    "@azure/msal-browser": "^5.28.0",
+    "@azure/msal-react": "^5.8.0",
     "@fontsource-variable/nunito": "^5.3.0",
     "@huggingface/tokenizers": "0.2.0",
-    "@tanstack/react-virtual": "^3.14.24",
+    "@tanstack/react-virtual": "^3.14.26",
     "idb": "^8.0.4",
     "leaflet": "^1.9.4",
     "onnxruntime-web": "1.31.1",
