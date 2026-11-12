@@ -4,6 +4,12 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## Depuis la dernière version
+
+### Corrections
+
+- Le bouton « Installer » d’une nouvelle version recharge bien l’appli : parfois, il ne semblait rien faire.
+
 ## 1.2.2 — 2026-11-12
 
 ### Corrections

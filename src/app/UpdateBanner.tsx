@@ -30,7 +30,11 @@ export function UpdateBanner() {
         <span className={styles.title}>{t.title}</span>
         <span className={styles.subtitle}>{label ?? t.available}</span>
       </span>
-      <button type="button" className={`${common.button} ${styles.action}`} onClick={applyUpdate}>
+      <button
+        type="button"
+        className={`${common.button} ${styles.action}`}
+        onClick={() => void applyUpdate()}
+      >
         {t.install}
       </button>
       <button

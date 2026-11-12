@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { registerSW } from 'virtual:pwa-register';
+import { activateUpdate } from './activateUpdate.ts';
 import { fetchDeployed, type Deployed } from './latestVersion.ts';
 
 /**
@@ -31,7 +32,6 @@ const FOREGROUND_CHECK_INTERVAL_MS = 60_000;
 let state: UpdateState = { status: 'idle', latest: null, checkedAt: null };
 const listeners = new Set<() => void>();
 let registration: ServiceWorkerRegistration | undefined;
-let updateSW: (reloadPage?: boolean) => Promise<void> = async () => window.location.reload();
 
 /** Read through a function: the status can change while a check awaits. */
 const currentStatus = (): UpdateStatus => state.status;
@@ -49,7 +49,7 @@ if (import.meta.env.DEV) {
 }
 
 export function initUpdates(): void {
-  updateSW = registerSW({
+  registerSW({
     immediate: true,
     onNeedRefresh: () => {
       setState({ status: 'ready' });
@@ -94,8 +94,15 @@ export async function checkForUpdate({ quiet = false } = {}): Promise<void> {
 }
 
 /** Loads the downloaded version (the page reloads). */
-export function applyUpdate(): void {
-  void updateSW(true);
+export async function applyUpdate(): Promise<void> {
+  const current = registration ?? (await navigator.serviceWorker?.getRegistration());
+  activateUpdate({
+    waiting: current?.waiting,
+    onControllerChange: (listener) =>
+      navigator.serviceWorker.addEventListener('controllerchange', listener, { once: true }),
+    reload: () => window.location.reload(),
+    setTimeout: (callback, ms) => window.setTimeout(callback, ms),
+  });
 }
 
 function subscribe(notify: () => void) {

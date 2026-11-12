@@ -105,7 +105,7 @@ export function AboutSection() {
           </dd>
         </dl>
         {status === 'ready' ? (
-          <button type="button" className={common.button} onClick={applyUpdate}>
+          <button type="button" className={common.button} onClick={() => void applyUpdate()}>
             {t.install}
           </button>
         ) : (
