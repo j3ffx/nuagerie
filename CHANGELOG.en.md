@@ -4,7 +4,7 @@ The changes of each Nuagerie version, the most recent first. The numbers follow
 [semantic versioning](https://semver.org/): while they start with 0, the app still changes a lot.
 The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
 
-## Since the last version
+## 1.2.2 — 2026-11-12
 
 ### Fixes
 
