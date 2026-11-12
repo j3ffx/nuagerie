@@ -4,6 +4,12 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## Depuis la dernière version
+
+### Corrections
+
+- Supprimer une photo depuis la visionneuse marche de nouveau avec les dernières versions de Chrome : le bouton « Supprimer » de la confirmation ne répondait plus.
+
 ## 1.2.1 — 2026-11-02
 
 ### Nouveautés

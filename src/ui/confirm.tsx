@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import common from './common.module.css';
 import { ConfirmContext, type Confirm, type ConfirmOptions } from './confirmContext.ts';
 import styles from './confirm.module.css';
@@ -16,7 +17,9 @@ interface Pending extends ConfirmOptions {
 /**
  * Hosts the confirmation dialog of the screens below it. A native modal
  * <dialog>: the rest of the page is inert, focus starts on "Annuler" (the
- * safe answer), and Escape or Android's back gesture cancel.
+ * safe answer), and Escape or Android's back gesture cancel. It sits beside
+ * the app, not in it: the viewer makes the app inert while it is open, and a
+ * modal dialog inside an inert subtree stays inert (seen with Chromium 158).
  */
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState<Pending | null>(null);
@@ -40,7 +43,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   return (
     <ConfirmContext.Provider value={confirm}>
       {children}
-      {pending && <ConfirmDialog options={pending} onAnswer={answer} />}
+      {pending &&
+        createPortal(<ConfirmDialog options={pending} onAnswer={answer} />, document.body)}
     </ConfirmContext.Provider>
   );
 }
