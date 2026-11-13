@@ -71,17 +71,17 @@ found by date, by place and, if you wish, by what they show. A PWA made for the 
 The details, readable without an account:
 [nuagerie.app/confidentialite](https://nuagerie.app/confidentialite).
 
-- The only network traffic goes to Microsoft (sign-in and Graph), to the map backgrounds of
-  [OpenStreetMap](https://www.openstreetmap.org/copyright) and, if you turn on the search in the
-  photos, to Hugging Face for the model's files, once. That search runs on the device: photos and
+- The only network traffic goes to the app's own host (its files), to Microsoft (sign-in and
+  Graph), to the map backgrounds of [OpenStreetMap](https://www.openstreetmap.org/copyright) and,
+  if you turn on the search in the photos, to Hugging Face for the model's files, once per device. That search runs on the device: photos and
   searches stay there.
 - Place names are worked out on the device: the photos' coordinates are sent nowhere.
 - The index, the thumbnails and the places of the photos are kept in the browser (IndexedDB,
   Cache Storage), and erased on sign-out, like the recent searches.
-- The sync, once turned on, is the only content written to OneDrive, in the signed-in person's
-  OneDrive: `Apps/Nuagerie/nuagerie.json` (favourites, preferences, folders) and
-  `Apps/Nuagerie/index.json.gz`, a copy of the index (names, dates and places of the files,
-  without the photos) that lets another device open in a few seconds. With the search in the
+- Unless you turn on the changes, the sync is the only content written to OneDrive, in the
+  signed-in person's OneDrive: `Apps/Nuagerie/nuagerie.json` (favourites, preferences, folders)
+  and `Apps/Nuagerie/index.json.gz`, a copy of the index (names, folders, dates, coordinates,
+  sizes and camera of the files, without the photos) that lets another device open in a few seconds. With the search in the
   photos, `Apps/Nuagerie/vectors.bin.gz` holds the analysis (a series of numbers per photo).
 
 ## Try it

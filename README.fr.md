@@ -76,18 +76,19 @@ agréable aussi sur PC.
 
 Le détail, lisible sans compte : [nuagerie.app/confidentialite](https://nuagerie.app/confidentialite).
 
-- Les seuls échanges réseau vont vers Microsoft (connexion et Graph), vers les fonds de carte
-  d’[OpenStreetMap](https://www.openstreetmap.org/copyright) et, si tu actives la recherche dans
-  les photos, vers Hugging Face pour les fichiers du modèle, une fois. Cette recherche tourne sur
+- Les seuls échanges réseau vont vers l’hébergeur de l’appli (ses fichiers), vers Microsoft
+  (connexion et Graph), vers les fonds de carte d’[OpenStreetMap](https://www.openstreetmap.org/copyright)
+  et, si tu actives la recherche dans les photos, vers Hugging Face pour les fichiers du modèle,
+  une fois par appareil. Cette recherche tourne sur
   l’appareil : les photos et les recherches y restent.
 - Les noms de lieux sont calculés sur l’appareil : les coordonnées des photos ne sont
   envoyées nulle part.
 - L’index, les miniatures et les lieux des photos sont gardés dans le navigateur (IndexedDB,
   Cache Storage), et effacés à la déconnexion, comme les recherches récentes.
-- La synchronisation, une fois activée, est le seul contenu écrit dans OneDrive, dans le
-  OneDrive de la personne connectée : `Applis/Nuagerie/nuagerie.json` (favoris, préférences,
-  dossiers) et `Applis/Nuagerie/index.json.gz`, une copie de l’index (noms, dates et lieux des
-  fichiers, sans les photos) qui permet à un autre appareil de s’ouvrir en quelques secondes.
+- Sauf si tu actives les modifications, la synchronisation est le seul contenu écrit dans
+  OneDrive, dans le OneDrive de la personne connectée : `Applis/Nuagerie/nuagerie.json` (favoris,
+  préférences, dossiers) et `Applis/Nuagerie/index.json.gz`, une copie de l’index (noms, dossiers,
+  dates, coordonnées, tailles et appareil photo des fichiers, sans les photos) qui permet à un autre appareil de s’ouvrir en quelques secondes.
   Avec la recherche dans les photos, `Applis/Nuagerie/vectors.bin.gz` contient l’analyse (une
   suite de nombres par photo).
 

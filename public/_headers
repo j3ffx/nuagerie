@@ -14,7 +14,8 @@
   Document-Isolation-Policy: isolate-and-credentialless
   # Only Microsoft is reachable from scripts: sign-in, Graph, and the OneDrive
   # hosts that serve thumbnails (thumbnail cache; svc.ms measured on a real
-  # drive) and original files (sharing). Map tile hosts get pinned with the map.
+  # drive) and original files (sharing). Images may come from any https host:
+  # OneDrive serves thumbnails from many, and the map from OpenStreetMap.
   # Hugging Face and its file hosts serve the model, once the search is turned on.
   Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; font-src 'self'; connect-src 'self' https://login.microsoftonline.com https://login.live.com https://graph.microsoft.com https://*.svc.ms https://*.1drv.com https://*.livefilestore.com https://*.microsoftpersonalcontent.com https://huggingface.co https://*.huggingface.co https://*.hf.co; frame-src 'self' https://login.microsoftonline.com https://login.live.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
 

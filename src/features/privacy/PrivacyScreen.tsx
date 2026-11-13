@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { MANAGE_CONSENT_URL } from '../../auth/msal.ts';
 import { localized } from '../../lib/i18n.ts';
 import { REPOSITORY_URL } from '../../lib/report.ts';
@@ -9,7 +10,7 @@ import styles from './PrivacyScreen.module.css';
 export const PRIVACY_PATH = '/confidentialite';
 
 /** Updated with the page: the date it was last changed. */
-const UPDATED = '2026-11-01';
+const UPDATED = '2026-11-13';
 
 interface Part {
   title: string;
@@ -42,14 +43,14 @@ const t = localized({
         title: 'Sur ton appareil',
         paragraphs: [
           'Pour s’ouvrir vite, et sans réseau, Nuagerie garde dans ton navigateur l’index de tes photos, leurs miniatures, les albums que tu gardes hors connexion, les lieux de tes photos, tes favoris, tes dernières recherches, tes préférences, la liste des photos supprimées depuis l’appli (avec leurs miniatures) et ta connexion Microsoft (nom du compte, adresse e-mail et jetons, gardés par la bibliothèque de connexion de Microsoft).',
-          'Se déconnecter efface tout cela, sauf l’apparence de l’appli (thème, langue, colonnes). Effacer les données du site dans le navigateur aussi.',
+          'Se déconnecter efface tout cela, sauf l’apparence de l’appli (thème, langue, colonnes) et quelques réglages de l’appareil sans rien de personnel (taille du cache, synchronisation coupée ici). Effacer les données du site dans le navigateur efface tout.',
           'La notification des souvenirs est préparée sur l’appareil et montre une de tes photos parmi tes notifications. Partager envoie une photo seulement à l’appli que tu choisis.',
         ],
       },
       {
         title: 'Recherche dans les photos',
         paragraphs: [
-          'Seulement si tu l’actives (Réglages → Recherche dans les photos). Le modèle qui comprend ce que montrent les photos est téléchargé une fois depuis Hugging Face, qui voit ton adresse IP comme tout site qui sert un fichier, et rien d’autre.',
+          'Seulement si tu l’actives (Réglages → Recherche dans les photos). Le modèle qui comprend ce que montrent les photos est téléchargé depuis Hugging Face, une fois sur chaque appareil, qui voit ton adresse IP et ton navigateur comme tout site qui sert un fichier, et rien de tes photos ni de tes recherches.',
           'Ensuite tout se calcule sur tes appareils : l’analyse lit les miniatures de tes photos et garde pour chacune une suite de nombres, et tes recherches ne quittent pas l’appareil. Avec la synchronisation, ces nombres vont aussi dans Applis/Nuagerie, pour tes autres appareils.',
           'Désactiver cette recherche ou se déconnecter efface le modèle et l’analyse de l’appareil.',
         ],
@@ -70,7 +71,7 @@ const t = localized({
       {
         title: 'Signaler un problème',
         paragraphs: [
-          'Le lien des réglages ouvre GitHub (compte nécessaire), avec la version de Nuagerie, si c’est la démo, et le type d’appareil (système, navigateur, largeur d’écran), rien de personnel. Ce que tu y écris est public.',
+          'Le lien des réglages ouvre GitHub (compte nécessaire), avec la version de Nuagerie, si c’est la démo, si l’appli est installée et le type d’appareil (système, navigateur, largeur d’écran), rien de personnel. Ce que tu y écris est public.',
         ],
       },
     ],
@@ -104,14 +105,14 @@ const t = localized({
         title: 'On your device',
         paragraphs: [
           'To open fast, and without a network, Nuagerie keeps in your browser the index of your photos, their thumbnails, the albums you keep offline, the places of your photos, your favourites, your latest searches, your preferences, the list of photos deleted from the app (with their thumbnails) and your Microsoft sign-in (account name, email address and tokens, kept by Microsoft’s sign-in library).',
-          'Signing out erases all of it, except the look of the app (theme, language, columns). So does clearing the site’s data in the browser.',
+          'Signing out erases all of it, except the look of the app (theme, language, columns) and a few device settings with nothing personal in them (cache size, sync turned off here). Clearing the site’s data in the browser erases everything.',
           'The memories notification is made on the device and shows one of your photos among your notifications. Sharing sends a photo only to the app you choose.',
         ],
       },
       {
         title: 'Search in the photos',
         paragraphs: [
-          'Only if you turn it on (Settings → Search in the photos). The model that understands what photos show is downloaded once from Hugging Face, which sees your IP address as any site serving a file does, and nothing else.',
+          'Only if you turn it on (Settings → Search in the photos). The model that understands what photos show is downloaded from Hugging Face, once on each device, which sees your IP address and your browser as any site serving a file does, and nothing of your photos or searches.',
           'After that, everything is worked out on your devices: the analysis reads your photos’ thumbnails and keeps a series of numbers for each, and your searches do not leave the device. With the sync, those numbers also go to Apps/Nuagerie, for your other devices.',
           'Turning this search off or signing out erases the model and the analysis from the device.',
         ],
@@ -132,7 +133,7 @@ const t = localized({
       {
         title: 'Reporting a problem',
         paragraphs: [
-          'The link in the settings opens GitHub (an account is needed), with Nuagerie’s version, whether it shows the demo, and the kind of device (system, browser, screen width), nothing personal. What you write there is public.',
+          'The link in the settings opens GitHub (an account is needed), with Nuagerie’s version, whether it shows the demo, whether the app is installed, and the kind of device (system, browser, screen width), nothing personal. What you write there is public.',
         ],
       },
     ],
@@ -149,6 +150,13 @@ const t = localized({
  */
 export function PrivacyScreen() {
   const parts: readonly Part[] = t.parts;
+  useEffect(() => {
+    document.title = `${t.title} · Nuagerie`;
+    // A page of its own for search engines, not a copy of the home page.
+    document
+      .querySelector('link[rel="canonical"]')
+      ?.setAttribute('href', `https://nuagerie.app${PRIVACY_PATH}`);
+  }, []);
   return (
     <main className={styles.privacy}>
       <header className={styles.header}>
