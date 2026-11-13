@@ -9,7 +9,7 @@ import {
 import { createDemoEngine } from './demoEngine.ts';
 import type { ContentEngine, EngineDevice } from './engine.ts';
 import { DIMENSIONS, toBytes, type VectorTable } from './rank.ts';
-import type { VectorSnapshots } from './vectorSnapshot.ts';
+import type { SharedVectors, VectorSnapshots } from './vectorSnapshot.ts';
 import { createMemoryVectorStore } from './vectorStore.ts';
 
 const photo = (id: string) => ({ id }) as MediaItem;
@@ -372,6 +372,28 @@ describe('sharing the vectors between devices', () => {
     t.search.update(items);
     await t.search.enable();
     expect(await t.store.ids()).toEqual(new Set(['chat']));
+  });
+
+  it('keeps nothing of a copy still arriving when the search is turned off', async () => {
+    let deliver: (copy: SharedVectors) => void = () => undefined;
+    const { snapshots } = shared({
+      load: () => new Promise<SharedVectors>((resolve) => (deliver = resolve)),
+    });
+    const t = setup({ snapshots });
+    t.search.update(items);
+    const enabling = t.search.enable();
+    await settled();
+    const disabling = t.search.disable();
+    await settled();
+    deliver({
+      ids: ['chat'],
+      bytes: new Int8Array(DIMENSIONS),
+      device: 'webgpu',
+      unreadable: ['plage'],
+    });
+    await Promise.all([enabling, disabling]);
+    expect(await t.store.ids()).toEqual(new Set());
+    expect(t.search.getSnapshot()).toMatchObject({ enabled: false, done: 0 });
   });
 
   it('survives a copy that cannot be read', async () => {

@@ -115,6 +115,10 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
   let textReady: Promise<void> | null = null;
   let capture: Promise<Float32Array> | null = null;
   let snapshotTried = false;
+  /** The copy being fetched from another device, for turning off to wait for. */
+  let fetchingCopy: Promise<void> = Promise.resolve();
+  /** Bumped when the search is turned off: work begun before writes nothing after. */
+  let epoch = 0;
   let lastNotify = 0;
 
   const set = (next: Partial<ContentState>) => {
@@ -150,14 +154,21 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
     return textReady;
   };
 
-  async function fromAnotherDevice(): Promise<void> {
-    if (!snapshots || snapshotTried || !deps.isOnline()) return;
+  function fromAnotherDevice(): Promise<void> {
+    if (!snapshots || snapshotTried || !deps.isOnline()) return fetchingCopy;
     snapshotTried = true;
+    fetchingCopy = fetchCopy(snapshots, epoch);
+    return fetchingCopy;
+  }
+
+  async function fetchCopy(snapshots: VectorSnapshots, started: number): Promise<void> {
+    const stillOn = () => epoch === started;
     set({ fetching: true });
     try {
       const copy = await snapshots.load();
-      if (!copy) return;
+      if (!copy || !stillOn()) return;
       const ids = (known ??= await store.ids());
+      if (!stillOn()) return;
       if (ids.size > 0 && deps.readDevice() !== copy.device) return;
       deps.writeDevice(copy.device);
       const wanted = new Set(items.map((item) => item.id));
@@ -168,6 +179,7 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
         missing.push([id, copy.bytes.slice(start, start + DIMENSIONS)]);
       });
       for (let i = 0; i < missing.length; i += STORE_BATCH) {
+        if (!stillOn()) return;
         await store.putMany(missing.slice(i, i + STORE_BATCH));
       }
       for (const [id] of missing) ids.add(id);
@@ -262,9 +274,12 @@ export function createContentSearch(deps: ContentDeps): ContentSearch {
 
     async disable() {
       search.stop();
-      // Nothing written after the store is cleared.
+      // Nothing written after the store is cleared: the analysis and the copy being fetched end
+      // first, and anything they have not written yet is dropped.
+      epoch++;
       const never = new AbortController().signal;
       while (state.analysing) await deps.pause(50, never);
+      await fetchingCopy;
       deps.write('enabled', false);
       deps.write('analysed', false);
       deps.writeDevice(null);
