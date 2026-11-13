@@ -24,8 +24,14 @@ const walk = (dir) => {
 };
 walk(DIST);
 
+/** Cloudflare Pages refuses a file over 25 MiB; a margin, so a file growing is seen before then. */
+const MAX_FILE_BYTES = 24 * 1024 * 1024;
+
 for (const file of files) {
   if (file.endsWith('.map')) errors.push(`source map would be published: ${file}`);
+  const size = statSync(file).size;
+  if (size > MAX_FILE_BYTES)
+    errors.push(`${file} weighs ${(size / 1024 / 1024).toFixed(1)} MiB, near Pages' 25 MiB limit`);
 }
 
 if (existsSync('.private-patterns')) {
