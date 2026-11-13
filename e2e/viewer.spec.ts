@@ -286,17 +286,21 @@ test('on a phone, the info panel leaves the whole photo above it', async ({ page
   const panel = viewer(page).getByRole('region', { name: 'Infos' });
   await expect(panel).toBeVisible();
   // Until the large image is there, the preview (scaled 1.02) is what gets measured:
-  // on a busy machine that takes longer than any fixed wait.
+  // on a busy machine that takes longer than any fixed wait. While the large image takes
+  // the preview's place, neither may have a box yet: that is "not yet", not a failure
+  // (expect.poll does not retry a callback that throws).
   const measure = async () => {
     const photo = await viewer(page).locator('[data-active] img').last().boundingBox();
     const sheet = await panel.boundingBox();
-    if (!photo || !sheet) throw new Error('nothing to measure');
+    if (!photo || !sheet) return null;
     return { overlap: photo.y + photo.height - sheet.y, height: photo.height };
   };
   await expect
-    .poll(async () => (await measure()).overlap, { message: 'photo bottom minus panel top' })
+    .poll(async () => (await measure())?.overlap ?? Infinity, {
+      message: 'photo bottom minus panel top',
+    })
     .toBeLessThanOrEqual(1);
-  expect((await measure()).height).toBeGreaterThan(150);
+  await expect.poll(async () => (await measure())?.height ?? 0).toBeGreaterThan(150);
 });
 
 test('with the info panel open on a phone, a swipe down closes the panel only', async ({
