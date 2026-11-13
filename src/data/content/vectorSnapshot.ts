@@ -1,3 +1,4 @@
+import { gunzipAtMost } from '../../lib/limitedStream.ts';
 import type { AppFolderWriter, GraphClient } from '../graph/client.ts';
 import { MODEL_ID, type EngineDevice } from './engine.ts';
 import { DIMENSIONS, type VectorTable } from './rank.ts';
@@ -56,11 +57,15 @@ export async function encodeVectors(
   return new Response(stream).blob();
 }
 
+/** Room for about 300,000 photos: a copy past it was not made by Nuagerie. */
+const MAX_VECTORS_BYTES = 256 * 1024 * 1024;
+
 export async function decodeVectors(
   body: ReadableStream<BufferSource>,
 ): Promise<SharedVectors | null> {
-  const stream = body.pipeThrough(new DecompressionStream('gzip'));
-  const data = new Uint8Array(await new Response(stream).arrayBuffer());
+  const data = new Uint8Array(
+    await new Response(gunzipAtMost(body, MAX_VECTORS_BYTES)).arrayBuffer(),
+  );
   const length = new DataView(data.buffer).getUint32(0, true);
   const header = JSON.parse(new TextDecoder().decode(data.subarray(4, 4 + length))) as Header;
   const bytes = new Int8Array(data.buffer, 4 + length);
