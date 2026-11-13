@@ -153,7 +153,8 @@ export function SyncProvider({
         if (!sameState(kept, latest)) save(kept);
         applying.current = true;
         try {
-          for (const [key, entry] of Object.entries(merged.preferences)) {
+          // `kept`, not `merged`: a preference changed here while the run was under way stays.
+          for (const [key, entry] of Object.entries(kept.preferences)) {
             if (!SYNCED.has(key)) continue;
             const mine = readPersistent<unknown>(key, undefined);
             if (JSON.stringify(mine) !== JSON.stringify(entry.value))
