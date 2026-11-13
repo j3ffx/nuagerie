@@ -31,6 +31,10 @@
   text-decoration: none;
   font-size: 12px;
   font-weight: 700;
+  /* Larger text: a label breaks rather than being cut off. */
+  text-align: center;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .pill {

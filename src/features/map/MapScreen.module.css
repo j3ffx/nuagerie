@@ -144,6 +144,7 @@
 
 .panelHeader {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
@@ -151,6 +152,8 @@
 }
 
 .panelTitle {
+  flex: 1 1 12ch;
+  min-width: 0;
   overflow: hidden;
   font-size: 15px;
   font-weight: 800;
@@ -208,4 +211,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Leaflet draws its zoom buttons at 30 px: the app's touch targets are 44. */
+.screen :global(.leaflet-control-zoom a) {
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+  font-size: 22px;
 }
