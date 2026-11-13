@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useData } from '../../data/dataContext.ts';
 import { MEMORIES_SYNC_TAG } from '../../data/memoryNotifier.ts';
 import common from '../../ui/common.module.css';
+import { useFocusRescue } from '../../ui/useFocusRescue.ts';
 import { localized } from '../../lib/i18n.ts';
 
 import {
@@ -58,6 +59,7 @@ const currentState = async (): Promise<State> => ((await memoriesNotificationOn(
  * Chrome on an installed app can; elsewhere, the section says so.
  */
 export function MemoriesNotificationSection() {
+  const card = useFocusRescue<HTMLDivElement>();
   const { mode } = useData();
   const [state, setState] = useState<State>('unknown');
   const [message, setMessage] = useState<string | null>(null);
@@ -117,7 +119,7 @@ export function MemoriesNotificationSection() {
       <h2 id="settings-memories" className={common.sectionTitle}>
         {t.title}
       </h2>
-      <div className={`${common.card} ${common.stack}`}>
+      <div ref={card} tabIndex={-1} className={`${common.card} ${common.stack}`}>
         <p className={common.muted}>{t.what}</p>
         {mode === 'demo' ? (
           <p className={common.muted}>{t.demo}</p>

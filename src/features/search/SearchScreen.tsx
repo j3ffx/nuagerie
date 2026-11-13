@@ -119,6 +119,15 @@ const t = localized({
 
 type Go = (target: SearchTarget) => void;
 
+/** Results just shown take the focus the search field gave up (to hide the keyboard). */
+function useFocusOnArrival<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    if (document.activeElement === document.body) ref.current?.focus({ preventScroll: true });
+  });
+  return ref;
+}
+
 /**
  * Finds photos by album, place and date. The search is in the URL
  * (`/recherche?q=…&album=…&lieu=…`), so Android's back button returns from
@@ -542,6 +551,7 @@ function Suggestions({ search, text, go }: { search: SearchIndex; text: string; 
 
 /** The items of a search, with what narrows it: its album and place, and the places in it. */
 function Results({ search, target, go }: { search: SearchIndex; target: SearchTarget; go: Go }) {
+  const summaryRef = useFocusOnArrival<HTMLParagraphElement>();
   const query = useMemo(() => parseQuery(target.q), [target.q]);
   const items = useMemo(
     () => searchItems(search, query, { albumId: target.album, place: target.place }),
@@ -592,7 +602,7 @@ function Results({ search, target, go }: { search: SearchIndex; target: SearchTa
           )}
         </ul>
       )}
-      <p className={`${common.muted} ${styles.summary}`}>
+      <p ref={summaryRef} tabIndex={-1} className={`${common.muted} ${styles.summary}`}>
         {formatItemCount(items.length)}
         {query.date && ` · ${query.date.label}`}
       </p>
@@ -639,6 +649,7 @@ function ContentResults({
   go: Go;
 }) {
   const { search: content, state } = useContentSearch();
+  const summaryRef = useFocusOnArrival<HTMLParagraphElement>();
   const query = useMemo(() => parseQuery(target.q), [target.q]);
   const among = useMemo(() => {
     const filters = { albumId: target.album, place: target.place };
@@ -694,7 +705,7 @@ function ContentResults({
   }
   return (
     <>
-      <p className={`${common.muted} ${styles.summary}`}>
+      <p ref={summaryRef} tabIndex={-1} className={`${common.muted} ${styles.summary}`}>
         {formatItemCount(items.length)}
         {query.date && ` · ${query.date.label}`}
         {!analysisComplete(state) && ` · ${formatCount(state.done)} / ${formatCount(state.total)}`}

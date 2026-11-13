@@ -5,6 +5,7 @@ import { formatBytes, formatCount } from '../../lib/format.ts';
 import { localized } from '../../lib/i18n.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
+import { useFocusRescue } from '../../ui/useFocusRescue.ts';
 import { useConfirm } from '../../ui/confirmContext.ts';
 import { useContentSearch } from '../content/contentContext.ts';
 import styles from './OfflineSection.module.css';
@@ -97,6 +98,7 @@ const MAX_LISTED = 20;
 
 /** Turns the search on, runs the analysis, says how far it went. */
 export function ContentSection() {
+  const card = useFocusRescue<HTMLDivElement>();
   const { mode } = useData();
   const { state, search } = useContentSearch();
   const online = useOnline();
@@ -134,7 +136,7 @@ export function ContentSection() {
       <h2 id="settings-content" className={common.sectionTitle}>
         {t.title}
       </h2>
-      <div className={`${common.card} ${common.stack}`}>
+      <div ref={card} tabIndex={-1} className={`${common.card} ${common.stack}`}>
         {!state.enabled ? (
           <>
             <p className={common.muted}>{demo ? `${t.what} ${t.demo}` : t.what}</p>
@@ -168,7 +170,7 @@ export function ContentSection() {
               state.preparing && <p role="status">{t.loading}</p>
             )}
             {state.fetching && <p role="status">{t.fetching}</p>}
-            <p role="status">
+            <p>
               {complete ? t.allDone : t.count(formatCount(state.done), formatCount(state.total))}
             </p>
             {state.analysing && (

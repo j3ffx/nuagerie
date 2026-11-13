@@ -13,8 +13,15 @@
 
 .title {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-size: 22px;
   letter-spacing: -0.01em;
+}
+
+/* Focused by script to announce a new screen, not something to act on. */
+.title:focus {
+  outline: none;
 }
 
 .sync {
@@ -25,6 +32,8 @@
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: var(--space-2);
 }

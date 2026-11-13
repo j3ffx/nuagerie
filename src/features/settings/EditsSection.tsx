@@ -4,6 +4,7 @@ import { formatCount } from '../../lib/format.ts';
 import { localized } from '../../lib/i18n.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
+import { useFocusRescue } from '../../ui/useFocusRescue.ts';
 import { useConfirm } from '../../ui/confirmContext.ts';
 import { useEdits } from '../edits/editsContext.ts';
 
@@ -54,6 +55,7 @@ const t = localized({
  * in the recycle bin is one tap away.
  */
 export function EditsSection() {
+  const card = useFocusRescue<HTMLDivElement>();
   const edits = useEdits();
   const { mode } = useData();
   const online = useOnline();
@@ -76,7 +78,7 @@ export function EditsSection() {
       <h2 id="settings-edits" className={common.sectionTitle}>
         {t.title}
       </h2>
-      <div className={`${common.card} ${common.stack}`}>
+      <div ref={card} tabIndex={-1} className={`${common.card} ${common.stack}`}>
         {!edits.available ? (
           <p className={common.muted}>{t.signIn}</p>
         ) : edits.status === 'off' ? (

@@ -196,7 +196,11 @@ test('says when sharing failed, and lets the user try again', async ({ page }) =
     .click();
   const button = page.getByRole('button', { name: 'Partager' });
   await button.click();
-  await expect(viewer(page).getByRole('status')).toHaveText(/Partage impossible/);
+  await expect(
+    viewer(page)
+      .getByRole('status')
+      .filter({ hasText: /Partage impossible/ }),
+  ).toBeVisible();
   await expect(button).toBeEnabled();
   await button.click();
   await expect

@@ -50,6 +50,7 @@ import { useViewer } from './useViewer.ts';
 import { usePlaceName } from './usePlaceName.ts';
 import { ViewerSlide } from './ViewerSlide.tsx';
 import styles from './Viewer.module.css';
+import { describeItem } from '../../lib/format.ts';
 import { localized } from '../../lib/i18n.ts';
 
 const t = localized({
@@ -67,6 +68,7 @@ const t = localized({
     syncTitle: 'Activer la synchronisation ?',
     syncConfirm: 'Activer',
     viewer: 'Visionneuse',
+    position: (photo: string, n: number, total: number) => `${photo}, ${n} sur ${total}`,
     previous: 'Photo précédente',
     next: 'Photo suivante',
     syncMessage:
@@ -91,6 +93,7 @@ const t = localized({
     syncTitle: 'Turn on the sync?',
     syncConfirm: 'Turn on',
     viewer: 'Viewer',
+    position: (photo: string, n: number, total: number) => `${photo}, ${n} of ${total}`,
     previous: 'Previous photo',
     next: 'Next photo',
     syncMessage:
@@ -553,6 +556,10 @@ export function Viewer({
           )}
         </div>
       </div>
+
+      <p className="visually-hidden" role="status">
+        {t.position(describeItem(item), index + 1, items.length)}
+      </p>
 
       <ViewerBar
         item={item}

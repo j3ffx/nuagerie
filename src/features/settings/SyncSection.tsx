@@ -3,6 +3,7 @@ import { useSync } from '../../data/sync/syncContext.ts';
 import { formatCount, formatDateTime } from '../../lib/format.ts';
 import { useOnline } from '../../lib/online.ts';
 import common from '../../ui/common.module.css';
+import { useFocusRescue } from '../../ui/useFocusRescue.ts';
 import { useConfirm } from '../../ui/confirmContext.ts';
 import { localized } from '../../lib/i18n.ts';
 
@@ -86,6 +87,7 @@ const STATUS_LABELS = {
  * reinstall and follow the user to other devices). Favourites need it.
  */
 export function SyncSection() {
+  const card = useFocusRescue<HTMLDivElement>();
   const sync = useSync();
   const { mode } = useData();
   const online = useOnline();
@@ -114,7 +116,7 @@ export function SyncSection() {
       <h2 id="settings-sync" className={common.sectionTitle}>
         {t.title}
       </h2>
-      <div className={`${common.card} ${common.stack}`}>
+      <div ref={card} tabIndex={-1} className={`${common.card} ${common.stack}`}>
         <dl className={common.definitionList}>
           <dt>{t.favorites}</dt>
           <dd>{formatCount(sync.favorites.size)}</dd>

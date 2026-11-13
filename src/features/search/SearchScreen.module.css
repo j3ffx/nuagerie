@@ -280,3 +280,8 @@
     background: var(--color-surface-2);
   }
 }
+
+/* Focused by script after a search, to read the count out. */
+.summary:focus {
+  outline: none;
+}

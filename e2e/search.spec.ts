@@ -150,7 +150,10 @@ test('reads a day of the year, and a word that is also an album name', async ({ 
   await expect(page.getByText(/éléments · 14 juillet 2023$/)).toBeVisible();
   await grid(page).first().click();
   await expect(
-    page.getByRole('dialog', { name: 'Visionneuse' }).getByText(/14 juillet 2023/),
+    page
+      .getByRole('dialog', { name: 'Visionneuse' })
+      .getByRole('status')
+      .filter({ hasText: /14 juillet 2023/ }),
   ).toBeVisible();
   await page.goBack();
 
