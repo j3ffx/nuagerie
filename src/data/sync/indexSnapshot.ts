@@ -1,4 +1,5 @@
-import type { AppFolderWriter, GraphClient } from '../graph/client.ts';
+import { gunzipAtMost } from '../../lib/limitedStream.ts';
+import { isGraphUrl, type AppFolderWriter, type GraphClient } from '../graph/client.ts';
 import type { GraphDriveItem } from '../graph/types.ts';
 import type { RootSyncState, SnapshotInfo } from '../store.ts';
 
@@ -61,7 +62,10 @@ export function usableSnapshot(
     Array.isArray(snapshot.channels) &&
     snapshot.channels.length > 0 &&
     snapshot.channels.every(
-      (channel) => typeof channel.deltaLink === 'string' && channel.resumeLink === null,
+      (channel) =>
+        typeof channel.deltaLink === 'string' &&
+        isGraphUrl(channel.deltaLink) &&
+        channel.resumeLink === null,
     ) &&
     Array.isArray(snapshot.items) &&
     typeof snapshot.savedAt === 'number'
@@ -76,8 +80,11 @@ export async function encodeSnapshot(snapshot: IndexSnapshot): Promise<Blob> {
   return new Response(stream).blob();
 }
 
+/** Far above what 100,000 photos take: a copy past it was not made by Nuagerie. */
+const MAX_SNAPSHOT_BYTES = 256 * 1024 * 1024;
+
 export async function decodeSnapshot(body: ReadableStream<BufferSource>): Promise<unknown> {
-  return new Response(body.pipeThrough(new DecompressionStream('gzip'))).json();
+  return new Response(gunzipAtMost(body, MAX_SNAPSHOT_BYTES)).json();
 }
 
 /**

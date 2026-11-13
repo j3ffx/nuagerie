@@ -12,6 +12,9 @@ import type { GraphDriveItem } from './types.ts';
 
 export const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
 
+/** A full address on Graph, where the token may go. */
+export const isGraphUrl = (url: string) => url.startsWith(`${GRAPH_BASE}/`);
+
 export class GraphError extends Error {
   readonly status: number;
   readonly code: string;
@@ -170,7 +173,12 @@ export function createGraphClient(
   const online = options.isOnline ?? isOnline;
 
   async function send(pathOrUrl: string, request: Request = { method: 'GET' }): Promise<Response> {
-    const url = /^https:\/\//.test(pathOrUrl) ? pathOrUrl : `${GRAPH_BASE}${pathOrUrl}`;
+    // The token goes to Graph only: a full address comes from Graph's own answers (next pages,
+    // delta links), and could otherwise come from a tampered copy in the app folder.
+    if (/^https?:/i.test(pathOrUrl) && !isGraphUrl(pathOrUrl)) {
+      throw new Error('Not a Microsoft Graph address');
+    }
+    const url = isGraphUrl(pathOrUrl) ? pathOrUrl : `${GRAPH_BASE}${pathOrUrl}`;
     for (let attempt = 0; ; attempt++) {
       const token = await options.getToken();
       let response: Response;

@@ -55,13 +55,13 @@ function fakeOneDrive(photosName = 'Pictures') {
             photo('p1', '20261006_084759.jpg', 'm'),
             photo('p2', 'IMG_0001.JPG', 'cam'),
           ],
-          '@odata.deltaLink': 'https://graph/delta?token=1',
+          '@odata.deltaLink': 'https://graph.microsoft.com/v1.0/delta?token=1',
         } as T;
       }
-      if (url === 'https://graph/delta?token=1') {
+      if (url === 'https://graph.microsoft.com/v1.0/delta?token=1') {
         const value = changes;
         changes = [];
-        return { value, '@odata.deltaLink': 'https://graph/delta?token=1' } as T;
+        return { value, '@odata.deltaLink': 'https://graph.microsoft.com/v1.0/delta?token=1' } as T;
       }
       throw new Error(`unexpected ${url}`);
     },
@@ -111,7 +111,7 @@ describe('createOneDriveSource', () => {
       ...graph.client,
       async getJson<T>(url: string) {
         // The refresh is held on its delta page while the reset happens.
-        if (url === 'https://graph/delta?token=1') await gate;
+        if (url === 'https://graph.microsoft.com/v1.0/delta?token=1') await gate;
         return graph.client.getJson<T>(url);
       },
     };
@@ -232,7 +232,9 @@ describe('createOneDriveSource', () => {
       expect(saved[0]?.items.map((item) => item.id).sort()).toEqual(
         ['cam', 'm', 'p1', 'p2', 'pics', 'y'].sort(),
       );
-      expect(saved[0]?.channels[0]?.deltaLink).toBe('https://graph/delta?token=1');
+      expect(saved[0]?.channels[0]?.deltaLink).toBe(
+        'https://graph.microsoft.com/v1.0/delta?token=1',
+      );
       await vi.waitFor(async () => expect((await store.getMeta())?.snapshot?.stale).toBe(false));
 
       graph.setChanges([photo('p3', 'IMG_0003.JPG', 'cam')]);
@@ -262,7 +264,7 @@ describe('createOneDriveSource', () => {
       graph.setChanges([photo('p3', 'IMG_0003.JPG', 'cam')]);
       const updated = await s.refresh?.();
       expect(updated?.items.map((i) => i.id).sort()).toEqual(['p1', 'p2', 'p3']);
-      expect(graph.calls).toContain('https://graph/delta?token=1');
+      expect(graph.calls).toContain('https://graph.microsoft.com/v1.0/delta?token=1');
     });
 
     it('lists the drive again after a reindex asked for, unless told to use the copy', async () => {

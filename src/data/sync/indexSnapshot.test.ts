@@ -23,7 +23,7 @@ const snapshot = (overrides: Partial<IndexSnapshot> = {}): IndexSnapshot => ({
       path: '/Pictures',
       id: 'pics',
       scope: 'folder',
-      deltaLink: 'https://d?t=1',
+      deltaLink: 'https://graph.microsoft.com/v1.0/me/drive/items/pics/delta?token=1',
       resumeLink: null,
     },
   ],
@@ -55,6 +55,13 @@ describe('usableSnapshot', () => {
     expect(usableSnapshot(unfinished, 'me', ROOTS)).toBe(false);
     expect(usableSnapshot(snapshot({ channels: [] }), 'me', ROOTS)).toBe(false);
     expect(usableSnapshot(null, 'me', ROOTS)).toBe(false);
+    // A delta link elsewhere than Graph would take the token there.
+    const elsewhere = snapshot();
+    elsewhere.channels = elsewhere.channels.map((c) => ({
+      ...c,
+      deltaLink: 'https://evil.example/d',
+    }));
+    expect(usableSnapshot(elsewhere, 'me', ROOTS)).toBe(false);
     expect(usableSnapshot({ schema: 2 }, 'me', ROOTS)).toBe(false);
   });
 });

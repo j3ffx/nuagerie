@@ -139,6 +139,22 @@ describe('mapWithConcurrency', () => {
   });
 });
 
+describe('the token', () => {
+  it('goes to Graph only, whatever address it is given', async () => {
+    const calls: string[] = [];
+    const client = createGraphClient({
+      getToken: async () => 'secret',
+      fetch: async (url) => {
+        calls.push(String(url));
+        return new Response('{}');
+      },
+    });
+    await expect(client.getJson('https://evil.example/me/drive')).rejects.toThrow();
+    await expect(client.getJson('http://graph.microsoft.com/v1.0/me')).rejects.toThrow();
+    expect(calls).toEqual([]);
+  });
+});
+
 describe('putAppFile', () => {
   it('writes only into the app folder, never over a newer copy', async () => {
     const { client, calls } = setup([json({ eTag: '"e2"' }), json({ eTag: '"e3"' })]);
