@@ -2,11 +2,12 @@
 // Enforces Conventional Commits (CLAUDE.md → Commits). Zero dependencies.
 //   node scripts/check-commits.mjs --file .git/COMMIT_EDITMSG   one message (the commit-msg hook)
 //   node scripts/check-commits.mjs --title "feat: …"            a pull request title (it becomes the squash commit)
-//   node scripts/check-commits.mjs <from>..<to>                 every non-merge commit in a range (CI)
+//   node scripts/check-commits.mjs <from>..<to>                 every non-merge commit in a range (CI), dates too
 //   node scripts/check-commits.mjs                              commits not yet on any remote
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { isNormalized } from './commit-date.mjs';
 
 // Single source of truth for types and scopes; CLAUDE.md points here.
 export const TYPES = [
@@ -109,13 +110,13 @@ function commitsIn(range) {
     if (from && !exists(from)) from = null; // `to` is a root commit
     args = [from ? `${from}..${to}` : to];
   }
-  return git('log', '--no-merges', '--format=%H%x00%ae%x00%B%x1e', ...args)
+  return git('log', '--no-merges', '--format=%H%x00%ae%x00%ai%x00%ci%x00%B%x1e', ...args)
     .split('\x1e')
     .map((s) => s.trim())
     .filter(Boolean)
     .map((s) => {
-      const [sha = '', author = '', body = ''] = s.split('\x00');
-      return { sha: sha.slice(0, 7), author, message: body.trim() };
+      const [sha = '', author = '', authored = '', committed = '', body = ''] = s.split('\x00');
+      return { sha: sha.slice(0, 7), author, authored, committed, message: body.trim() };
     })
     .filter((c) => !BOTS.includes(c.author));
 }
@@ -150,6 +151,10 @@ function main(argv) {
   let bad = 0;
   for (const c of commits) {
     const problems = lint(c.message);
+    // Re-dated by the post-commit hook; a commit made elsewhere (a merge on GitHub's site, a
+    // machine without the hook) would show when someone worked.
+    if (!isNormalized(c.authored, c.committed))
+      problems.push(`dates not at noon UTC (${c.authored}, ${c.committed}): npm run fix:dates`);
     if (!problems.length) continue;
     bad++;
     console.error(`✖ ${c.sha} ${c.message.split('\n')[0]}\n    ${problems.join('\n    ')}`);
