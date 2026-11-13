@@ -313,6 +313,31 @@ describe('createDriveEdits', () => {
     expect(items.some((item) => item.id === 'fresh')).toBe(true);
   });
 
+  it('counts a delete OneDrive did but answered badly, so it can be restored', async () => {
+    const { edits, current } = setup((writer) => ({
+      ...writer,
+      deleteItem: async (id, options) => {
+        await writer.deleteItem(id, options);
+        throw new Error('No answer in time');
+      },
+    }));
+    const result = await edits.deleteItems(['p1']);
+    expect(result.done).toEqual(['p1']);
+    expect(ids(current())).not.toContain('p1');
+  });
+
+  it('still reports a delete that did not happen', async () => {
+    const { edits, current } = setup((writer) => ({
+      ...writer,
+      deleteItem: async () => {
+        throw new Error('No answer in time');
+      },
+    }));
+    const result = await edits.deleteItems(['p1']);
+    expect(result.failed).toEqual([{ id: 'p1', reason: 'error' }]);
+    expect(ids(current())).toContain('p1');
+  });
+
   it('stops asking once Microsoft no longer grants the permission', async () => {
     let calls = 0;
     const index = build(drive());

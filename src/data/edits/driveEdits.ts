@@ -152,7 +152,18 @@ export function createDriveEdits({ writer, index, apply }: DriveEditsOptions): D
         ids,
         allowed,
         async (id) => {
-          await writer.deleteItem(id);
+          try {
+            await writer.deleteItem(id);
+          } catch (error) {
+            // No answer, or a bad one: OneDrive may have done it all the same. Gone means done,
+            // so the photo gets its place in the app's bin and can be restored.
+            if (failureOf(error) !== 'error') throw error;
+            const item = await writer.getItem(id).catch((lookup: unknown) => {
+              if (failureOf(lookup) === 'gone') return null;
+              throw error;
+            });
+            if (item && !item.deleted) throw error;
+          }
           return { deleted: id };
         },
         onProgress,
