@@ -30,7 +30,15 @@ const t = localized({
 
 /** A path inside the app to go back to; anything else (another site) is ignored. */
 function returnPath(value: string | null): string {
-  return value && value.startsWith('/') && !value.startsWith('//') ? value : '/reglages';
+  if (!value?.startsWith('/')) return '/reglages';
+  // "//site" and "/\site" are other sites to a browser: resolved, the address must stay here.
+  try {
+    const url = new URL(value, window.location.origin);
+    if (url.origin !== window.location.origin) return '/reglages';
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return '/reglages';
+  }
 }
 
 /** What each version brought (CHANGELOG.md), the most recent first. */
