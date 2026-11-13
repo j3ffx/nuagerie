@@ -4,6 +4,12 @@ The changes of each Nuagerie version, the most recent first. The numbers follow
 [semantic versioning](https://semver.org/): while they start with 0, the app still changes a lot.
 The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
 
+## Since the last version
+
+### Fixes
+
+- Nuagerie and its Privacy page can be read without JavaScript too: search engines and AI assistants find what the app is and what it promises.
+
 ## 1.2.4 — 2026-11-13
 
 A full review of the app, first of all for security and for keeping what the Privacy page promises.

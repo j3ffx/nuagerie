@@ -30,10 +30,49 @@
   </head>
   <body>
     <div id="root"></div>
-    <noscript
-      >Nuagerie a besoin de JavaScript pour fonctionner. Nuagerie needs JavaScript to
-      work.</noscript
-    >
+    <!-- What the app is, for whatever reads the page without running it (crawlers, AI
+         assistants): the app itself replaces nothing here, as it runs only with scripts. -->
+    <noscript>
+      <main>
+        <article lang="fr">
+          <h1>Nuagerie</h1>
+          <p>
+            Nuagerie est la galerie de tes photos OneDrive : rangées par albums, par date et par
+            lieu, avec une carte, les souvenirs « il y a N ans », les favoris et une recherche par
+            mots, par lieu, par date ou par ce que montrent les photos. C’est une application web
+            gratuite et libre, qui s’installe sur le téléphone et marche hors connexion.
+          </p>
+          <p>
+            Elle n’a pas de serveur : tout se passe dans ton navigateur, en lecture seule par
+            défaut, et tes photos vont directement de Microsoft à ton appareil.
+          </p>
+          <p>
+            Nuagerie a besoin de JavaScript. Essayer sans compte :
+            <a href="/?demo=1">la démo</a>. Lire la
+            <a href="/confidentialite">page Confidentialité</a>. Code source sur
+            <a href="https://github.com/j3ffx/nuagerie">GitHub</a>.
+          </p>
+        </article>
+        <article lang="en">
+          <h1>Nuagerie</h1>
+          <p>
+            Nuagerie is the gallery of your OneDrive photos: by album, date and place, with a map,
+            "N years ago" memories, favourites, and a search by words, place, date or what the
+            photos show. It is a free, open-source web app that installs on the phone and works
+            offline.
+          </p>
+          <p>
+            It has no server: everything happens in your browser, read-only by default, and your
+            photos go straight from Microsoft to your device.
+          </p>
+          <p>
+            Nuagerie needs JavaScript. Try it without an account: <a href="/?demo=1">the demo</a>.
+            Read the <a href="/confidentialite">Privacy page</a>. Source code on
+            <a href="https://github.com/j3ffx/nuagerie">GitHub</a>.
+          </p>
+        </article>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

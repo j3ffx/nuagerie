@@ -7,12 +7,13 @@ const PLACES = { timeout: 45_000 };
 const FRENCH =
   /\b(Réglages|Recherche|Carte|Tout voir|Souvenirs|Favoris|Retour|Annuler|élément|dossier|hors connexion|Télécharger|Partager|Masquer|Fermer|Lieux|Années)\b/;
 
-/** The visible text of the page, without what comes from the user's drive (album, folder names). */
+/** The visible text of the page, without what comes from the user’s drive (album, folder names)
+ * nor the text for readers without scripts. */
 const uiText = (page: Page) =>
   page.evaluate(() => {
     const clone = document.body.cloneNode(true) as HTMLElement;
     clone
-      .querySelectorAll('[data-item-id], ul[aria-label] li span, h1, [data-album-name]')
+      .querySelectorAll('[data-item-id], ul[aria-label] li span, h1, [data-album-name], noscript')
       .forEach((node) => node.remove());
     return clone.innerText;
   });

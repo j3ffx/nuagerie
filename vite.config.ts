@@ -6,6 +6,7 @@ import { minimal2023Preset } from '@vite-pwa/assets-generator/config';
 import { VitePWA } from 'vite-plugin-pwa';
 import { lanQrCode } from './build/lan-qr.ts';
 import { ortRuntime, ortRuntimeUrls } from './build/ort-runtime.ts';
+import { staticPages } from './build/static-pages.ts';
 import { currentCommit, versionFile } from './build/version.ts';
 
 export default defineConfig(({ mode }) => {
@@ -18,6 +19,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       ortRuntime(),
+      staticPages(),
       lan && basicSsl({ name: 'nuagerie-dev' }),
       lan && lanQrCode(),
       versionFile({ version, commit }),

@@ -4,6 +4,12 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## Depuis la dernière version
+
+### Corrections
+
+- Nuagerie et sa page Confidentialité se lisent aussi sans JavaScript : les moteurs de recherche et les assistants IA trouvent ce qu’est l’appli et ce qu’elle promet.
+
 ## 1.2.4 — 2026-11-13
 
 Une revue complète de l’appli, faite avant tout pour la sécurité et le respect de ce que promet la page Confidentialité.
