@@ -24,6 +24,20 @@ export const MODEL_ID = 'siglip2-base-patch16-224';
 export const MODEL_URL =
   'https://huggingface.co/onnx-community/siglip2-base-patch16-224-ONNX/resolve/ba1f3b0843f24bc5417d38e19c37b287d719b2f4/';
 
+/**
+ * The SHA-256 of each file of the model at that revision (Hugging Face's own, for the large ones):
+ * a file that does not match is neither used nor kept, be it damaged, cut short or swapped.
+ */
+export const MODEL_FILES: Readonly<Record<string, string>> = {
+  'tokenizer.json': 'cb9140fae3ac5122c972d37adf83e1248471a38147ad76f8215c8872c6fd8322',
+  'tokenizer_config.json': '7c3a247599e741bceba1a3fe0285aea88d1044dc1fad2caa1e48cdd9fd25f630',
+  'onnx/text_model_quantized.onnx':
+    '3a0603d3a00c05a80a6ded4743c16aaac7b1e62cdcc7e362e7ce418659b96400',
+  'onnx/vision_model_fp16.onnx': 'a1959f7bd3993a607e48839f6d01e25b876fe76afda301b028b78eef68aabd95',
+  'onnx/vision_model_quantized.onnx':
+    '5f2b401c1a4fc095702a5d45348e17ad46c4f87064085365b43c6e8eaa5c0070',
+};
+
 type Request =
   | { kind: 'prepareText' }
   | { kind: 'prepareImages' }

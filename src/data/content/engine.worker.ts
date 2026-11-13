@@ -3,6 +3,7 @@ import { Tokenizer } from '@huggingface/tokenizers';
 import * as ort from 'onnxruntime-web/webgpu';
 import { keepFile, keptFile, MODEL_CACHE } from './cacheNames.ts';
 import {
+  MODEL_FILES,
   MODEL_URL,
   type DownloadProgress,
   type EngineDevice,
@@ -31,7 +32,12 @@ const runtimeReady = (async () => {
   ort.env.wasm.wasmBinary = await new Response(stream).arrayBuffer();
 })();
 
-/** A model file, from the device once it has been downloaded. */
+async function sha256(file: Blob): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/** A model file, from the device once it has been downloaded and checked. */
 async function modelFile(path: string, onProgress?: DownloadProgress): Promise<Uint8Array> {
   const cache = await caches.open(MODEL_CACHE);
   const url = MODEL_URL + path;
@@ -52,6 +58,10 @@ async function modelFile(path: string, onProgress?: DownloadProgress): Promise<U
     onProgress?.(loaded, total);
   }
   const file = new Blob(parts);
+  const expected = MODEL_FILES[path];
+  if (!expected || (await sha256(file)) !== expected) {
+    throw new Error(`Model: ${path} is not the expected file`);
+  }
   // Not kept when the browser refuses (no room): it works, and downloads again next time.
   await keepFile(cache, url, file).catch(() => undefined);
   return new Uint8Array(await file.arrayBuffer());
