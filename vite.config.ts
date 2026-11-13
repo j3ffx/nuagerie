@@ -66,7 +66,8 @@ export default defineConfig(({ mode }) => {
         injectManifest: {
           // Latin subset of the font only; other subsets load on demand if ever needed.
           globPatterns: ['**/*.{js,css,html,svg,png,ico}', '**/*latin-wght-normal*.woff2'],
-          globIgnores: ['**/*-ext-*.woff2'],
+          // og.png is for link previews only: not worth a place in every installed copy.
+          globIgnores: ['**/*-ext-*.woff2', 'og.png'],
         },
         devOptions: { enabled: false },
       }),
