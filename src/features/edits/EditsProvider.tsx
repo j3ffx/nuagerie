@@ -476,11 +476,15 @@ export function EditsProvider({ children }: { children: ReactNode }) {
         void caches.delete(trashCacheName(mode)).catch(() => false);
       return;
     }
+    const all = parseTrash(readPersistent(trashKey(mode), []), null);
     const kept = parseTrash(readPersistent(trashKey(mode), []), Date.now());
-    if (kept.length !== parseTrash(readPersistent(trashKey(mode), []), null).length) {
+    if (kept.length !== all.length) {
       writePersistent(trashKey(mode), kept);
+      // Their thumbnails go with them: the list is kept 30 days, and so are they.
+      const keep = new Set(kept.map((entry) => entry.id));
+      void trashCache.delete(all.filter((entry) => !keep.has(entry.id)).map((entry) => entry.id));
     }
-  }, [mode]);
+  }, [mode, trashCache]);
 
   return (
     <EditsContext.Provider
