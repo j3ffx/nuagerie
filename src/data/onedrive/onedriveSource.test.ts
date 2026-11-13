@@ -103,6 +103,32 @@ describe('createOneDriveSource', () => {
     expect(graph.calls.some((url) => url.includes('delta'))).toBe(false);
   });
 
+  it('drops a sync under way when the index is reset, and lists everything again', async () => {
+    const graph = fakeOneDrive();
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const held: GraphClient = {
+      ...graph.client,
+      async getJson<T>(url: string) {
+        // The refresh is held on its delta page while the reset happens.
+        if (url === 'https://graph/delta?token=1') await gate;
+        return graph.client.getJson<T>(url);
+      },
+    };
+    const s = source(held);
+    await s.loadIndex();
+    graph.setChanges([photo('p3', 'IMG_0003.JPG', 'cam')]);
+    const refreshing = s.refresh?.();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await s.reset?.();
+    release();
+
+    expect(await refreshing).toBeNull();
+    const index = await s.loadIndex();
+    // Listed again in full: the late page did not pass itself off as a complete index.
+    expect(index.items.map((item) => item.id).sort()).toEqual(['p1', 'p2']);
+  });
+
   it('applies incremental changes on refresh', async () => {
     const graph = fakeOneDrive();
     const s = source(graph.client);

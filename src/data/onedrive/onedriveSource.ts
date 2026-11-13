@@ -276,6 +276,14 @@ export interface OneDriveSourceOptions {
   store?: IndexStore;
 }
 
+/** The index was reset while a sync ran: that sync stops. */
+class IndexReset extends Error {
+  constructor() {
+    super('The index was reset');
+    this.name = 'IndexReset';
+  }
+}
+
 export function createOneDriveSource(options: OneDriveSourceOptions): DataSource {
   const client = options.client ?? createGraphClient({ getToken: options.getToken });
   const thumbnails = createThumbnailFetcher(client);
@@ -347,12 +355,19 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
     if (path !== readDefaultRootPath()) writeDefaultRootPath(path);
   }
 
-  /** Runs every channel; returns the number of changes. */
+  /** Bumped by each reset: a sync or a copy begun before it no longer describes the index. */
+  let generation = 0;
+
+  /** Runs every channel; returns the number of changes. Stops, writing nothing more, on a reset. */
   async function sync(
     store: IndexStore,
     start: IndexMeta,
     onProgress?: (progress: IndexProgress) => void,
   ): Promise<{ meta: IndexMeta; changes: number }> {
+    const started = generation;
+    const current = () => {
+      if (generation !== started) throw new IndexReset();
+    };
     let meta = start;
     let changes = 0;
     let loadedBefore = 0;
@@ -366,7 +381,9 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
         estimate: meta.lastCount,
         onProgress: ({ loaded }) =>
           onProgress?.({ loaded: loadedBefore + loaded, total: meta.lastCount }),
+        beforeWrite: current,
         onRootState: async (state) => {
+          current();
           meta = { ...meta, channels: meta.channels.map((c, j) => (j === i ? state : c)) };
           await store.setMeta(meta);
         },
@@ -388,6 +405,7 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
         loadedBefore = 0;
       }
     }
+    current();
     const count = await store.count();
     meta = {
       ...meta,
@@ -463,8 +481,6 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
 
   /** Leaves a copy of a complete index for the other devices, at most once a day; never blocks. */
   let saving = false;
-  /** Bumped by each reset: a copy made before it no longer describes the index. */
-  let generation = 0;
   async function saveSnapshot(store: IndexStore, meta: IndexMeta): Promise<void> {
     if (!options.snapshots || options.accountId === null || saving) return;
     if (!snapshotDue(meta.snapshot)) return;
@@ -513,7 +529,12 @@ export function createOneDriveSource(options: OneDriveSourceOptions): DataSource
       async refresh(onProgress?: (progress: IndexProgress) => void) {
         const store = await getStore();
         const meta = await prepareMeta(store);
-        const result = await sync(store, meta, onProgress);
+        const result = await sync(store, meta, onProgress).catch((error: unknown) => {
+          // Reset meanwhile: what this run read belongs to the index that is gone.
+          if (error instanceof IndexReset) return null;
+          throw error;
+        });
+        if (!result) return null;
         void saveSnapshot(store, result.meta);
         return result.changes > 0 ? buildFromStore(store, result.meta) : null;
       },

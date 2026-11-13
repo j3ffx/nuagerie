@@ -35,6 +35,8 @@ export function DataProvider({
   /** A change of the user's is being made: syncs wait, then one runs after it. */
   const editing = useRef(false);
   const wanted = useRef(false);
+  /** The index is being (re)loaded: a sync now would enumerate the drive a second time. */
+  const loading = useRef(true);
   const [generation, setGeneration] = useState(0);
   const [thumbnails] = useState(() => createThumbnails(mode, source));
 
@@ -43,7 +45,7 @@ export function DataProvider({
       wanted.current = true;
       return;
     }
-    if (!source.refresh || syncing.current || !isOnline()) return;
+    if (!source.refresh || syncing.current || loading.current || !isOnline()) return;
     syncing.current = true;
     setSync((s) => ({ ...s, status: 'running', progress: null, message: null }));
     running.current = source
@@ -81,6 +83,7 @@ export function DataProvider({
 
   useEffect(() => {
     let cancelled = false;
+    loading.current = true;
     const startedAt = performance.now();
     source
       .loadIndex((progress) => {
@@ -88,6 +91,7 @@ export function DataProvider({
       })
       .then((index) => {
         if (cancelled) return;
+        loading.current = false;
         setState({ status: 'ready', index, loadedInMs: performance.now() - startedAt });
         refresh();
       })
@@ -114,12 +118,18 @@ export function DataProvider({
 
   const resetIndex = useCallback(
     async (options?: { useSharedCopy?: boolean }) => {
-      await source.reset?.(options);
+      // After the sync under way, never during it: it would write its pages into the emptied
+      // index, and the reload would carry on from there with the rest of the drive missing.
+      loading.current = true;
+      await exclusive(async () => {
+        await source.reset?.(options);
+        wanted.current = false;
+      });
       setSync(IDLE);
       setState({ status: 'loading', progress: null });
       setGeneration((g) => g + 1);
     },
-    [source],
+    [source, exclusive],
   );
 
   const showIndex = useCallback((index: MediaIndex) => {

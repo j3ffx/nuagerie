@@ -31,6 +31,8 @@ export interface SyncCallbacks {
   onProgress?: (progress: SyncProgress) => void;
   /** Saves the root state after each page (resume link, then delta link). */
   onRootState: (root: RootSyncState) => Promise<void>;
+  /** Throws when the index this sync writes to was reset meanwhile: nothing more is written. */
+  beforeWrite?: () => void;
   estimate?: number | null;
 }
 
@@ -147,6 +149,7 @@ export async function syncRoot(
       if (error instanceof GraphError && error.status === 410 && !resynced) {
         // The service cannot continue from this token: enumerate again from scratch.
         resynced = true;
+        callbacks.beforeWrite?.();
         await store.clear();
         root = { ...root, deltaLink: null, resumeLink: null };
         await callbacks.onRootState(root);
@@ -174,6 +177,7 @@ export async function syncRoot(
     const progress = { loaded, total: callbacks.estimate ?? null };
     pendingWrite = (async () => {
       const storeStart = performance.now();
+      callbacks.beforeWrite?.();
       await store.applyChanges(upserts, deleted);
       timings.storeMs += performance.now() - storeStart;
       // Saved only once the page is stored, so a resume never skips items.
