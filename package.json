@@ -1,7 +1,7 @@
 {
   "name": "nuagerie",
   "private": true,
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Galerie photo personnelle en lecture seule pour OneDrive (PWA).",
   "license": "GPL-3.0-only",
   "type": "module",

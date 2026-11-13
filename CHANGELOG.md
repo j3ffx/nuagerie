@@ -4,6 +4,22 @@ Les changements de chaque version de Nuagerie, la plus récente en premier. Les 
 [versionnage sémantique](https://semver.org/lang/fr/) : tant qu’ils commencent par 0, l’application
 évolue encore beaucoup.
 
+## 1.2.4 — 2026-11-13
+
+Une revue complète de l’appli, faite avant tout pour la sécurité et le respect de ce que promet la page Confidentialité.
+
+### Nouveautés
+
+- Un lien vers Nuagerie collé dans WhatsApp ou un message s’affiche avec un aperçu.
+
+### Corrections
+
+- Une réindexation lancée pendant une mise à jour de l’index ne peut plus laisser des photos manquantes.
+- Une suppression faite par OneDrive mais mal confirmée arrive bien dans la corbeille de l’appli, et se restaure.
+- Désactiver la recherche dans les photos ou se déconnecter efface tout, même une analyse encore en train d’arriver d’un autre appareil ; les miniatures de la corbeille partent bien après 30 jours.
+- Sécurité renforcée : le jeton Microsoft ne part que vers Microsoft, les fichiers du dossier Applis/Nuagerie et du modèle sont vérifiés avant d’être utilisés.
+- Avec un lecteur d’écran : chaque écran a son titre, la visionneuse annonce la photo affichée, et une recherche annonce ses résultats. Les textes agrandis tiennent mieux sur un petit écran.
+
 ## 1.2.3 — 2026-11-13
 
 ### Corrections

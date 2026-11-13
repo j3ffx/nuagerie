@@ -4,6 +4,22 @@ The changes of each Nuagerie version, the most recent first. The numbers follow
 [semantic versioning](https://semver.org/): while they start with 0, the app still changes a lot.
 The French notes ([CHANGELOG.md](CHANGELOG.md)) come first; these say the same.
 
+## 1.2.4 — 2026-11-13
+
+A full review of the app, first of all for security and for keeping what the Privacy page promises.
+
+### New
+
+- A link to Nuagerie pasted in WhatsApp or a message shows with a preview.
+
+### Fixes
+
+- A reindex started while the index was updating can no longer leave photos missing.
+- A delete OneDrive did but answered badly does reach the app’s recycle bin, and can be restored.
+- Turning the search in the photos off or signing out erases everything, even an analysis still arriving from another device; the recycle bin’s thumbnails do go after 30 days.
+- Stronger security: the Microsoft token only goes to Microsoft, and the files of the Apps/Nuagerie folder and of the model are checked before use.
+- With a screen reader: each screen has its title, the viewer says which photo is shown, and a search says its results. Enlarged text fits better on a small screen.
+
 ## 1.2.3 — 2026-11-13
 
 ### Fixes
