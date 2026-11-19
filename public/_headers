@@ -2,6 +2,9 @@
 # https://developers.cloudflare.com/pages/configuration/headers/
 
 /*
+  # Every name under the domain is served over HTTPS: browsers may keep to it
+  # for all of them, for a year.
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
   X-Content-Type-Options: nosniff
   # Framed by no other site. The app itself frames its /redirect page: MSAL
   # gets tokens without a screen in a hidden iframe that ends there.
