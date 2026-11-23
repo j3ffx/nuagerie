@@ -29,8 +29,8 @@
     "deploy": "npm run build && npm run check:dist && wrangler pages deploy dist --project-name nuagerie"
   },
   "dependencies": {
-    "@azure/msal-browser": "^5.29.0",
-    "@azure/msal-react": "^5.8.1",
+    "@azure/msal-browser": "^5.29.1",
+    "@azure/msal-react": "^5.8.2",
     "@fontsource-variable/nunito": "^5.3.0",
     "@huggingface/tokenizers": "0.2.0",
     "@tanstack/react-virtual": "^3.14.26",
